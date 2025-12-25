@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  gotodo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persist the event store data
+      - ./data:/app/data
+    environment:
+      - DATA_DIR=/app/data
+      - LOG_FORMAT=logfmt  # Options: logfmt (default), json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+

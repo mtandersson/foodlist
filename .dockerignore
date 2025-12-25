@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+LICENSE
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.svelte-kit
+frontend/coverage
+
+# Backend
+backend/gotodo
+backend/events.jsonl
+backend/*.test
+backend/coverage.out
+backend/coverage.html
+
+# E2E
+e2e/node_modules
+e2e/cypress/videos
+e2e/cypress/screenshots
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+events.jsonl
+data/
+*.log
+

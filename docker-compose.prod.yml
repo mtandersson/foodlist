@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  gotodo:
+    image: gotodo:latest
+    container_name: gotodo-prod
+    ports:
+      - "80:8080"
+    volumes:
+      - gotodo-data:/app/data
+    environment:
+      - DATA_DIR=/app/data
+      - STATIC_DIR=/app/frontend/dist
+      - PORT=8080
+      - LOG_FORMAT=json  # Options: logfmt, json (json recommended for production)
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+volumes:
+  gotodo-data:
+    driver: local
+

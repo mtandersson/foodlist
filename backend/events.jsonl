@@ -1,0 +1,85 @@
+{"type":"ListTitleChanged","title":"🛒 Handlingslista"}
+{"type":"TodoCreated","id":"a1b2c3d4-1111-1111-1111-111111111111","name":"Mjölk 🥛","createdAt":"2025-12-20T08:00:00Z","sortOrder":1000}
+{"type":"TodoCompleted","id":"a1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"a1b2c3d4-2222-2222-2222-222222222222","name":"Mjölk 🥛","createdAt":"2025-12-22T09:00:00Z","sortOrder":2000}
+{"type":"TodoCompleted","id":"a1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-22T11:00:00Z"}
+{"type":"TodoCreated","id":"a1b2c3d4-3333-3333-3333-333333333333","name":"Mjölk 🥛","createdAt":"2025-12-24T08:30:00Z","sortOrder":3000}
+{"type":"TodoCompleted","id":"a1b2c3d4-3333-3333-3333-333333333333","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"b1b2c3d4-1111-1111-1111-111111111111","name":"Bröd 🍞","createdAt":"2025-12-20T08:01:00Z","sortOrder":1100}
+{"type":"TodoCompleted","id":"b1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"b1b2c3d4-2222-2222-2222-222222222222","name":"Bröd 🍞","createdAt":"2025-12-23T09:00:00Z","sortOrder":2100}
+{"type":"TodoCompleted","id":"b1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-23T11:00:00Z"}
+{"type":"TodoCreated","id":"c1b2c3d4-1111-1111-1111-111111111111","name":"Ägg 🥚","createdAt":"2025-12-20T08:02:00Z","sortOrder":1200}
+{"type":"TodoCompleted","id":"c1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"c1b2c3d4-2222-2222-2222-222222222222","name":"Ägg 🥚","createdAt":"2025-12-24T08:00:00Z","sortOrder":3100}
+{"type":"TodoCompleted","id":"c1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"d1b2c3d4-1111-1111-1111-111111111111","name":"Smör","createdAt":"2025-12-21T08:00:00Z","sortOrder":1300}
+{"type":"TodoCompleted","id":"d1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-21T10:00:00Z"}
+{"type":"TodoCreated","id":"e1b2c3d4-1111-1111-1111-111111111111","name":"Ost 🧀","createdAt":"2025-12-20T08:03:00Z","sortOrder":1400}
+{"type":"TodoCompleted","id":"e1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"e1b2c3d4-2222-2222-2222-222222222222","name":"Ost 🧀","createdAt":"2025-12-24T08:01:00Z","sortOrder":3200}
+{"type":"TodoCompleted","id":"e1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"f1b2c3d4-1111-1111-1111-111111111111","name":"Bananer 🍌","createdAt":"2025-12-20T08:04:00Z","sortOrder":1500}
+{"type":"TodoCompleted","id":"f1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"f1b2c3d4-2222-2222-2222-222222222222","name":"Bananer 🍌","createdAt":"2025-12-23T08:00:00Z","sortOrder":2200}
+{"type":"TodoCompleted","id":"f1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-23T11:00:00Z"}
+{"type":"TodoCreated","id":"g1b2c3d4-1111-1111-1111-111111111111","name":"Äpplen 🍎","createdAt":"2025-12-21T08:01:00Z","sortOrder":1600}
+{"type":"TodoCompleted","id":"g1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-21T10:00:00Z"}
+{"type":"TodoCreated","id":"h1b2c3d4-1111-1111-1111-111111111111","name":"Apelsiner 🍊","createdAt":"2025-12-22T08:00:00Z","sortOrder":1700}
+{"type":"TodoCompleted","id":"h1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-22T11:00:00Z"}
+{"type":"TodoCreated","id":"i1b2c3d4-1111-1111-1111-111111111111","name":"Kaffe ☕","createdAt":"2025-12-20T08:05:00Z","sortOrder":1800}
+{"type":"TodoCompleted","id":"i1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"i1b2c3d4-2222-2222-2222-222222222222","name":"Kaffe ☕","createdAt":"2025-12-24T08:02:00Z","sortOrder":3300}
+{"type":"TodoCompleted","id":"i1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"j1b2c3d4-1111-1111-1111-111111111111","name":"Pasta","createdAt":"2025-12-21T08:02:00Z","sortOrder":1900}
+{"type":"TodoCompleted","id":"j1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-21T10:00:00Z"}
+{"type":"TodoCreated","id":"k1b2c3d4-1111-1111-1111-111111111111","name":"Ris","createdAt":"2025-12-22T08:01:00Z","sortOrder":2300}
+{"type":"TodoCompleted","id":"k1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-22T11:00:00Z"}
+{"type":"TodoCreated","id":"l1b2c3d4-1111-1111-1111-111111111111","name":"Kycklingfilé 🍗","createdAt":"2025-12-23T08:01:00Z","sortOrder":2400}
+{"type":"TodoCompleted","id":"l1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-23T11:00:00Z"}
+{"type":"TodoCreated","id":"m1b2c3d4-1111-1111-1111-111111111111","name":"Lax 🐟","createdAt":"2025-12-24T08:03:00Z","sortOrder":3400}
+{"type":"TodoCompleted","id":"m1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"n1b2c3d4-1111-1111-1111-111111111111","name":"Tomater 🍅","createdAt":"2025-12-20T08:06:00Z","sortOrder":2000}
+{"type":"TodoCompleted","id":"n1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"n1b2c3d4-2222-2222-2222-222222222222","name":"Tomater 🍅","createdAt":"2025-12-24T08:04:00Z","sortOrder":3500}
+{"type":"TodoCompleted","id":"n1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"o1b2c3d4-1111-1111-1111-111111111111","name":"Gurka 🥒","createdAt":"2025-12-21T08:03:00Z","sortOrder":2500}
+{"type":"TodoCompleted","id":"o1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-21T10:00:00Z"}
+{"type":"TodoCreated","id":"p1b2c3d4-1111-1111-1111-111111111111","name":"Morötter 🥕","createdAt":"2025-12-22T08:02:00Z","sortOrder":2600}
+{"type":"TodoCompleted","id":"p1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-22T11:00:00Z"}
+{"type":"TodoCreated","id":"q1b2c3d4-1111-1111-1111-111111111111","name":"Lök","createdAt":"2025-12-23T08:02:00Z","sortOrder":2700}
+{"type":"TodoCompleted","id":"q1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-23T11:00:00Z"}
+{"type":"TodoCreated","id":"r1b2c3d4-1111-1111-1111-111111111111","name":"Vitlök 🧄","createdAt":"2025-12-24T08:05:00Z","sortOrder":3600}
+{"type":"TodoCompleted","id":"r1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"s1b2c3d4-1111-1111-1111-111111111111","name":"Yoghurt","createdAt":"2025-12-21T08:04:00Z","sortOrder":2800}
+{"type":"TodoCompleted","id":"s1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-21T10:00:00Z"}
+{"type":"TodoCreated","id":"s1b2c3d4-2222-2222-2222-222222222222","name":"Yoghurt","createdAt":"2025-12-24T08:06:00Z","sortOrder":3700}
+{"type":"TodoCompleted","id":"s1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"t1b2c3d4-1111-1111-1111-111111111111","name":"Juice 🧃","createdAt":"2025-12-22T08:03:00Z","sortOrder":2900}
+{"type":"TodoCompleted","id":"t1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-22T11:00:00Z"}
+{"type":"TodoCreated","id":"u1b2c3d4-1111-1111-1111-111111111111","name":"Chips","createdAt":"2025-12-23T08:03:00Z","sortOrder":3000}
+{"type":"TodoCompleted","id":"u1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-23T11:00:00Z"}
+{"type":"TodoCreated","id":"v1b2c3d4-1111-1111-1111-111111111111","name":"Choklad 🍫","createdAt":"2025-12-20T08:07:00Z","sortOrder":3100}
+{"type":"TodoCompleted","id":"v1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-20T10:30:00Z"}
+{"type":"TodoCreated","id":"v1b2c3d4-2222-2222-2222-222222222222","name":"Choklad 🍫","createdAt":"2025-12-24T08:07:00Z","sortOrder":3800}
+{"type":"TodoCompleted","id":"v1b2c3d4-2222-2222-2222-222222222222","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"w1b2c3d4-1111-1111-1111-111111111111","name":"Glass 🍦","createdAt":"2025-12-23T08:04:00Z","sortOrder":3900}
+{"type":"TodoCompleted","id":"w1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-23T11:00:00Z"}
+{"type":"TodoCreated","id":"x1b2c3d4-1111-1111-1111-111111111111","name":"Diskmedel","createdAt":"2025-12-21T08:05:00Z","sortOrder":4000}
+{"type":"TodoCompleted","id":"x1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-21T10:00:00Z"}
+{"type":"TodoCreated","id":"y1b2c3d4-1111-1111-1111-111111111111","name":"Tvättmedel","createdAt":"2025-12-22T08:04:00Z","sortOrder":4100}
+{"type":"TodoCompleted","id":"y1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-22T11:00:00Z"}
+{"type":"TodoCreated","id":"z1b2c3d4-1111-1111-1111-111111111111","name":"Toalettpapper 🧻","createdAt":"2025-12-24T08:08:00Z","sortOrder":4200}
+{"type":"TodoCompleted","id":"z1b2c3d4-1111-1111-1111-111111111111","completedAt":"2025-12-24T12:00:00Z"}
+{"type":"TodoCreated","id":"aa1b2c3d-1111-1111-1111-111111111111","name":"Mjölk 🥛","createdAt":"2025-12-25T08:00:00Z","sortOrder":5000}
+{"type":"TodoCreated","id":"ab1b2c3d-1111-1111-1111-111111111111","name":"Bröd 🍞","createdAt":"2025-12-25T08:01:00Z","sortOrder":5100}
+{"type":"TodoCreated","id":"ac1b2c3d-1111-1111-1111-111111111111","name":"Gräddfil","createdAt":"2025-12-25T08:02:00Z","sortOrder":5200}
+{"type":"TodoStarred","id":"aa1b2c3d-1111-1111-1111-111111111111","sortOrder":6000}
+{"type":"TodoCreated","id":"8c3d1731-cc31-4cb8-b7d0-8b8ef3ccb839","name":"Kaffe ☕","createdAt":"2025-12-25T07:01:18.520074Z","sortOrder":7000}
+{"type":"TodoRenamed","id":"8c3d1731-cc31-4cb8-b7d0-8b8ef3ccb839","name":"☕ Kaffe"}
+{"type":"TodoCompleted","id":"8c3d1731-cc31-4cb8-b7d0-8b8ef3ccb839","completedAt":"2025-12-25T07:01:27.416863Z"}
+{"type":"ListTitleChanged","title":"🛒 Mat"}
+{"type":"TodoUncompleted","id":"8c3d1731-cc31-4cb8-b7d0-8b8ef3ccb839"}
+{"type":"TodoCompleted","id":"8c3d1731-cc31-4cb8-b7d0-8b8ef3ccb839","completedAt":"2025-12-25T07:04:30.761189Z"}
+{"type":"TodoCompleted","id":"ac1b2c3d-1111-1111-1111-111111111111","completedAt":"2025-12-25T07:04:32.225122Z"}
+{"type":"TodoUncompleted","id":"ac1b2c3d-1111-1111-1111-111111111111"}

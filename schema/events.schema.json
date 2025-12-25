@@ -1,0 +1,270 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gotodo.local/events.schema.json",
+  "title": "Todo Events",
+  "description": "Message types exchanged between client and server for the todo application",
+  "definitions": {
+    "ClientCount": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "ClientCount"},
+        "count": {"type": "integer", "minimum": 0}
+      },
+      "required": ["type", "count"],
+      "additionalProperties": false
+    },
+    "CreateTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CreateTodo"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "name"],
+      "additionalProperties": false
+    },
+    "CompleteTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CompleteTodo"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "UncompleteTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "UncompleteTodo"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "StarTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "StarTodo"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "UnstarTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "UnstarTodo"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "ReorderTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "ReorderTodo"},
+        "id": {"type": "string", "format": "uuid"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "sortOrder"],
+      "additionalProperties": false
+    },
+    "RenameTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "RenameTodo"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"}
+      },
+      "required": ["type", "id", "name"],
+      "additionalProperties": false
+    },
+    "SetListTitle": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "SetListTitle"},
+        "title": {"type": "string"}
+      },
+      "required": ["type", "title"],
+      "additionalProperties": false
+    },
+    "TodoCreated": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoCreated"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "name", "createdAt", "sortOrder"],
+      "additionalProperties": false
+    },
+    "TodoCompleted": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoCompleted"},
+        "id": {"type": "string", "format": "uuid"},
+        "completedAt": {"type": "string", "format": "date-time"}
+      },
+      "required": ["type", "id", "completedAt"],
+      "additionalProperties": false
+    },
+    "TodoUncompleted": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoUncompleted"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "TodoStarred": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoStarred"},
+        "id": {"type": "string", "format": "uuid"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "sortOrder"],
+      "additionalProperties": false
+    },
+    "TodoUnstarred": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoUnstarred"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "TodoReordered": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoReordered"},
+        "id": {"type": "string", "format": "uuid"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "sortOrder"],
+      "additionalProperties": false
+    },
+    "TodoRenamed": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoRenamed"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"}
+      },
+      "required": ["type", "id", "name"],
+      "additionalProperties": false
+    },
+    "ListTitleChanged": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "ListTitleChanged"},
+        "title": {"type": "string"}
+      },
+      "required": ["type", "title"],
+      "additionalProperties": false
+    },
+    "StateRollup": {
+      "type": "object",
+      "description": "Sent to clients on connection with current state",
+      "properties": {
+        "type": {"const": "StateRollup"},
+        "todos": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Todo"}
+        },
+        "listTitle": {"type": "string"}
+      },
+      "required": ["type", "todos", "listTitle"],
+      "additionalProperties": false
+    },
+    "AutocompleteRequest": {
+      "type": "object",
+      "description": "Request autocomplete suggestions for todo names",
+      "properties": {
+        "type": {"const": "AutocompleteRequest"},
+        "query": {"type": "string"},
+        "requestId": {"type": "string"}
+      },
+      "required": ["type", "query", "requestId"],
+      "additionalProperties": false
+    },
+    "AutocompleteResponse": {
+      "type": "object",
+      "description": "Response with autocomplete suggestions",
+      "properties": {
+        "type": {"const": "AutocompleteResponse"},
+        "suggestions": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "requestId": {"type": "string"}
+      },
+      "required": ["type", "suggestions", "requestId"],
+      "additionalProperties": false
+    },
+    "Todo": {
+      "type": "object",
+      "description": "A todo item projected from events",
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "completedAt": {"type": ["string", "null"], "format": "date-time"},
+        "sortOrder": {"type": "integer"},
+        "starred": {"type": "boolean"}
+      },
+      "required": ["id", "name", "createdAt", "sortOrder", "starred"],
+      "additionalProperties": false
+    },
+    "Event": {
+      "oneOf": [
+        {"$ref": "#/definitions/TodoCreated"},
+        {"$ref": "#/definitions/TodoCompleted"},
+        {"$ref": "#/definitions/TodoUncompleted"},
+        {"$ref": "#/definitions/TodoStarred"},
+        {"$ref": "#/definitions/TodoUnstarred"},
+        {"$ref": "#/definitions/TodoReordered"},
+        {"$ref": "#/definitions/TodoRenamed"},
+        {"$ref": "#/definitions/ListTitleChanged"}
+      ]
+    },
+    "Command": {
+      "oneOf": [
+        {"$ref": "#/definitions/CreateTodo"},
+        {"$ref": "#/definitions/CompleteTodo"},
+        {"$ref": "#/definitions/UncompleteTodo"},
+        {"$ref": "#/definitions/StarTodo"},
+        {"$ref": "#/definitions/UnstarTodo"},
+        {"$ref": "#/definitions/ReorderTodo"},
+        {"$ref": "#/definitions/RenameTodo"},
+        {"$ref": "#/definitions/SetListTitle"}
+      ]
+    },
+    "ServerMessage": {
+      "oneOf": [
+        {"$ref": "#/definitions/TodoCreated"},
+        {"$ref": "#/definitions/TodoCompleted"},
+        {"$ref": "#/definitions/TodoUncompleted"},
+        {"$ref": "#/definitions/TodoStarred"},
+        {"$ref": "#/definitions/TodoUnstarred"},
+        {"$ref": "#/definitions/TodoReordered"},
+        {"$ref": "#/definitions/TodoRenamed"},
+        {"$ref": "#/definitions/ListTitleChanged"},
+        {"$ref": "#/definitions/StateRollup"},
+        {"$ref": "#/definitions/ClientCount"},
+        {"$ref": "#/definitions/AutocompleteResponse"}
+      ]
+    },
+    "ClientMessage": {
+      "oneOf": [
+        {"$ref": "#/definitions/Command"},
+        {"$ref": "#/definitions/AutocompleteRequest"}
+      ]
+    }
+  }
+}

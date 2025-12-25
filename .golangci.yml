@@ -1,0 +1,47 @@
+run:
+  timeout: 3m
+  tests: true
+  modules-download-mode: readonly
+  skip-dirs:
+    - frontend
+    - e2e
+    - data
+  allow-parallel-runners: true
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gofmt
+    - goimports
+    - gofumpt
+    - gocritic
+    - revive
+  disable:
+    - godox
+
+linters-settings:
+  gofumpt:
+    module-path: gotodo
+  revive:
+    severity: warning
+    rules:
+      - name: indent-error-flow
+      - name: error-return
+      - name: var-naming
+  errcheck:
+    exclude-functions:
+      - (*github.com/gorilla/websocket.Conn).WriteMessage
+      - (*github.com/gorilla/websocket.Conn).ReadMessage
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    - "should have comment"
+
+output:
+  format: colored-line-number
+
