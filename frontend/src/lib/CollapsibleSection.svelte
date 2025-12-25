@@ -113,23 +113,23 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: var(--spacing-md);
     width: 100%;
   }
 
   .section-header {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
     background: var(--surface-muted);
     border: none;
     color: var(--text-on-primary);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 8px 12px;
-    border-radius: 8px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background var(--transition-normal);
     text-align: left;
     flex-shrink: 1;
     min-width: 0;
@@ -146,14 +146,14 @@
 
   .section-count {
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     flex-shrink: 0;
   }
 
   .chevron {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.2s ease;
+    width: var(--icon-xs);
+    height: var(--icon-xs);
+    transition: transform var(--transition-normal);
     transform: rotate(0deg);
     flex-shrink: 0;
   }
@@ -163,14 +163,14 @@
   }
 
   .section-content {
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-lg);
     width: 100%;
   }
 
   .action-buttons {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-xs);
     flex-shrink: 0;
   }
 
@@ -182,17 +182,17 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
     flex-shrink: 0;
-    height: 32px;
-    width: 32px;
+    height: var(--button-height-sm);
+    width: var(--button-height-sm);
   }
 
   .move-btn svg {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-xs);
+    height: var(--icon-xs);
   }
 
   .move-btn:hover {
@@ -208,22 +208,22 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
     flex-shrink: 0;
-    height: 32px;
-    width: 32px;
+    height: var(--button-height-sm);
+    width: var(--button-height-sm);
   }
 
   .delete-btn svg {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-xs);
+    height: var(--icon-xs);
   }
 
   .delete-btn:hover {
-    background: rgba(255, 59, 48, 0.1);
-    color: #ff3b30;
+    background: var(--color-delete-bg);
+    color: var(--color-delete);
   }
 </style>
 

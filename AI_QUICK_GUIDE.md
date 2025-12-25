@@ -114,6 +114,38 @@ if (!connected) {
 }
 ```
 
+## CSS Best Practices
+
+**No Magic Numbers - Always Use Variables:**
+
+```css
+/* ✗ BAD - Magic numbers everywhere */
+.button {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+/* ✓ GOOD - Semantic constants */
+.button {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-2xl);
+}
+```
+
+**Constant Categories:**
+- Spacing: `--spacing-xs` through `--spacing-5xl`
+- Radii: `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-full`
+- Fonts: `--font-size-xs` through `--font-size-2xl`
+- Colors: `--primary-color`, `--text-primary`, etc.
+- Shadows: `--shadow-sm` through `--shadow-2xl`
+- Durations: `--duration-fast`, `--duration-normal`, etc.
+
+**Define all constants in `frontend/src/app.css` under `:root`**
+
 ## Critical Checklist
 
 Before marking complete:
@@ -126,6 +158,8 @@ Before marking complete:
 - [ ] Animations smooth (60fps)
 - [ ] No memory leaks
 - [ ] Documentation complete
+- [ ] No magic numbers in CSS (use variables)
+- [ ] Consistent spacing/sizing via design system
 
 ## Common Issues & Solutions
 
@@ -137,6 +171,8 @@ Before marking complete:
 | Flaky E2E tests             | Add proper waits, avoid fixed delays        |
 | Memory leaks                | Close connections, cleanup subscriptions    |
 | Slow animations             | Use CSS transforms (GPU), virtualize lists  |
+| Magic numbers in CSS        | Use CSS custom properties (variables)       |
+| Inconsistent spacing        | Use design system constants from :root      |
 
 ## Development Flow Example
 
@@ -182,6 +218,8 @@ npm run dev -w frontend
 5. **Type safety** - Generated types from schema
 6. **E2E coverage** - Real user flows tested
 7. **Multi-client sync** - Test with multiple tabs
+8. **No magic numbers in CSS** - Always use CSS variables
+9. **Design system consistency** - Use predefined constants
 
 ## Success = Green Tests + Working App
 

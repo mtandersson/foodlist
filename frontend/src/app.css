@@ -29,6 +29,115 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
   --transition-slow: 0.3s ease;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 48px;
+  --spacing-5xl: 64px;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* Sizes */
+  --icon-xs: 16px;
+  --icon-sm: 20px;
+  --icon-md: 24px;
+  --icon-lg: 28px;
+  --icon-xl: 32px;
+
+  /* Component Sizes */
+  --checkbox-size: 28px;
+  --button-height-sm: 32px;
+  --button-height-md: 40px;
+  --drop-indicator-height: 56px;
+  --drop-spacing: 64px;
+  --min-drop-zone-height: 20px;
+
+  /* Font Sizes */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 17px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 32px;
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Opacity */
+  --opacity-disabled: 0.5;
+  --opacity-completed: 0.7;
+  --opacity-dragging: 0.5;
+  --opacity-hover: 0.9;
+  --opacity-subtle: 0.6;
+  --opacity-pulse-min: 0.8;
+  --opacity-pulse-max: 1;
+
+  /* Z-Index */
+  --z-index-dropdown: 100;
+  --z-index-drop-indicator: 11;
+  --z-index-drop-target: 10;
+  --z-index-menu: 150;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-2xl: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-menu: 0 -4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-focus: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* Widths */
+  --container-max-width: 820px;
+  --container-viewport-width: 90vw;
+  --scrollbar-width: 8px;
+  --menu-min-width: 200px;
+
+  /* Heights */
+  --viewport-height-offset: 48px;
+
+  /* Stroke Widths */
+  --stroke-thin: 2px;
+  --stroke-medium: 2.5px;
+  --stroke-bold: 3px;
+
+  /* Animation Durations */
+  --duration-instant: 0.1s;
+  --duration-fast: 0.15s;
+  --duration-normal: 0.2s;
+  --duration-slow: 0.3s;
+  --duration-animation: 300ms;
+  --duration-flip-instant: 0ms;
+  --duration-pulse: 1s;
+  --duration-long-press: 500ms;
+  --duration-auto-expand: 500ms;
+  --duration-blur-delay: 150ms;
+
+  /* Line Heights */
+  --line-height-tight: 1;
+  --line-height-normal: 1.4;
+
+  /* Percentages for positioning */
+  --position-third: 33.333%;
+  --position-half: 50%;
+
+  /* Deletion color (not themed) */
+  --color-delete: #ff3b30;
+  --color-delete-bg: rgba(255, 59, 48, 0.1);
 }
 
 /* Dark mode styles */

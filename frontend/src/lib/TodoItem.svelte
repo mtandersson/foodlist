@@ -143,30 +143,30 @@
   .todo-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-xl);
     background: var(--card-bg);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-slow);
+    box-shadow: var(--shadow-sm);
   }
 
   .todo-item.completed {
-    opacity: 0.7;
+    opacity: var(--opacity-completed);
   }
 
   .checkbox {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid var(--checkbox-border);
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    border-radius: var(--position-half);
+    border: var(--stroke-thin) solid var(--checkbox-border);
     background: transparent;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: all 0.2s ease;
+    transition: all var(--transition-normal);
     padding: 0;
   }
 
@@ -181,23 +181,23 @@
   }
 
   .checkbox svg {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-xs);
+    height: var(--icon-xs);
   }
 
   .todo-name {
     flex: 1;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: var(--text-primary);
     cursor: default;
-    transition: all 0.2s ease;
+    transition: all var(--transition-normal);
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
 
   .todo-name.long-pressing {
-    opacity: 0.6;
+    opacity: var(--opacity-subtle);
     transform: scale(0.98);
   }
 
@@ -207,20 +207,20 @@
   }
 
   .category-badge {
-    padding: 4px 12px;
+    padding: var(--spacing-xs) var(--spacing-md);
     background: var(--primary-color);
     color: white;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.4;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   .edit-input {
     flex: 1;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: var(--text-primary);
     border: none;
     outline: none;
@@ -230,8 +230,8 @@
   }
 
   .star-btn {
-    width: 32px;
-    height: 32px;
+    width: var(--icon-xl);
+    height: var(--icon-xl);
     border: none;
     background: transparent;
     cursor: pointer;
@@ -239,7 +239,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all var(--transition-normal);
     padding: 0;
   }
 
@@ -253,8 +253,8 @@
   }
 
   .star-btn svg {
-    width: 20px;
-    height: 20px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
   }
 </style>
 

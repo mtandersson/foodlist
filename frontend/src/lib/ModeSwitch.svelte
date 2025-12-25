@@ -41,35 +41,35 @@
   .mode-switch {
     display: inline-flex;
     background: var(--surface-muted);
-    border-radius: 999px;
-    padding: 4px;
-    gap: 4px;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-full);
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+    box-shadow: var(--shadow-inset);
   }
 
   .mode-switch button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-sm);
     border: none;
     background: transparent;
-    padding: 8px 12px;
-    border-radius: 999px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-full);
     color: var(--text-on-primary);
     cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 600;
+    transition: all var(--transition-normal);
+    font-weight: var(--font-weight-semibold);
   }
 
   .mode-switch button.selected {
     background: var(--card-bg);
     color: var(--text-primary);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
   }
 
   .mode-switch .icon {
-    font-size: 14px;
-    line-height: 1;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-tight);
   }
 </style>
 

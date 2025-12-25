@@ -514,35 +514,35 @@
 
 <style>
   .todos-section {
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-lg);
     position: relative;
-    min-height: 20px;
-    transition: all 0.2s ease;
+    min-height: var(--min-drop-zone-height);
+    transition: all var(--transition-normal);
   }
 
   .todos-section.drag-over-uncategorized {
     background: var(--surface-light);
-    border-radius: 12px;
-    padding: 8px;
-    margin: -8px -8px 8px -8px;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    margin: calc(-1 * var(--spacing-sm)) calc(-1 * var(--spacing-sm)) var(--spacing-sm) calc(-1 * var(--spacing-sm));
   }
 
   .category-wrapper {
     position: relative;
-    transition: all 0.2s ease;
-    margin-bottom: 16px;
+    transition: all var(--transition-normal);
+    margin-bottom: var(--spacing-lg);
   }
 
   .category-wrapper.drag-over-category {
     background: var(--surface-light);
-    border-radius: 12px;
-    padding: 8px;
-    margin: -8px -8px 8px -8px;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    margin: calc(-1 * var(--spacing-sm)) calc(-1 * var(--spacing-sm)) var(--spacing-sm) calc(-1 * var(--spacing-sm));
   }
 
   .category-drop-zone {
     position: relative;
-    min-height: 20px;
+    min-height: var(--min-drop-zone-height);
   }
 
   .todo-container {
@@ -550,77 +550,77 @@
   }
 
   .todo-container.spacer-top {
-    margin-top: 64px;
+    margin-top: var(--drop-spacing);
   }
 
   .todo-container.spacer-bottom {
-    margin-bottom: 64px;
+    margin-bottom: var(--drop-spacing);
   }
 
   .todo-wrapper {
     position: relative;
-    margin-bottom: 8px;
-    transition: transform 0.1s ease;
+    margin-bottom: var(--spacing-sm);
+    transition: transform var(--duration-instant);
   }
 
   .dragging {
-    opacity: 0.5;
+    opacity: var(--opacity-dragging);
   }
 
   /* svelte-ignore css-unused-selector */
   :global(.todo-wrapper.drop-above),
   :global(.todo-wrapper.drop-below) {
-    z-index: 10;
+    z-index: var(--z-index-drop-target);
   }
 
   /* svelte-ignore css-unused-selector */
   :global(.todo-wrapper.drop-above)::before {
     content: '';
     display: block;
-    height: 56px;
-    border: 2px dashed var(--text-on-primary);
-    border-radius: 12px;
-    opacity: 0.9;
-    animation: pulse 1s ease-in-out infinite;
+    height: var(--drop-indicator-height);
+    border: var(--stroke-thin) dashed var(--text-on-primary);
+    border-radius: var(--radius-md);
+    opacity: var(--opacity-hover);
+    animation: pulse var(--duration-pulse) ease-in-out infinite;
     position: absolute;
     width: 100%;
-    top: -64px;
-    z-index: 11;
+    top: calc(-1 * var(--drop-spacing));
+    z-index: var(--z-index-drop-indicator);
   }
 
   /* svelte-ignore css-unused-selector */
   :global(.todo-wrapper.drop-below)::after {
     content: '';
     display: block;
-    height: 56px;
-    border: 2px dashed var(--text-on-primary);
-    border-radius: 12px;
-    opacity: 0.9;
-    animation: pulse 1s ease-in-out infinite;
+    height: var(--drop-indicator-height);
+    border: var(--stroke-thin) dashed var(--text-on-primary);
+    border-radius: var(--radius-md);
+    opacity: var(--opacity-hover);
+    animation: pulse var(--duration-pulse) ease-in-out infinite;
     position: absolute;
     width: 100%;
-    bottom: -64px;
-    z-index: 11;
+    bottom: calc(-1 * var(--drop-spacing));
+    z-index: var(--z-index-drop-indicator);
   }
 
   @keyframes pulse {
     0%, 100% {
-      opacity: 0.8;
-      border-width: 2px;
+      opacity: var(--opacity-pulse-min);
+      border-width: var(--stroke-thin);
     }
     50% {
-      opacity: 1;
-      border-width: 3px;
+      opacity: var(--opacity-pulse-max);
+      border-width: var(--stroke-bold);
     }
   }
 
   .empty-drop-area {
-    padding: 24px;
+    padding: var(--spacing-2xl);
     text-align: center;
     color: var(--text-muted);
-    font-size: 14px;
-    border: 2px dashed var(--surface-muted);
-    border-radius: 8px;
-    transition: opacity 0.2s ease;
+    font-size: var(--font-size-sm);
+    border: var(--stroke-thin) dashed var(--surface-muted);
+    border-radius: var(--radius-sm);
+    transition: opacity var(--transition-normal);
   }
 </style>

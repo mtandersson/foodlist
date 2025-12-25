@@ -223,7 +223,69 @@ Add transitions for:
 
 **Use CSS transitions or framework-specific animation libraries**
 
-#### 4.3 Accessibility
+#### 4.3 CSS Best Practices
+
+**No Magic Numbers:**
+
+- **Never use literal numbers** directly in CSS (e.g., `padding: 16px;`)
+- **Always use CSS custom properties** (CSS variables) defined in `:root`
+- Define all constants with clear, semantic names
+
+**Categories of CSS Constants:**
+
+1. **Spacing:** `--spacing-xs`, `--spacing-sm`, `--spacing-md`, `--spacing-lg`, etc.
+2. **Border Radius:** `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-full`
+3. **Font Sizes:** `--font-size-xs`, `--font-size-sm`, `--font-size-base`, etc.
+4. **Font Weights:** `--font-weight-normal`, `--font-weight-medium`, etc.
+5. **Colors:** `--primary-color`, `--text-primary`, `--card-bg`, etc.
+6. **Transitions:** `--transition-fast`, `--transition-normal`, `--transition-slow`
+7. **Shadows:** `--shadow-sm`, `--shadow-md`, `--shadow-lg`, etc.
+8. **Sizes:** `--icon-sm`, `--icon-md`, `--checkbox-size`, etc.
+9. **Durations:** `--duration-fast`, `--duration-normal`, `--duration-animation`
+10. **Opacity:** `--opacity-disabled`, `--opacity-hover`, `--opacity-dragging`
+11. **Z-Index:** `--z-index-dropdown`, `--z-index-menu`, etc.
+
+**Good Example:**
+
+```css
+.button {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+}
+```
+
+**Bad Example:**
+
+```css
+.button {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+```
+
+**Why This Matters:**
+
+- **Consistency:** All components use the same spacing/sizing system
+- **Maintainability:** Change one value to update entire app
+- **Theming:** Easy to create variants (light/dark mode, compact/spacious)
+- **Readability:** `var(--spacing-lg)` is more meaningful than `16px`
+- **No Guessing:** Developers know which value to use
+
+**Adding New Constants:**
+
+1. Check if a similar constant already exists
+2. Add to `frontend/src/app.css` in `:root` section
+3. Group by category (spacing, colors, sizes, etc.)
+4. Use semantic naming that describes purpose
+5. Document why the constant exists if non-obvious
+
+#### 4.4 Accessibility
 
 - Proper ARIA labels
 - Keyboard navigation
@@ -405,6 +467,8 @@ ws.onMessage((serverEvent) => {
 8. **Hardcoding URLs/ports:** Use environment variables
 9. **Not cleaning up test data:** Each test should start clean
 10. **Skipping animation testing:** Verify transitions don't break UX
+11. **Using magic numbers in CSS:** Always use CSS custom properties (variables)
+12. **Inconsistent spacing/sizing:** Use the design system constants
 
 ## Performance Considerations
 
