@@ -24,7 +24,7 @@
     onclick={() => select('normal')}
   >
     <span class="icon">☰</span>
-    Normal
+    <span class="label">Normal</span>
   </button>
   <button
     type="button"
@@ -33,7 +33,7 @@
     onclick={() => select('categories')}
   >
     <span class="icon">📁</span>
-    Kategorier
+    <span class="label">Kategorier</span>
   </button>
 </div>
 
@@ -70,6 +70,22 @@
   .mode-switch .icon {
     font-size: var(--font-size-sm);
     line-height: var(--line-height-tight);
+  }
+
+  /* Hide text labels on mobile, show only icons */
+  @media (max-width: 768px) {
+    .mode-switch .label {
+      display: none;
+    }
+
+    .mode-switch button {
+      gap: 0;
+      padding: var(--spacing-sm);
+    }
+
+    .mode-switch .icon {
+      font-size: var(--font-size-base);
+    }
   }
 </style>
 
