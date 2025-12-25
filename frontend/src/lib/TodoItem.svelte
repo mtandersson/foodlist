@@ -208,14 +208,15 @@
   }
 
   .category-badge {
-    margin-left: 8px;
-    padding: 4px 8px;
-    background: var(--surface-muted);
-    color: var(--text-primary);
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-on-primary);
     border-radius: 999px;
     font-size: 12px;
-    line-height: 1;
+    font-weight: 500;
+    line-height: 1.4;
     white-space: nowrap;
+    opacity: 0.9;
   }
 
   .edit-input {

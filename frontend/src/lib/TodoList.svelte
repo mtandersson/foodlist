@@ -6,6 +6,7 @@
   import TodoItem from './TodoItem.svelte';
   import ModeSwitch from './ModeSwitch.svelte';
   import CategoriesView from './CategoriesView.svelte';
+  import CollapsibleSection from './CollapsibleSection.svelte';
   import type { Todo, AutocompleteSuggestion } from './types';
 
   // Determine WebSocket URL
@@ -21,6 +22,7 @@
   let completedExpanded = $state(true);
   let viewMode: 'normal' | 'categories' = $state((typeof localStorage !== 'undefined' && (localStorage.getItem('viewMode') as 'normal' | 'categories')) || 'normal');
   let pendingCategoryId: string | null = $state(null);
+  let menuOpen = $state(false);
   
   // List title state
   let editingTitle = $state(false);
@@ -164,6 +166,23 @@
     }
   }
 
+  // Menu state
+  function toggleMenu() {
+    menuOpen = !menuOpen;
+  }
+
+  function closeMenu() {
+    menuOpen = false;
+  }
+
+  function handleNewCategory() {
+    const name = prompt('Ny kategori', '');
+    if (name && name.trim()) {
+      handleCreateCategory(name.trim());
+    }
+    closeMenu();
+  }
+
   // Drag and drop state
   let draggedId: string | null = $state(null);
   let dragOverId: string | null = $state(null);
@@ -259,13 +278,24 @@
         </svg>
         {$userCount}
       </span>
-      <button class="menu-btn" aria-label="Menu">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="5" r="2"></circle>
-          <circle cx="12" cy="12" r="2"></circle>
-          <circle cx="12" cy="19" r="2"></circle>
-        </svg>
-      </button>
+      <div class="menu-wrapper">
+        <button class="menu-btn" aria-label="Menu" onclick={toggleMenu}>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="5" r="2"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+            <circle cx="12" cy="19" r="2"></circle>
+          </svg>
+        </button>
+        {#if menuOpen}
+          <div class="menu-dropdown">
+            <button class="menu-item" onclick={handleNewCategory}>
+              <span class="menu-icon">➕</span>
+              Ny kategori
+            </button>
+          </div>
+          <button class="menu-backdrop" onclick={closeMenu} aria-label="Close menu"></button>
+        {/if}
+      </div>
     </div>
   </header>
 
@@ -312,38 +342,26 @@
 
       <!-- Completed section -->
       {#if $completedTodos.length > 0}
-        <button class="completed-header" onclick={toggleCompletedSection}>
-          <svg 
-            class="chevron" 
-            class:expanded={completedExpanded}
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            stroke-width="2"
-          >
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-          Slutfört
-        </button>
-
-        {#if completedExpanded}
-          <div class="completed-section" transition:slide={{ duration: 300 }}>
-            {#each $completedTodos as todo (todo.id)}
-              <div
-                animate:flip={{ duration: 300 }}
-                transition:fade={{ duration: 200 }}
-              >
-                <TodoItem
-                  {todo}
-                  categoryName={getCategoryName(todo.categoryId ?? null)}
-                  onToggleComplete={store.toggleComplete}
-                  onToggleStar={store.toggleStar}
-                  onRename={store.rename}
-                />
-              </div>
-            {/each}
-          </div>
-        {/if}
+        <CollapsibleSection
+          title="Slutfört"
+          expanded={completedExpanded}
+          onToggle={toggleCompletedSection}
+        >
+          {#each $completedTodos as todo (todo.id)}
+            <div
+              animate:flip={{ duration: 300 }}
+              transition:fade={{ duration: 200 }}
+            >
+              <TodoItem
+                {todo}
+                categoryName={getCategoryName(todo.categoryId ?? null)}
+                onToggleComplete={store.toggleComplete}
+                onToggleStar={store.toggleStar}
+                onRename={store.rename}
+              />
+            </div>
+          {/each}
+        </CollapsibleSection>
       {/if}
     {:else}
       <CategoriesView
@@ -351,13 +369,11 @@
         activeTodosByCategory={$activeTodosByCategory}
         completedTodos={$completedTodos}
         getCategoryName={getCategoryName}
-        onCreateCategory={handleCreateCategory}
-        onRenameCategory={handleRenameCategory}
-        onDeleteCategory={handleDeleteCategory}
-        onReorderCategory={handleReorderCategory}
-        onCategorizeTodo={handleCategorize}
         onToggleComplete={store.toggleComplete}
         onToggleStar={store.toggleStar}
+        onRename={store.rename}
+        completedExpanded={completedExpanded}
+        onToggleCompletedSection={toggleCompletedSection}
       />
     {/if}
   </div>
@@ -453,23 +469,6 @@
     background: rgba(255, 255, 255, 0.3);
   }
 
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    color: var(--text-on-primary);
-    font-size: 16px;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  .back-btn svg {
-    width: 20px;
-    height: 20px;
-  }
-
   .header-right {
     display: flex;
     align-items: center;
@@ -500,6 +499,54 @@
   .menu-btn svg {
     width: 24px;
     height: 24px;
+  }
+
+  .menu-wrapper {
+    position: relative;
+  }
+
+  .menu-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    min-width: 200px;
+    z-index: 150;
+    overflow: hidden;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .menu-item:hover {
+    background: var(--surface-muted);
+  }
+
+  .menu-icon {
+    font-size: 18px;
+  }
+
+  .menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    border: none;
+    cursor: default;
+    z-index: 100;
   }
 
   .title {
@@ -618,41 +665,6 @@
 
   .drag-over {
     transform: translateY(4px);
-  }
-
-  .completed-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface-muted);
-    border: none;
-    color: var(--text-on-primary);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-bottom: 12px;
-    transition: background 0.2s ease;
-  }
-
-  .completed-header:hover {
-    background: var(--surface-muted-strong);
-  }
-
-  .chevron {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.2s ease;
-    transform: rotate(0deg);
-  }
-
-  .chevron.expanded {
-    transform: rotate(90deg);
-  }
-
-  .completed-section {
-    margin-bottom: 16px;
   }
 
   .add-todo-wrapper {
