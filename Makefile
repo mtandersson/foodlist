@@ -7,18 +7,16 @@ ifeq ($(CONTAINER_RUNTIME),)
 endif
 CONTAINER_NAME := $(notdir $(CONTAINER_RUNTIME))
 
-# Detect compose command
-COMPOSE_CMD := $(shell command -v podman-compose 2>/dev/null || command -v docker-compose 2>/dev/null)
-ifeq ($(COMPOSE_CMD),)
-    COMPOSE_CMD := docker-compose
-endif
+# Detect compose command (prefer podman-compose, then docker-compose, then native compose)
+COMPOSE_CMD := $(shell command -v podman-compose 2>/dev/null || command -v docker-compose 2>/dev/null || echo "$(CONTAINER_RUNTIME) compose")
+COMPOSE_NAME := $(notdir $(COMPOSE_CMD))
 
 # Default target
 help:
 	@echo "GoTodo - Available Commands:"
 	@echo ""
 	@echo "Container Runtime: $(CONTAINER_NAME)"
-	@echo "Compose Command: $(notdir $(COMPOSE_CMD))"
+	@echo "Compose Command: $(COMPOSE_NAME)"
 	@echo ""
 	@echo "Development:"
 	@echo "  make build          - Build frontend and backend"

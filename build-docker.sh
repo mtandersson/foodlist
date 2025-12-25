@@ -8,15 +8,23 @@ set -e
 # Detect container runtime (prefer podman over docker)
 if command -v podman > /dev/null 2>&1; then
     CONTAINER_RUNTIME="podman"
-    COMPOSE_CMD="podman-compose"
     echo "🦭 Using Podman for container builds..."
 elif command -v docker > /dev/null 2>&1; then
     CONTAINER_RUNTIME="docker"
-    COMPOSE_CMD="docker-compose"
     echo "🐳 Using Docker for container builds..."
 else
     echo "❌ Error: Neither podman nor docker is installed"
     exit 1
+fi
+
+# Detect compose command (prefer podman-compose, fallback to docker-compose)
+if command -v podman-compose > /dev/null 2>&1; then
+    COMPOSE_CMD="podman-compose"
+elif command -v docker-compose > /dev/null 2>&1; then
+    COMPOSE_CMD="docker-compose"
+else
+    COMPOSE_CMD="$CONTAINER_RUNTIME compose"
+    echo "ℹ️  Note: Using '$COMPOSE_CMD' (standalone compose tools not found)"
 fi
 
 echo ""
