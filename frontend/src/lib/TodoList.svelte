@@ -702,12 +702,26 @@
     padding: 0 var(--spacing-2xl);
   }
 
+  @media (max-width: 768px) {
+    .todo-list-container {
+      width: 100%;
+      padding: 0 var(--spacing-md);
+      height: 100vh;
+    }
+  }
+
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-2xl) 0 var(--spacing-xl);
     flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    .header {
+      padding: var(--spacing-lg) 0 var(--spacing-md);
+    }
   }
 
   .scrollable-content {
@@ -736,6 +750,17 @@
 
   .scrollable-content::-webkit-scrollbar-thumb:hover {
     background: var(--surface-muted-strong);
+  }
+
+  @media (max-width: 768px) {
+    .scrollable-content {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+
+    .scrollable-content::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
   }
 
   .header-right {
@@ -1090,6 +1115,13 @@
     margin-bottom: var(--spacing-2xl);
     /* Match scrollable-content's scrollbar gutter + padding-right */
     padding-right: calc(var(--scrollbar-width) + var(--spacing-xs));
+  }
+
+  @media (max-width: 768px) {
+    .add-todo-wrapper {
+      margin-bottom: var(--spacing-lg);
+      padding-right: 0;
+    }
   }
 
   .autocomplete-dropdown {
