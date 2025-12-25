@@ -1,8 +1,24 @@
 .PHONY: help build run stop clean logs test docker-build docker-run docker-stop docker-clean dev-json test-logging
 
+# Detect container runtime (prefer podman over docker)
+CONTAINER_RUNTIME := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
+ifeq ($(CONTAINER_RUNTIME),)
+    CONTAINER_RUNTIME := docker
+endif
+CONTAINER_NAME := $(notdir $(CONTAINER_RUNTIME))
+
+# Detect compose command
+COMPOSE_CMD := $(shell command -v podman-compose 2>/dev/null || command -v docker-compose 2>/dev/null)
+ifeq ($(COMPOSE_CMD),)
+    COMPOSE_CMD := docker-compose
+endif
+
 # Default target
 help:
 	@echo "GoTodo - Available Commands:"
+	@echo ""
+	@echo "Container Runtime: $(CONTAINER_NAME)"
+	@echo "Compose Command: $(notdir $(COMPOSE_CMD))"
 	@echo ""
 	@echo "Development:"
 	@echo "  make build          - Build frontend and backend"
@@ -13,12 +29,12 @@ help:
 	@echo "  make test-logging   - Test structured logging formats"
 	@echo "  make clean          - Clean build artifacts"
 	@echo ""
-	@echo "Docker:"
-	@echo "  make docker-build   - Build Docker image"
-	@echo "  make docker-run     - Run with docker-compose"
-	@echo "  make docker-stop    - Stop Docker containers"
-	@echo "  make docker-clean   - Remove Docker containers and images"
-	@echo "  make docker-logs    - View Docker logs"
+	@echo "Container:"
+	@echo "  make docker-build   - Build container image"
+	@echo "  make docker-run     - Run with compose"
+	@echo "  make docker-stop    - Stop containers"
+	@echo "  make docker-clean   - Remove containers and images"
+	@echo "  make docker-logs    - View container logs"
 	@echo ""
 
 # Development targets
@@ -75,33 +91,33 @@ clean:
 	rm -f backend/events.jsonl
 	rm -f events.jsonl
 
-# Docker targets
+# Container targets
 docker-build:
-	@echo "Building Docker image..."
+	@echo "Building container image using $(CONTAINER_NAME)..."
 	./build-docker.sh
 
 docker-run:
-	@echo "Starting with Docker Compose..."
-	docker-compose up -d
+	@echo "Starting with $(notdir $(COMPOSE_CMD))..."
+	$(COMPOSE_CMD) up -d
 	@echo "Application running at http://localhost:8080"
 
 docker-stop:
-	@echo "Stopping Docker containers..."
-	docker-compose down
+	@echo "Stopping containers..."
+	$(COMPOSE_CMD) down
 
 docker-clean:
-	@echo "Removing Docker containers and images..."
-	docker-compose down -v
-	docker rmi gotodo:latest 2>/dev/null || true
+	@echo "Removing containers and images..."
+	$(COMPOSE_CMD) down -v
+	$(CONTAINER_RUNTIME) rmi gotodo:latest 2>/dev/null || true
 
 docker-logs:
-	docker-compose logs -f
+	$(COMPOSE_CMD) logs -f
 
-# Production Docker
+# Production Container
 docker-prod:
-	@echo "Building and running production Docker setup..."
-	docker build -t gotodo:latest .
-	docker-compose -f docker-compose.prod.yml up -d
+	@echo "Building and running production container setup..."
+	$(CONTAINER_RUNTIME) build -t gotodo:latest .
+	$(COMPOSE_CMD) -f docker-compose.prod.yml up -d
 	@echo "Production deployment running at http://localhost:80"
 
 # Quick start

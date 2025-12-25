@@ -26,10 +26,12 @@ make dev
 make test
 ```
 
-### Using Docker
+### Using Containers (Podman/Docker)
+
+The build system automatically prefers Podman if installed, with fallback to Docker.
 
 ```bash
-# Quick start with Docker
+# Quick start (auto-detects Podman or Docker)
 make quick-start
 
 # Or manually
@@ -51,6 +53,7 @@ make docker-run
 The backend uses Go's `log/slog` package for structured logging. You can configure the log format using the `LOG_FORMAT` environment variable:
 
 **LogFmt format (default):**
+
 ```bash
 # No environment variable needed, logfmt is the default
 ./backend/gotodo
@@ -60,6 +63,7 @@ LOG_FORMAT=logfmt ./backend/gotodo
 ```
 
 Example output:
+
 ```
 time=2025-12-25T07:34:47.003+01:00 level=INFO msg="logger configured" format=logfmt
 time=2025-12-25T07:34:47.006+01:00 level=INFO msg="initializing event store" file=/path/to/events.jsonl
@@ -70,11 +74,13 @@ time=2025-12-25T07:34:48.456+01:00 level=INFO msg="command received" type=Create
 ```
 
 **JSON format:**
+
 ```bash
 LOG_FORMAT=json ./backend/gotodo
 ```
 
 Example output:
+
 ```json
 {"time":"2025-12-25T07:34:47.003+01:00","level":"INFO","msg":"logger configured","format":"json"}
 {"time":"2025-12-25T07:34:47.006+01:00","level":"INFO","msg":"initializing event store","file":"/path/to/events.jsonl"}
@@ -85,19 +91,20 @@ Example output:
 ```
 
 JSON format is particularly useful for:
+
 - Log aggregation systems (e.g., ELK stack, Grafana Loki)
 - Structured log parsing and analysis
 - Cloud logging services (e.g., CloudWatch, Stackdriver)
 
-### Using with Docker
+### Using with Containers
 
-You can set the log format in your docker-compose configuration:
+You can set the log format in your compose configuration (`docker-compose.yml`):
 
 ```yaml
 services:
   gotodo:
     environment:
-      - LOG_FORMAT=json  # or logfmt
+      - LOG_FORMAT=json # or logfmt
 ```
 
 ## Architecture
@@ -118,6 +125,7 @@ services:
 ### Event Sourcing
 
 All state changes are represented as immutable events:
+
 - `TodoCreated`
 - `TodoCompleted`
 - `TodoUncompleted`
@@ -181,10 +189,9 @@ make test
 
 - `AI_QUICK_GUIDE.md` - TDD workflow and architecture guide
 - `AI_DEVELOPMENT_GUIDE.md` - Detailed development instructions
-- `DOCKER.md` - Docker deployment guide
+- `DOCKER.md` - Container deployment guide (Podman/Docker)
 - `TEST_COVERAGE_REPORT.md` - Test coverage details
 
 ## License
 
 MIT
-
