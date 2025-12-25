@@ -15,6 +15,7 @@
     onRename: (id: string, name: string) => void;
     onDeleteCategory: (id: string) => void;
     onCategorizeTodo: (id: string, categoryId: string | null) => void;
+    onReorderCategory: (id: string, sortOrder: number) => void;
     completedExpanded?: boolean;
     onToggleCompletedSection: () => void;
   }
@@ -29,6 +30,7 @@
     onRename,
     onDeleteCategory,
     onCategorizeTodo,
+    onReorderCategory,
     completedExpanded = true,
     onToggleCompletedSection,
   }: Props = $props();
@@ -165,6 +167,32 @@
     draggedId = null;
     dragOverCategoryId = null;
   }
+
+  function handleMoveUp(categoryId: string, currentIndex: number) {
+    if (currentIndex === 0) return; // Already at the top
+    
+    const category = categories[currentIndex];
+    const categoryAbove = categories[currentIndex - 1];
+    
+    // Calculate new sortOrder to be between the one above and the current
+    const above = currentIndex > 1 ? categories[currentIndex - 2].sortOrder : categoryAbove.sortOrder + 1000;
+    const newSortOrder = Math.floor((above + categoryAbove.sortOrder) / 2);
+    
+    onReorderCategory(categoryId, newSortOrder);
+  }
+
+  function handleMoveDown(categoryId: string, currentIndex: number) {
+    if (currentIndex === categories.length - 1) return; // Already at the bottom
+    
+    const category = categories[currentIndex];
+    const categoryBelow = categories[currentIndex + 1];
+    
+    // Calculate new sortOrder to be between the current and the one below
+    const below = currentIndex < categories.length - 2 ? categories[currentIndex + 2].sortOrder : categoryBelow.sortOrder - 1000;
+    const newSortOrder = Math.floor((categoryBelow.sortOrder + below) / 2);
+    
+    onReorderCategory(categoryId, newSortOrder);
+  }
 </script>
 
 <!-- Uncategorized todos (no header, just the items) -->
@@ -190,13 +218,15 @@
 </div>
 
 <!-- Categories -->
-{#each categories as category (category.id)}
+{#each categories as category, index (category.id)}
   <CollapsibleSection
     title={category.name}
     count={todosForCategory(category.id).length}
     expanded={expandedCategories.has(category.id)}
     onToggle={() => toggleCategory(category.id)}
     onDelete={todosForCategory(category.id).length === 0 ? () => onDeleteCategory(category.id) : undefined}
+    onMoveUp={index > 0 ? () => handleMoveUp(category.id, index) : undefined}
+    onMoveDown={index < categories.length - 1 ? () => handleMoveDown(category.id, index) : undefined}
   >
     {#if todosForCategory(category.id).length > 0 || draggedId}
       <div
