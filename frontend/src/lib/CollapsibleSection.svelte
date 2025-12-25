@@ -207,7 +207,7 @@
     gap: var(--spacing-sm);
     background: var(--surface-muted);
     border: none;
-    color: var(--text-on-primary);
+    color: var(--primary-color);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     padding: var(--spacing-sm) var(--spacing-md);
@@ -243,10 +243,10 @@
     flex: 1;
     min-width: 0;
     background: var(--surface-light);
-    border: var(--stroke-thin) solid var(--text-on-primary);
+    border: var(--stroke-thin) solid var(--primary-color);
     border-radius: var(--radius-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
-    color: var(--text-on-primary);
+    color: var(--primary-color);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     outline: none;
@@ -254,8 +254,8 @@
   }
 
   .title-input:focus {
-    border-color: var(--text-on-primary);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
   }
 
   .section-count {
@@ -311,7 +311,7 @@
 
   .edit-btn:hover {
     background: var(--surface-muted);
-    color: var(--text-on-primary);
+    color: var(--primary-color);
   }
 
   .move-btn {
@@ -337,7 +337,7 @@
 
   .move-btn:hover {
     background: var(--surface-muted);
-    color: var(--text-on-primary);
+    color: var(--primary-color);
   }
 
   .delete-btn {

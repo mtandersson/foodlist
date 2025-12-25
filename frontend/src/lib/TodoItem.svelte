@@ -188,7 +188,7 @@
   .todo-name {
     flex: 1;
     font-size: var(--font-size-base);
-    color: var(--text-primary);
+    color: var(--text-secondary);
     cursor: default;
     transition: all var(--transition-normal);
     user-select: none;
@@ -221,7 +221,7 @@
   .edit-input {
     flex: 1;
     font-size: var(--font-size-base);
-    color: var(--text-primary);
+    color: var(--text-secondary);
     border: none;
     outline: none;
     background: transparent;

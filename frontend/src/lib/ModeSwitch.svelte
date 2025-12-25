@@ -55,7 +55,7 @@
     background: transparent;
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-full);
-    color: var(--text-on-primary);
+    color: var(--primary-color);
     cursor: pointer;
     transition: all var(--transition-normal);
     font-weight: var(--font-weight-semibold);

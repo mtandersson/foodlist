@@ -819,7 +819,7 @@
   }
 
   .title {
-    color: var(--text-on-primary);
+    color: var(--primary-color);
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     margin: 0;
@@ -840,12 +840,12 @@
   }
 
   .title-input {
-    color: var(--text-on-primary);
+    color: var(--primary-color);
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     margin: 0;
     padding: var(--spacing-sm);
-    border: var(--stroke-thin) solid rgba(var(--card-bg-rgb), 0.5);
+    border: var(--stroke-thin) solid var(--primary-color);
     border-radius: var(--radius-sm);
     background: var(--surface-muted);
     width: 100%;
