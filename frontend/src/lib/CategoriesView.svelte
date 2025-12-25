@@ -20,6 +20,8 @@
     onReorder: (id: string, newSortOrder: number) => void;
     completedExpanded?: boolean;
     onToggleCompletedSection: () => void;
+    expandedCategories: Set<string | null>;
+    onToggleCategory: (id: string | null) => void;
   }
 
   let {
@@ -37,94 +39,16 @@
     onReorder,
     completedExpanded = true,
     onToggleCompletedSection,
+    expandedCategories,
+    onToggleCategory,
   }: Props = $props();
 
-  let expandedCategories = $state<Set<string | null>>(new Set());
   let draggedId: string | null = $state(null);
   let dropCategoryId: string | null = $state(null);
   let dropTargetId: string | null = $state(null);
   let dropPosition: 'above' | 'below' | null = $state(null);
   let isDragging = $state(false);
   let autoExpandTimer: number | null = null;
-  let isInitialized = false;
-  let lastCategoryIds: string[] = [];
-
-  // Load expanded state from localStorage once on mount
-  if (typeof localStorage !== 'undefined' && !isInitialized) {
-    const stored = localStorage.getItem('expandedCategories');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        expandedCategories = new Set(parsed);
-      } catch (e) {
-        console.error('Failed to parse expandedCategories from localStorage', e);
-      }
-    }
-    isInitialized = true;
-  }
-
-  // Initialize new categories as expanded and clean up deleted ones
-  const categoryIds = $derived(categories.map((c) => c.id));
-
-  $effect(() => {
-    if (!isInitialized) return;
-    
-    // Check if the set of category IDs actually changed (not just order)
-    const currentIdsSet = new Set(categoryIds);
-    const lastIdsSet = new Set(lastCategoryIds);
-    const hasNewCategories = categoryIds.some(id => !lastIdsSet.has(id));
-    const hasDeletedCategories = lastCategoryIds.some(id => !currentIdsSet.has(id));
-    
-    if (!hasNewCategories && !hasDeletedCategories) {
-      lastCategoryIds = categoryIds;
-      return;
-    }
-    
-    let changed = false;
-    const newExpandedCategories = new Set(expandedCategories);
-    
-    // Add any new categories to the expanded set
-    categoryIds.forEach(id => {
-      if (!newExpandedCategories.has(id)) {
-        newExpandedCategories.add(id);
-        changed = true;
-      }
-    });
-    
-    // Remove deleted categories from expanded set
-    const categoryIdsSet = new Set(categoryIds);
-    newExpandedCategories.forEach(id => {
-      if (id !== null && !categoryIdsSet.has(id)) {
-        newExpandedCategories.delete(id);
-        changed = true;
-      }
-    });
-    
-    // Only update if something actually changed
-    if (changed) {
-      expandedCategories = newExpandedCategories;
-      saveExpandedState();
-    }
-    
-    lastCategoryIds = categoryIds;
-  });
-
-  function saveExpandedState() {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('expandedCategories', JSON.stringify(Array.from(expandedCategories)));
-    }
-  }
-
-  function toggleCategory(categoryId: string | null) {
-    const newSet = new Set(expandedCategories);
-    if (newSet.has(categoryId)) {
-      newSet.delete(categoryId);
-    } else {
-      newSet.add(categoryId);
-    }
-    expandedCategories = newSet;
-    saveExpandedState();
-  }
 
   function todosForCategory(categoryId: string | null): Todo[] {
     return activeTodosByCategory.get(categoryId) ?? [];
@@ -184,10 +108,7 @@
         clearTimeout(autoExpandTimer);
       }
       autoExpandTimer = window.setTimeout(() => {
-        const newSet = new Set(expandedCategories);
-        newSet.add(categoryId);
-        expandedCategories = newSet;
-        saveExpandedState();
+        onToggleCategory(categoryId);
         autoExpandTimer = null;
       }, 500);
     }
@@ -443,7 +364,7 @@
       title={category.name}
       count={todosForCategory(category.id).length}
       expanded={expandedCategories.has(category.id)}
-      onToggle={() => toggleCategory(category.id)}
+      onToggle={() => onToggleCategory(category.id)}
       onDelete={todosForCategory(category.id).length === 0 ? () => onDeleteCategory(category.id) : undefined}
       onMoveUp={index > 0 ? () => handleMoveUp(category.id, index) : undefined}
       onMoveDown={index < categories.length - 1 ? () => handleMoveDown(category.id, index) : undefined}

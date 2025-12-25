@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { flip } from 'svelte/animate';
   import { fade, slide } from 'svelte/transition';
+  import { v4 as uuidv4 } from 'uuid';
   import { createTodoStore } from './store';
   import TodoItem from './TodoItem.svelte';
   import ModeSwitch from './ModeSwitch.svelte';
@@ -16,7 +17,7 @@
     : `${wsProtocol}//${window.location.host}/ws`;
 
   const store = createTodoStore(wsUrl);
-  const { activeTodos, completedTodos, categories, activeTodosByCategory, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage } = store;
+  const { activeTodos, completedTodos, categories, activeTodosByCategory, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced } = store;
 
   // Watch for error messages related to category operations
   $effect(() => {
@@ -41,8 +42,66 @@
   });
 
   let newTodoName = $state('');
-  let completedExpanded = $state(true);
+  let completedExpanded = $state(typeof localStorage !== 'undefined' && localStorage.getItem('completedExpanded') !== null ? localStorage.getItem('completedExpanded') === 'true' : true);
   let viewMode: 'normal' | 'categories' = $state((typeof localStorage !== 'undefined' && (localStorage.getItem('viewMode') as 'normal' | 'categories')) || 'normal');
+
+  // Expanded categories state
+  let expandedCategories = $state<Set<string | null>>(new Set());
+  let isExpandedCategoriesInitialized = false;
+
+  // Load expanded state from localStorage once on mount
+  if (typeof localStorage !== 'undefined' && !isExpandedCategoriesInitialized) {
+    const stored = localStorage.getItem('expandedCategories');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        expandedCategories = new Set(parsed);
+      } catch (e) {
+        console.error('Failed to parse expandedCategories from localStorage', e);
+      }
+    }
+    isExpandedCategoriesInitialized = true;
+  }
+
+  function saveExpandedCategories() {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('expandedCategories', JSON.stringify(Array.from(expandedCategories)));
+    }
+  }
+
+  function handleToggleCategory(categoryId: string | null) {
+    const newSet = new Set(expandedCategories);
+    if (newSet.has(categoryId)) {
+      newSet.delete(categoryId);
+    } else {
+      newSet.add(categoryId);
+    }
+    expandedCategories = newSet;
+    saveExpandedCategories();
+  }
+
+  // Cleanup deleted categories from expanded set
+  $effect(() => {
+    if (!$isSynced) return;
+    
+    const currentCategories = $categories;
+    const categoryIds = new Set(currentCategories.map(c => c.id));
+    let changed = false;
+    const newSet = new Set(expandedCategories);
+    
+    newSet.forEach(id => {
+      if (id !== null && !categoryIds.has(id)) {
+        newSet.delete(id);
+        changed = true;
+      }
+    });
+    
+    if (changed) {
+      expandedCategories = newSet;
+      saveExpandedCategories();
+    }
+  });
+
   let pendingCategoryId: string | null = $state(null);
   let menuOpen = $state(false);
   
@@ -136,6 +195,9 @@
 
   function toggleCompletedSection() {
     completedExpanded = !completedExpanded;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('completedExpanded', String(completedExpanded));
+    }
   }
 
   function handleModeChange(mode: 'normal' | 'categories') {
@@ -156,7 +218,15 @@
   }
 
   function handleCreateCategory(name: string) {
-    store.createCategory(name).then(
+    const id = uuidv4();
+    
+    // Expand immediately (Optimistic update in store will ensure it exists)
+    const newSet = new Set(expandedCategories);
+    newSet.add(id);
+    expandedCategories = newSet;
+    saveExpandedCategories();
+
+    store.createCategory(name, id).then(
       () => {
         // Success - dialog will be closed by $effect watching categories
         categoryError = null;
@@ -569,6 +639,8 @@
         onReorder={store.reorder}
         completedExpanded={completedExpanded}
         onToggleCompletedSection={toggleCompletedSection}
+        expandedCategories={expandedCategories}
+        onToggleCategory={handleToggleCategory}
       />
     {/if}
   </div>

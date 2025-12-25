@@ -68,8 +68,9 @@ export interface TodoStore {
   listTitle: ReturnType<typeof writable<string>>
   autocompleteSuggestions: ReturnType<typeof writable<AutocompleteSuggestion[]>>
   errorMessage: ReturnType<typeof writable<string | null>>
+  isSynced: ReturnType<typeof writable<boolean>>
   createTodo: (name: string, categoryId?: string | null) => void
-  createCategory: (name: string) => Promise<void>
+  createCategory: (name: string, id?: string) => Promise<string>
   renameCategory: (id: string, name: string) => Promise<void>
   deleteCategory: (id: string) => void
   reorderCategory: (id: string, newSortOrder: number) => void
@@ -93,6 +94,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
   const listTitle = writable<string>("My Todo List")
   const autocompleteSuggestions = writable<AutocompleteSuggestion[]>([])
   const errorMessage = writable<string | null>(null)
+  const isSynced = writable<boolean>(false)
   let errorTimeout: number | null = null
 
   // Track pending autocomplete request to match responses
@@ -188,6 +190,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
       }
       categoriesMap.set(catMap)
       listTitle.set(message.listTitle)
+      isSynced.set(true)
       return
     }
 
@@ -450,18 +453,24 @@ export function createTodoStore(wsUrl: string): TodoStore {
     sendCommand(command, optimistic)
   }
 
-  function createCategory(name: string): Promise<void> {
+  function createCategory(name: string, id?: string): Promise<string> {
     const commandId = uuidv4()
-    const id = uuidv4()
+    const newId = id || uuidv4()
     const command: CreateCategory = {
       type: "CreateCategory",
       commandId,
-      id,
+      id: newId,
       name,
       sortOrder: getHighestCategorySortOrder() + 1000,
     }
-    // No optimistic update - wait for server response
-    return sendCommand(command)
+    const optimistic: CategoryCreated = {
+      type: "CategoryCreated",
+      id: newId,
+      name,
+      createdAt: new Date().toISOString(),
+      sortOrder: command.sortOrder!,
+    }
+    return sendCommand(command, optimistic).then(() => newId)
   }
 
   function renameCategory(id: string, name: string): Promise<void> {
@@ -612,6 +621,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
     listTitle,
     autocompleteSuggestions,
     errorMessage,
+    isSynced,
     createTodo,
     createCategory,
     renameCategory,
