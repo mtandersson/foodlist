@@ -61,21 +61,52 @@ class MockWebSocket {
 describe('TodoWebSocket', () => {
   let mockWs: MockWebSocket;
   let originalWebSocket: typeof WebSocket;
+  let visibilityChangeHandler: (() => void) | undefined;
+  let onlineHandler: (() => void) | undefined;
+  let offlineHandler: (() => void) | undefined;
 
   beforeEach(() => {
     MockWebSocket.instances = [];
     originalWebSocket = globalThis.WebSocket;
     globalThis.WebSocket = MockWebSocket as any;
+    
+    // Mock document and window event listeners
+    vi.spyOn(document, 'addEventListener').mockImplementation((event, handler) => {
+      if (event === 'visibilitychange') {
+        visibilityChangeHandler = handler as () => void;
+      }
+    });
+    vi.spyOn(document, 'removeEventListener').mockImplementation((event) => {
+      if (event === 'visibilitychange') {
+        visibilityChangeHandler = undefined;
+      }
+    });
+    vi.spyOn(window, 'addEventListener').mockImplementation((event, handler) => {
+      if (event === 'online') {
+        onlineHandler = handler as () => void;
+      } else if (event === 'offline') {
+        offlineHandler = handler as () => void;
+      }
+    });
+    vi.spyOn(window, 'removeEventListener').mockImplementation((event) => {
+      if (event === 'online') {
+        onlineHandler = undefined;
+      } else if (event === 'offline') {
+        offlineHandler = undefined;
+      }
+    });
+    
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     globalThis.WebSocket = originalWebSocket;
+    vi.restoreAllMocks();
     vi.useRealTimers();
   });
 
   it('should connect to WebSocket server', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws');
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     
     expect(ws.getConnectionState()).toBe(ConnectionState.CONNECTING);
     
@@ -86,7 +117,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should receive and parse messages', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws');
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     const messages: ServerMessage[] = [];
     
     ws.onMessage((msg) => messages.push(msg));
@@ -113,7 +144,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should send events to server', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws');
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     
     await vi.runAllTimersAsync();
     
@@ -135,7 +166,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should attempt reconnection on disconnect', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws', { reconnectDelay: 1000 });
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { reconnectDelay: 1000, enableHeartbeat: false });
     
     await vi.runAllTimersAsync();
     
@@ -156,7 +187,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should notify on connection state change', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws');
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     const states: ConnectionState[] = [];
     
     ws.onConnectionChange((state) => states.push(state));
@@ -169,7 +200,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should not reconnect when manually closed', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws', { reconnectDelay: 100 });
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { reconnectDelay: 100, enableHeartbeat: false });
     
     await vi.runAllTimersAsync();
     
@@ -181,7 +212,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should handle malformed JSON messages', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws');
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     const messageHandler = vi.fn();
     ws.onMessage(messageHandler);
 
@@ -205,6 +236,7 @@ describe('TodoWebSocket', () => {
     const ws = new TodoWebSocket('ws://localhost:8080/ws', {
       maxReconnectAttempts: 1,
       reconnectDelay: 10,
+      enableHeartbeat: false,
     });
     
     await vi.runAllTimersAsync();
@@ -218,7 +250,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should unsubscribe message handler', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws');
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     const messageHandler = vi.fn();
     const unsubscribe = ws.onMessage(messageHandler);
 
@@ -238,7 +270,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should unsubscribe connection handler', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws');
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     const connectionHandler = vi.fn();
     const unsubscribe = ws.onConnectionChange(connectionHandler);
 
@@ -262,7 +294,7 @@ describe('TodoWebSocket', () => {
   });
 
   it('should queue messages while reconnecting', async () => {
-    const ws = new TodoWebSocket('ws://localhost:8080/ws', { reconnectDelay: 100 });
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { reconnectDelay: 100, enableHeartbeat: false });
     
     await vi.runAllTimersAsync();
     
