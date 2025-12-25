@@ -637,3 +637,435 @@ func TestCommandToEvent_CategorizeRequiresExistingCategory(t *testing.T) {
 	})
 	assert.Error(t, err)
 }
+
+func TestCommandToEvent_CreateCategory_ReuseDeletedCategory(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-original",
+		Name:      "Shopping",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Delete the category
+	server.state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-original",
+	})
+
+	// Verify category is deleted
+	_, ok := server.state.GetCategory("cat-original")
+	assert.False(t, ok)
+
+	// Verify we can find it in deleted categories
+	deletedID := server.state.FindDeletedCategoryByName("Shopping")
+	assert.Equal(t, "cat-original", deletedID)
+
+	// Try to create a new category with the same name
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-new", // New ID provided
+		Name:        "Shopping",
+		SortOrder:   2000,
+	})
+	require.NoError(t, err)
+
+	// Verify the event reuses the old ID instead of the new one
+	created := event.(CategoryCreated)
+	assert.Equal(t, "cat-original", created.ID, "Should reuse deleted category ID")
+	assert.Equal(t, "Shopping", created.Name)
+}
+
+func TestCommandToEvent_CreateCategory_ReuseDeletedCategoryCaseInsensitive(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create and delete a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	server.state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// Try to create category with different case - should NOT reuse (case-sensitive)
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-2",
+		Name:        "WORK", // Different case
+		SortOrder:   2000,
+	})
+	require.NoError(t, err)
+
+	// Verify the event uses the NEW ID (not reused because of case mismatch)
+	created := event.(CategoryCreated)
+	assert.Equal(t, "cat-2", created.ID, "Should NOT reuse deleted category ID (case-sensitive)")
+	assert.Equal(t, "WORK", created.Name, "Should preserve the new name casing")
+}
+
+func TestCommandToEvent_CreateCategory_ReuseDeletedCategoryExactMatch(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create and delete a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	server.state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// Try to create category with exact same name (case-sensitive match)
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-2",
+		Name:        "Work", // Exact match
+		SortOrder:   2000,
+	})
+	require.NoError(t, err)
+
+	// Verify the event reuses the old ID
+	created := event.(CategoryCreated)
+	assert.Equal(t, "cat-1", created.ID, "Should reuse deleted category ID (exact case match)")
+	assert.Equal(t, "Work", created.Name)
+}
+
+func TestCommandToEvent_CreateCategory_NoDeletedCategoryToReuse(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	// Create a category with no deleted category to reuse
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-new",
+		Name:        "Fresh Category",
+		SortOrder:   1000,
+	})
+	require.NoError(t, err)
+
+	// Verify it uses the provided ID
+	created := event.(CategoryCreated)
+	assert.Equal(t, "cat-new", created.ID, "Should use provided ID when no deleted category exists")
+	assert.Equal(t, "Fresh Category", created.Name)
+}
+
+func TestCommandToEvent_CreateCategory_DeletedAndRecreatedMultipleTimes(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create, delete, recreate cycle
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Temporary",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	server.state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// First recreate
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-2",
+		Name:        "Temporary",
+		SortOrder:   2000,
+	})
+	require.NoError(t, err)
+	created := event.(CategoryCreated)
+	assert.Equal(t, "cat-1", created.ID)
+
+	// Apply the recreate event
+	server.state.Apply(created)
+
+	// Delete again
+	server.state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// Second recreate - should reuse cat-1 again
+	event, err = server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-3",
+		Name:        "Temporary",
+		SortOrder:   3000,
+	})
+	require.NoError(t, err)
+	created = event.(CategoryCreated)
+	assert.Equal(t, "cat-1", created.ID)
+}
+
+func TestCommandToEvent_CreateCategory_RejectDuplicateName(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Try to create another category with the same name
+	_, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-2",
+		Name:        "Work",
+		SortOrder:   2000,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already exists")
+}
+
+func TestCommandToEvent_CreateCategory_RejectDuplicateNameCaseSensitive(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Try to create category with different case - should be allowed (case-sensitive)
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-2",
+		Name:        "WORK",
+		SortOrder:   2000,
+	})
+	require.NoError(t, err)
+
+	created := event.(CategoryCreated)
+	assert.Equal(t, "cat-2", created.ID)
+	assert.Equal(t, "WORK", created.Name)
+}
+
+func TestCommandToEvent_CreateCategory_AllowAfterDeletion(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Try to create duplicate - should fail
+	_, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-2",
+		Name:        "Work",
+		SortOrder:   2000,
+	})
+	require.Error(t, err)
+
+	// Delete the category
+	server.state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// Now creating with same name should work (and reuse the ID)
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory"},
+		ID:          "cat-2",
+		Name:        "Work",
+		SortOrder:   3000,
+	})
+	require.NoError(t, err)
+
+	created := event.(CategoryCreated)
+	assert.Equal(t, "cat-1", created.ID, "Should reuse deleted category ID")
+	assert.Equal(t, "Work", created.Name)
+}
+
+func TestCommandToEvent_RenameCategory_RejectDuplicateName(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create two categories
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-2",
+		Name:      "Personal",
+		CreatedAt: now,
+		SortOrder: 2000,
+	})
+
+	// Try to rename cat-2 to "Work" (which already exists)
+	_, err := server.commandToEvent(RenameCategoryCommand{
+		BaseCommand: BaseCommand{Type: "RenameCategory"},
+		ID:          "cat-2",
+		Name:        "Work",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already exists")
+}
+
+func TestCommandToEvent_RenameCategory_AllowSameName(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Rename to the same name (should be allowed - no-op)
+	event, err := server.commandToEvent(RenameCategoryCommand{
+		BaseCommand: BaseCommand{Type: "RenameCategory"},
+		ID:          "cat-1",
+		Name:        "Work",
+	})
+	require.NoError(t, err)
+
+	renamed := event.(CategoryRenamed)
+	assert.Equal(t, "cat-1", renamed.ID)
+	assert.Equal(t, "Work", renamed.Name)
+}
+
+func TestCommandToEvent_RenameCategory_CaseSensitive(t *testing.T) {
+	server, ts, _ := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create two categories
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-2",
+		Name:      "Personal",
+		CreatedAt: now,
+		SortOrder: 2000,
+	})
+
+	// Rename to "WORK" (different case) - should be allowed
+	event, err := server.commandToEvent(RenameCategoryCommand{
+		BaseCommand: BaseCommand{Type: "RenameCategory"},
+		ID:          "cat-2",
+		Name:        "WORK",
+	})
+	require.NoError(t, err)
+
+	renamed := event.(CategoryRenamed)
+	assert.Equal(t, "cat-2", renamed.ID)
+	assert.Equal(t, "WORK", renamed.Name)
+}
+
+func TestServer_SendErrorMessageOnDuplicateCategory(t *testing.T) {
+	server, ts, wsURL := setupTestServer(t)
+	defer ts.Close()
+
+	now := time.Now().UTC()
+
+	// Create a category
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Connect WebSocket client
+	conn := connectWS(t, wsURL)
+	defer conn.Close()
+
+	// Read initial state rollup
+	_, _, err := conn.ReadMessage()
+	require.NoError(t, err)
+
+	// Read client count message
+	_, _, err = conn.ReadMessage()
+	require.NoError(t, err)
+
+	// Try to create duplicate category with commandId
+	command := map[string]interface{}{
+		"type":      "CreateCategory",
+		"commandId": "test-command-1",
+		"id":        "cat-2",
+		"name":      "Work",
+	}
+	err = conn.WriteJSON(command)
+	require.NoError(t, err)
+
+	// Should receive error response
+	_, message, err := conn.ReadMessage()
+	require.NoError(t, err)
+
+	var response CommandResponse
+	err = json.Unmarshal(message, &response)
+	require.NoError(t, err)
+
+	assert.Equal(t, "CommandResponse", response.Type)
+	assert.Equal(t, "test-command-1", response.CommandID)
+	assert.False(t, response.Success)
+	assert.Contains(t, response.Error, "already exists")
+}

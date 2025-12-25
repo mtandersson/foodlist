@@ -38,22 +38,33 @@ type ClientCountMessage struct {
 	Count int    `json:"count"`
 }
 
+// CommandResponse is sent to a client in response to a command
+type CommandResponse struct {
+	Type      string `json:"type"`
+	CommandID string `json:"commandId"`
+	Success   bool   `json:"success"`
+	Error     string `json:"error,omitempty"`
+}
+
 // Command represents an incoming action from the client
 type Command interface {
 	GetType() string
+	GetCommandID() string
 }
 
 type BaseCommand struct {
-	Type string `json:"type"`
+	Type      string `json:"type"`
+	CommandID string `json:"commandId"`
 }
 
-func (c BaseCommand) GetType() string { return c.Type }
+func (c BaseCommand) GetType() string      { return c.Type }
+func (c BaseCommand) GetCommandID() string { return c.CommandID }
 
 type CreateTodoCommand struct {
 	BaseCommand
-	ID        string  `json:"id"`
-	Name      string  `json:"name"`
-	SortOrder float64 `json:"sortOrder,omitempty"`
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
+	SortOrder  float64 `json:"sortOrder,omitempty"`
 	CategoryID *string `json:"categoryId,omitempty"`
 }
 
@@ -184,10 +195,10 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	// Send state rollup to new client
 	rollup := StateRollup{
-		Type:      "StateRollup",
-		Todos:     s.state.GetTodos(),
+		Type:       "StateRollup",
+		Todos:      s.state.GetTodos(),
 		Categories: s.state.GetCategories(),
-		ListTitle: s.state.GetListTitle(),
+		ListTitle:  s.state.GetListTitle(),
 	}
 	rollupData, err := json.Marshal(rollup)
 	if err != nil {
@@ -263,23 +274,53 @@ func (s *Server) readPump(client *Client) {
 		}
 
 		// Log received command
-		slog.Info("command received", "type", cmd.GetType(), "message", string(message))
+		slog.Info("command received", "type", cmd.GetType(), "commandId", cmd.GetCommandID(), "message", string(message))
 
 		// Convert command to event
 		event, err := s.commandToEvent(cmd)
 		if err != nil {
-			slog.Error("failed to convert command", "error", err, "command_type", cmd.GetType())
+			slog.Error("failed to convert command", "error", err, "command_type", cmd.GetType(), "commandId", cmd.GetCommandID())
+			// Send error response back to the client
+			response := CommandResponse{
+				Type:      "CommandResponse",
+				CommandID: cmd.GetCommandID(),
+				Success:   false,
+				Error:     err.Error(),
+			}
+			if responseData, marshalErr := json.Marshal(response); marshalErr == nil {
+				client.sendCh <- responseData
+			}
 			continue
 		}
 
 		// Persist event to store
 		if err := s.store.Append(event); err != nil {
 			slog.Error("failed to persist event", "error", err, "event_type", event.EventType())
+			// Send error response
+			response := CommandResponse{
+				Type:      "CommandResponse",
+				CommandID: cmd.GetCommandID(),
+				Success:   false,
+				Error:     "failed to persist event",
+			}
+			if responseData, marshalErr := json.Marshal(response); marshalErr == nil {
+				client.sendCh <- responseData
+			}
 			continue
 		}
 
 		// Apply event to state
 		s.state.Apply(event)
+
+		// Send success response to the client
+		response := CommandResponse{
+			Type:      "CommandResponse",
+			CommandID: cmd.GetCommandID(),
+			Success:   true,
+		}
+		if responseData, err := json.Marshal(response); err == nil {
+			client.sendCh <- responseData
+		}
 
 		// Broadcast resulting event to all clients (including sender for confirmation)
 		eventData, err := MarshalEvent(event)
@@ -446,11 +487,11 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 			sortOrder = int(c.SortOrder)
 		}
 		return TodoCreated{
-			Type:      "TodoCreated",
-			ID:        c.ID,
-			Name:      c.Name,
-			CreatedAt: time.Now().UTC(),
-			SortOrder: sortOrder,
+			Type:       "TodoCreated",
+			ID:         c.ID,
+			Name:       c.Name,
+			CreatedAt:  time.Now().UTC(),
+			SortOrder:  sortOrder,
 			CategoryID: categoryID,
 		}, nil
 	case CategorizeTodoCommand:
@@ -472,13 +513,28 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		if c.ID == "" {
 			return nil, fmt.Errorf("missing category id")
 		}
+
+		// Check if an active category with this name already exists
+		if s.state.CategoryNameExists(c.Name) {
+			return nil, fmt.Errorf("category with name '%s' already exists", c.Name)
+		}
+
+		// Check if there's a deleted category with the same name (case-sensitive)
+		deletedCategoryID := s.state.FindDeletedCategoryByName(c.Name)
+
+		// If a deleted category with this name exists, reuse its ID
+		categoryID := c.ID
+		if deletedCategoryID != "" {
+			categoryID = deletedCategoryID
+		}
+
 		sortOrder := s.state.GetHighestCategorySortOrder() + 1000
 		if c.SortOrder != 0 {
 			sortOrder = int(c.SortOrder)
 		}
 		return CategoryCreated{
 			Type:      "CategoryCreated",
-			ID:        c.ID,
+			ID:        categoryID,
 			Name:      c.Name,
 			CreatedAt: time.Now().UTC(),
 			SortOrder: sortOrder,
@@ -487,6 +543,16 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		if _, ok := s.state.GetCategory(c.ID); !ok {
 			return nil, fmt.Errorf("category not found")
 		}
+
+		// Check if another category with this name already exists
+		if s.state.CategoryNameExists(c.Name) {
+			// Get the current category to check if it's renaming to itself
+			currentCat, _ := s.state.GetCategory(c.ID)
+			if currentCat.Name != c.Name {
+				return nil, fmt.Errorf("category with name '%s' already exists", c.Name)
+			}
+		}
+
 		return CategoryRenamed{
 			Type: "CategoryRenamed",
 			ID:   c.ID,

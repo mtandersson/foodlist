@@ -7,23 +7,25 @@ import (
 
 // State holds the current state of all todos, projected from events
 type State struct {
-	todos            map[string]*Todo
-	categories       map[string]*Category
-	listTitle        string
-	nameFrequency    map[string]int     // Tracks frequency of todo names (case-insensitive key -> count)
-	nameCanonical    map[string]string  // Maps lowercase name to most recent casing
-	nameLastCategory map[string]*string // Tracks last categoryId used for a name (lowercase)
+	todos             map[string]*Todo
+	categories        map[string]*Category
+	deletedCategories map[string]string // Maps deleted category IDs to their names (case-sensitive)
+	listTitle         string
+	nameFrequency     map[string]int     // Tracks frequency of todo names (case-insensitive key -> count)
+	nameCanonical     map[string]string  // Maps lowercase name to most recent casing
+	nameLastCategory  map[string]*string // Tracks last categoryId used for a name (lowercase)
 }
 
 // NewState creates a new empty state
 func NewState() *State {
 	return &State{
-		todos:            make(map[string]*Todo),
-		categories:       make(map[string]*Category),
-		listTitle:        "My Todo List",
-		nameFrequency:    make(map[string]int),
-		nameCanonical:    make(map[string]string),
-		nameLastCategory: make(map[string]*string),
+		todos:             make(map[string]*Todo),
+		categories:        make(map[string]*Category),
+		deletedCategories: make(map[string]string),
+		listTitle:         "My Todo List",
+		nameFrequency:     make(map[string]int),
+		nameCanonical:     make(map[string]string),
+		nameLastCategory:  make(map[string]*string),
 	}
 }
 
@@ -93,6 +95,8 @@ func (s *State) Apply(event Event) {
 			CreatedAt: e.CreatedAt,
 			SortOrder: e.SortOrder,
 		}
+		// Remove from deleted categories if it was deleted before
+		delete(s.deletedCategories, e.ID)
 
 	case CategoryRenamed:
 		if cat, ok := s.categories[e.ID]; ok {
@@ -100,6 +104,10 @@ func (s *State) Apply(event Event) {
 		}
 
 	case CategoryDeleted:
+		// Before deleting, store the category name for potential reuse
+		if cat, ok := s.categories[e.ID]; ok {
+			s.deletedCategories[e.ID] = cat.Name
+		}
 		delete(s.categories, e.ID)
 
 	case CategoryReordered:
@@ -249,4 +257,25 @@ func (s *State) CategoryHasTodos(categoryID string) bool {
 // GetLastCategoryForName returns the last category used for a given name (if any)
 func (s *State) GetLastCategoryForName(name string) *string {
 	return s.nameLastCategory[strings.ToLower(name)]
+}
+
+// FindDeletedCategoryByName returns the ID of a deleted category with the given name (case-sensitive)
+// Returns empty string if no such deleted category exists
+func (s *State) FindDeletedCategoryByName(name string) string {
+	for id, deletedName := range s.deletedCategories {
+		if deletedName == name {
+			return id
+		}
+	}
+	return ""
+}
+
+// CategoryNameExists checks if an active category with the given name exists (case-sensitive)
+func (s *State) CategoryNameExists(name string) bool {
+	for _, cat := range s.categories {
+		if cat.Name == name {
+			return true
+		}
+	}
+	return false
 }

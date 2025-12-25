@@ -441,3 +441,157 @@ func TestState_CategoryProjectionAndCategorization(t *testing.T) {
 	assert.False(t, state.CategoryHasTodos("cat-1"))
 }
 
+func TestState_DeletedCategoryTracking(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+
+	// Create a category
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Verify category exists
+	cat, ok := state.GetCategory("cat-1")
+	require.True(t, ok)
+	assert.Equal(t, "Work", cat.Name)
+
+	// Delete the category
+	state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// Verify category no longer exists
+	_, ok = state.GetCategory("cat-1")
+	assert.False(t, ok)
+
+	// Verify we can find the deleted category by name
+	deletedID := state.FindDeletedCategoryByName("Work")
+	assert.Equal(t, "cat-1", deletedID)
+
+	// Test case-sensitive - different case should NOT match
+	deletedID = state.FindDeletedCategoryByName("work")
+	assert.Equal(t, "", deletedID)
+
+	deletedID = state.FindDeletedCategoryByName("WORK")
+	assert.Equal(t, "", deletedID)
+
+	// Test non-existent category
+	deletedID = state.FindDeletedCategoryByName("NonExistent")
+	assert.Equal(t, "", deletedID)
+}
+
+func TestState_CategoryReuseAfterDeletion(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+
+	// Create and delete a category
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Shopping",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// Verify it's in deleted categories
+	deletedID := state.FindDeletedCategoryByName("Shopping")
+	assert.Equal(t, "cat-1", deletedID)
+
+	// Recreate the category with the same ID
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Shopping",
+		CreatedAt: now.Add(time.Hour),
+		SortOrder: 2000,
+	})
+
+	// Verify category is active again
+	cat, ok := state.GetCategory("cat-1")
+	require.True(t, ok)
+	assert.Equal(t, "Shopping", cat.Name)
+
+	// Verify it's no longer in deleted categories
+	deletedID = state.FindDeletedCategoryByName("Shopping")
+	assert.Equal(t, "", deletedID)
+}
+
+func TestState_MultipleCategoriesWithSameNameDeleted(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+
+	// Create two categories with same name (different IDs) - this is edge case but should handle
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-2",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 2000,
+	})
+
+	state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-2",
+	})
+
+	// Should find one of the deleted categories (whichever comes first in map iteration)
+	deletedID := state.FindDeletedCategoryByName("Work")
+	assert.NotEqual(t, "", deletedID)
+	assert.True(t, deletedID == "cat-1" || deletedID == "cat-2")
+}
+
+func TestState_CategoryNameExists(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+
+	// Initially no categories
+	assert.False(t, state.CategoryNameExists("Work"))
+
+	// Create a category
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Category exists (exact match)
+	assert.True(t, state.CategoryNameExists("Work"))
+
+	// Case-sensitive - different case should NOT match
+	assert.False(t, state.CategoryNameExists("work"))
+	assert.False(t, state.CategoryNameExists("WORK"))
+
+	// Delete the category
+	state.Apply(CategoryDeleted{
+		Type: "CategoryDeleted",
+		ID:   "cat-1",
+	})
+
+	// After deletion, should not exist anymore
+	assert.False(t, state.CategoryNameExists("Work"))
+}

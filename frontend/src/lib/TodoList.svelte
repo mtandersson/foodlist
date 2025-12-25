@@ -16,7 +16,29 @@
     : `${wsProtocol}//${window.location.host}/ws`;
 
   const store = createTodoStore(wsUrl);
-  const { activeTodos, completedTodos, categories, activeTodosByCategory, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions } = store;
+  const { activeTodos, completedTodos, categories, activeTodosByCategory, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage } = store;
+
+  // Watch for error messages related to category operations
+  $effect(() => {
+    const error = $errorMessage;
+    if (error && creatingCategory) {
+      categoryError = error;
+      store.clearError(); // Clear global error since we're showing it in the dialog
+    }
+  });
+
+  // Watch for successful category creation to close dialog
+  let lastCategoryCount = $state(0);
+  $effect(() => {
+    const currentCount = $categories.length;
+    if (creatingCategory && currentCount > lastCategoryCount) {
+      // New category was created successfully
+      creatingCategory = false;
+      newCategoryName = '';
+      categoryError = null;
+    }
+    lastCategoryCount = currentCount;
+  });
 
   let newTodoName = $state('');
   let completedExpanded = $state(true);
@@ -31,6 +53,7 @@
   // New category state
   let creatingCategory = $state(false);
   let newCategoryName = $state('');
+  let categoryError = $state<string | null>(null);
 
   // Autocomplete state
   let showAutocomplete = $state(false);
@@ -133,7 +156,16 @@
   }
 
   function handleCreateCategory(name: string) {
-    store.createCategory(name);
+    store.createCategory(name).then(
+      () => {
+        // Success - dialog will be closed by $effect watching categories
+        categoryError = null;
+      },
+      (error: string) => {
+        // Error - show in dialog
+        categoryError = error;
+      }
+    );
   }
 
   function handleRenameCategory(id: string, name: string) {
@@ -182,6 +214,7 @@
   function handleNewCategory() {
     creatingCategory = true;
     newCategoryName = '';
+    categoryError = null;
     closeMenu();
     // Focus the input after it renders
     setTimeout(() => {
@@ -194,14 +227,14 @@
     const name = newCategoryName.trim();
     if (name) {
       handleCreateCategory(name);
+      // Don't close immediately - wait for server response
     }
-    creatingCategory = false;
-    newCategoryName = '';
   }
 
   function cancelCreatingCategory() {
     creatingCategory = false;
     newCategoryName = '';
+    categoryError = null;
   }
 
   function handleNewCategoryKeydown(e: KeyboardEvent) {
@@ -422,11 +455,17 @@
           <input
             type="text"
             class="new-category-input"
+            class:error={categoryError}
             bind:value={newCategoryName}
             onkeydown={handleNewCategoryKeydown}
             onblur={finishCreatingCategory}
             placeholder="Namn på ny kategori..."
           />
+          {#if categoryError}
+            <div class="category-error" transition:slide>
+              {categoryError}
+            </div>
+          {/if}
           <div class="new-category-actions">
             <button
               type="button"
@@ -781,13 +820,31 @@
     margin-bottom: var(--spacing-md);
   }
 
+  .new-category-input.error {
+    border-color: var(--danger);
+  }
+
   .new-category-input:focus {
     border-color: var(--text-primary);
     background: var(--surface-muted-strong);
   }
 
+  .new-category-input.error:focus {
+    border-color: var(--danger);
+  }
+
   .new-category-input::placeholder {
     color: var(--text-muted);
+  }
+
+  .category-error {
+    color: var(--danger);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(var(--danger-rgb), 0.1);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--danger);
   }
 
   .new-category-actions {

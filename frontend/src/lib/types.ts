@@ -102,6 +102,7 @@ export interface ListTitleChanged {
 // Command types (client -> server)
 export interface CreateTodo {
   type: "CreateTodo"
+  commandId: string
   id: string
   name: string
   sortOrder?: number
@@ -110,12 +111,14 @@ export interface CreateTodo {
 
 export interface CategorizeTodo {
   type: "CategorizeTodo"
+  commandId: string
   id: string
   categoryId: string | null
 }
 
 export interface CreateCategory {
   type: "CreateCategory"
+  commandId: string
   id: string
   name: string
   sortOrder?: number
@@ -123,55 +126,65 @@ export interface CreateCategory {
 
 export interface RenameCategory {
   type: "RenameCategory"
+  commandId: string
   id: string
   name: string
 }
 
 export interface DeleteCategory {
   type: "DeleteCategory"
+  commandId: string
   id: string
 }
 
 export interface ReorderCategory {
   type: "ReorderCategory"
+  commandId: string
   id: string
   sortOrder: number
 }
 
 export interface CompleteTodo {
   type: "CompleteTodo"
+  commandId: string
   id: string
 }
 
 export interface UncompleteTodo {
   type: "UncompleteTodo"
+  commandId: string
   id: string
 }
 
 export interface StarTodo {
   type: "StarTodo"
+  commandId: string
   id: string
 }
 
 export interface UnstarTodo {
   type: "UnstarTodo"
+  commandId: string
   id: string
 }
 
 export interface ReorderTodo {
   type: "ReorderTodo"
+  commandId: string
   id: string
   sortOrder: number
 }
 
 export interface RenameTodo {
   type: "RenameTodo"
+  commandId: string
   id: string
   name: string
 }
 
 export interface SetListTitle {
   type: "SetListTitle"
+  commandId: string
   title: string
 }
 
@@ -222,7 +235,19 @@ export interface AutocompleteResponse {
   requestId: string
 }
 
-export type ServerMessage = Event | StateRollup | ClientCount | AutocompleteResponse
+export interface CommandResponse {
+  type: "CommandResponse"
+  commandId: string
+  success: boolean
+  error?: string
+}
+
+export type ServerMessage =
+  | Event
+  | StateRollup
+  | ClientCount
+  | AutocompleteResponse
+  | CommandResponse
 
 export type Command =
   | CreateTodo
@@ -268,7 +293,9 @@ export function isTodoRenamed(msg: ServerMessage): msg is TodoRenamed {
   return msg.type === "TodoRenamed"
 }
 
-export function isListTitleChanged(msg: ServerMessage): msg is ListTitleChanged {
+export function isListTitleChanged(
+  msg: ServerMessage
+): msg is ListTitleChanged {
   return msg.type === "ListTitleChanged"
 }
 
@@ -284,6 +311,8 @@ export function isClientCount(msg: ServerMessage): msg is ClientCount {
   return msg.type === "ClientCount"
 }
 
-export function isAutocompleteResponse(msg: ServerMessage): msg is AutocompleteResponse {
+export function isAutocompleteResponse(
+  msg: ServerMessage
+): msg is AutocompleteResponse {
   return msg.type === "AutocompleteResponse"
 }
