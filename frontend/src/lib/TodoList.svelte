@@ -214,65 +214,138 @@
 
   // Drag and drop state
   let draggedId: string | null = $state(null);
-  let dragOverId: string | null = $state(null);
+  let dropTargetId: string | null = $state(null);
+  let dropPosition: 'above' | 'below' | null = $state(null);
+  let isDragging = $state(false);
+
+  function computeSortOrder(todos: Todo[], newIndex: number): number {
+    if (todos.length === 0) return 0;
+    if (newIndex <= 0) return todos[0].sortOrder + 1000;
+    if (newIndex >= todos.length) return todos[todos.length - 1].sortOrder - 1000;
+    const above = todos[newIndex - 1].sortOrder;
+    const below = todos[newIndex].sortOrder;
+    return Math.floor((above + below) / 2);
+  }
 
   function handleDragStart(e: DragEvent, todo: Todo) {
     draggedId = todo.id;
+    dropTargetId = null;
+    dropPosition = null;
+    isDragging = true;
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', todo.id);
     }
   }
 
-  function handleDragOver(e: DragEvent, todo: Todo) {
-    e.preventDefault();
-    if (draggedId && draggedId !== todo.id) {
-      dragOverId = todo.id;
-    }
-  }
-
-  function handleDragLeave() {
-    dragOverId = null;
-  }
-
-  function handleDrop(e: DragEvent, targetTodo: Todo) {
-    e.preventDefault();
-    dragOverId = null;
-
-    if (!draggedId || draggedId === targetTodo.id) {
-      draggedId = null;
-      return;
-    }
-
-    // Calculate new sort order
+  function wouldMove(targetId: string, position: 'above' | 'below'): boolean {
     const todos = $activeTodos;
-    const targetIndex = todos.findIndex(t => t.id === targetTodo.id);
-    const draggedIndex = todos.findIndex(t => t.id === draggedId);
+    const draggedIndex = todos.findIndex((t) => t.id === draggedId);
+    const targetIndex = todos.findIndex((t) => t.id === targetId);
+    if (draggedIndex === -1 || targetIndex === -1) return false;
+    const newIndex = position === 'below' ? targetIndex + 1 : targetIndex;
+    // No-op if dropping in same or adjacent slot that keeps order
+    return !(newIndex === draggedIndex || newIndex === draggedIndex + 1);
+  }
 
-    if (targetIndex === -1 || draggedIndex === -1) {
-      draggedId = null;
+  function handleDragOverItem(e: DragEvent, todo: Todo) {
+    e.preventDefault();
+    if (!draggedId || draggedId === todo.id) return;
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const position: 'above' | 'below' = e.clientY < rect.top + rect.height / 2 ? 'above' : 'below';
+
+    if (!wouldMove(todo.id, position)) {
+      dropTargetId = null;
+      dropPosition = null;
       return;
     }
 
-    let newSortOrder: number;
+    dropTargetId = todo.id;
+    dropPosition = position;
+  }
 
-    if (draggedIndex > targetIndex) {
-      // Moving up - place above target
-      const above = targetIndex > 0 ? todos[targetIndex - 1].sortOrder : targetTodo.sortOrder + 1000;
-      newSortOrder = Math.floor((above + targetTodo.sortOrder) / 2);
-    } else {
-      // Moving down - place below target
-      const below = targetIndex < todos.length - 1 ? todos[targetIndex + 1].sortOrder : targetTodo.sortOrder - 1000;
-      newSortOrder = Math.floor((targetTodo.sortOrder + below) / 2);
+  function handleDragOverList(e: DragEvent) {
+    e.preventDefault();
+    if (!draggedId) return;
+
+    const listEl = e.currentTarget as HTMLElement;
+    const wrappers = Array.from(listEl.querySelectorAll('.todo-wrapper')) as HTMLElement[];
+    const todos = $activeTodos;
+
+    if (!wrappers.length || !todos.length) {
+      dropTargetId = null;
+      dropPosition = null;
+      return;
     }
 
+    const firstRect = wrappers[0].getBoundingClientRect();
+    const lastRect = wrappers[wrappers.length - 1].getBoundingClientRect();
+    const { clientY } = e;
+
+    // If near the very top, target before first
+    if (clientY < firstRect.top + firstRect.height / 3 && wouldMove(todos[0].id, 'above')) {
+      dropTargetId = todos[0].id;
+      dropPosition = 'above';
+      return;
+    }
+
+    // If near the very bottom, target after last
+    if (clientY > lastRect.bottom - lastRect.height / 3 && wouldMove(todos[todos.length - 1].id, 'below')) {
+      dropTargetId = todos[todos.length - 1].id;
+      dropPosition = 'below';
+      return;
+    }
+    // Otherwise let item-level handlers set precise position
+  }
+
+  function handleDragLeaveItem(e: DragEvent, todoId: string) {
+    const relatedTarget = e.relatedTarget as Node | null;
+    if (!relatedTarget || !(e.currentTarget as Node).contains(relatedTarget)) {
+      if (dropTargetId === todoId) {
+        dropTargetId = null;
+        dropPosition = null;
+      }
+    }
+  }
+
+  function finishDrop() {
+    if (!draggedId) return;
+
+    // Only reorder if we have a valid drop target
+    if (!dropTargetId || !dropPosition) {
+      clearDragState();
+      return;
+    }
+
+    const todos = $activeTodos;
+    const targetIndex = todos.findIndex((t) => t.id === dropTargetId);
+    
+    if (targetIndex === -1) {
+      clearDragState();
+      return;
+    }
+
+    const newIndex = dropPosition === 'below' ? targetIndex + 1 : targetIndex;
+    const newSortOrder = computeSortOrder(todos, newIndex);
     store.reorder(draggedId, newSortOrder);
-    draggedId = null;
+    clearDragState();
+  }
+
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    finishDrop();
   }
 
   function handleDragEnd() {
+    clearDragState();
+  }
+
+  function clearDragState() {
     draggedId = null;
-    dragOverId = null;
+    dropTargetId = null;
+    dropPosition = null;
+    isDragging = false;
   }
 
   onDestroy(() => {
@@ -377,27 +450,42 @@
 
     {#if viewMode === 'normal'}
       <!-- Active todos -->
-      <div class="todos-section">
+      <div
+        class="todos-section"
+        ondragover={handleDragOverList}
+        ondrop={handleDrop}
+        role="list"
+      >
         {#each $activeTodos as todo (todo.id)}
           <div
-            animate:flip={{ duration: 300 }}
+            class="todo-container"
+            class:spacer-top={dropTargetId === todo.id && dropPosition === 'above'}
+            class:spacer-bottom={dropTargetId === todo.id && dropPosition === 'below'}
+            animate:flip={{ duration: isDragging ? 0 : 300 }}
             transition:fade={{ duration: 200 }}
-            draggable="true"
-            ondragstart={(e) => handleDragStart(e, todo)}
-            ondragover={(e) => handleDragOver(e, todo)}
-            ondragleave={handleDragLeave}
-            ondrop={(e) => handleDrop(e, todo)}
-            ondragend={handleDragEnd}
-            class:dragging={draggedId === todo.id}
-            class:drag-over={dragOverId === todo.id}
           >
-            <TodoItem
-              {todo}
-              categoryName={getCategoryName(todo.categoryId ?? null)}
-              onToggleComplete={store.toggleComplete}
-              onToggleStar={store.toggleStar}
-              onRename={store.rename}
-            />
+            <div
+              class="todo-wrapper"
+              role="listitem"
+              aria-grabbed={draggedId === todo.id}
+              class:drop-above={dropTargetId === todo.id && dropPosition === 'above'}
+              class:drop-below={dropTargetId === todo.id && dropPosition === 'below'}
+              draggable="true"
+              ondragstart={(e) => handleDragStart(e, todo)}
+              ondragover={(e) => handleDragOverItem(e, todo)}
+              ondragleave={(e) => handleDragLeaveItem(e, todo.id)}
+              ondrop={handleDrop}
+              ondragend={handleDragEnd}
+              class:dragging={draggedId === todo.id}
+            >
+              <TodoItem
+                {todo}
+                categoryName={getCategoryName(todo.categoryId ?? null)}
+                onToggleComplete={store.toggleComplete}
+                onToggleStar={store.toggleStar}
+                onRename={store.rename}
+              />
+            </div>
           </div>
         {/each}
       </div>
@@ -437,6 +525,7 @@
         onDeleteCategory={handleDeleteCategory}
         onCategorizeTodo={handleCategorize}
         onReorderCategory={handleReorderCategory}
+        onReorder={store.reorder}
         completedExpanded={completedExpanded}
         onToggleCompletedSection={toggleCompletedSection}
       />
@@ -515,6 +604,8 @@
     margin-bottom: 16px;
     padding-right: 4px;
     min-height: 0;
+    /* Force scrollbar to always be visible for consistent layout */
+    scrollbar-gutter: stable;
   }
 
   .scrollable-content::-webkit-scrollbar {
@@ -796,12 +887,70 @@
     margin-bottom: 16px;
   }
 
-  .dragging {
+  .todo-container {
+    position: relative;
+  }
+
+  .todo-container.spacer-top {
+    margin-top: 64px;
+  }
+
+  .todo-container.spacer-bottom {
+    margin-bottom: 64px;
+  }
+
+  .todo-wrapper {
+    position: relative;
+    margin-bottom: 8px;
+    transition: transform 0.1s ease;
+  }
+
+  .todo-wrapper.dragging {
     opacity: 0.5;
   }
 
-  .drag-over {
-    transform: translateY(4px);
+  .todo-wrapper.drop-above,
+  .todo-wrapper.drop-below {
+    z-index: 10;
+  }
+
+  .todo-wrapper.drop-above::before,
+  .todo-wrapper.drop-below::after {
+    content: '';
+    display: block;
+    height: 56px;
+    border: 2px dashed var(--text-on-primary);
+    border-radius: 12px;
+    opacity: 0.9;
+    animation: pulse 1s ease-in-out infinite;
+    position: absolute;
+    width: 100%;
+    z-index: 11;
+  }
+
+  .todo-wrapper.drop-above::before {
+    top: -64px;
+  }
+
+  .todo-wrapper.drop-below::after {
+    top: auto;
+    bottom: -64px;
+  }
+
+  /* 
+    Remove the translateY on the item itself to avoid layout thrashing/jumping
+    The pseudo-element provides the visual cue.
+  */
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.8;
+      border-width: 2px;
+    }
+    50% {
+      opacity: 1;
+      border-width: 3px;
+    }
   }
 
   .add-todo-wrapper {
@@ -870,4 +1019,3 @@
     border-radius: 12px;
   }
 </style>
-

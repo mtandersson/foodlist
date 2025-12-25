@@ -147,7 +147,6 @@
     padding: 16px 20px;
     background: var(--card-bg);
     border-radius: 12px;
-    margin-bottom: 8px;
     transition: all 0.3s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
