@@ -61,20 +61,22 @@
 </script>
 
 <!-- Uncategorized todos (no header, just the items) -->
-{#each todosForCategory(null) as todo (todo.id)}
-  <div
-    animate:flip={{ duration: 300 }}
-    transition:fade={{ duration: 200 }}
-  >
-    <TodoItem
-      {todo}
-      categoryName={null}
-      onToggleComplete={onToggleComplete}
-      onToggleStar={onToggleStar}
-      onRename={onRename}
-    />
-  </div>
-{/each}
+<div class="todos-section">
+  {#each todosForCategory(null) as todo (todo.id)}
+    <div
+      animate:flip={{ duration: 300 }}
+      transition:fade={{ duration: 200 }}
+    >
+      <TodoItem
+        {todo}
+        categoryName={null}
+        onToggleComplete={onToggleComplete}
+        onToggleStar={onToggleStar}
+        onRename={onRename}
+      />
+    </div>
+  {/each}
+</div>
 
 <!-- Categories -->
 {#each categories as category (category.id)}
@@ -126,3 +128,9 @@
     {/each}
   </CollapsibleSection>
 {/if}
+
+<style>
+  .todos-section {
+    margin-bottom: 16px;
+  }
+</style>
