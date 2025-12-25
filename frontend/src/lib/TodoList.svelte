@@ -434,6 +434,7 @@
         onToggleComplete={store.toggleComplete}
         onToggleStar={store.toggleStar}
         onRename={store.rename}
+        onDeleteCategory={handleDeleteCategory}
         completedExpanded={completedExpanded}
         onToggleCompletedSection={toggleCompletedSection}
       />

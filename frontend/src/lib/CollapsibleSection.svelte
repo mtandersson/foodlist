@@ -6,29 +6,54 @@
     count?: number;
     expanded?: boolean;
     onToggle: () => void;
+    onDelete?: () => void;
     children?: import('svelte').Snippet;
   }
 
-  let { title, count, expanded = true, onToggle, children }: Props = $props();
+  let { title, count, expanded = true, onToggle, onDelete, children }: Props = $props();
+
+  function handleDelete(e: MouseEvent) {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete();
+    }
+  }
 </script>
 
 <div class="collapsible-section">
-  <button class="section-header" onclick={onToggle}>
-    <svg 
-      class="chevron" 
-      class:expanded={expanded}
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      stroke-width="2"
-    >
-      <polyline points="9 18 15 12 9 6"></polyline>
-    </svg>
-    <span class="section-title">{title}</span>
-    {#if count !== undefined}
-      <span class="section-count">{count}</span>
+  <div class="section-header-wrapper">
+    <button class="section-header" onclick={onToggle}>
+      <svg 
+        class="chevron" 
+        class:expanded={expanded}
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        stroke-width="2"
+      >
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+      <span class="section-title">{title}</span>
+      {#if count !== undefined}
+        <span class="section-count">{count}</span>
+      {/if}
+    </button>
+    {#if onDelete}
+      <button 
+        class="delete-btn" 
+        onclick={handleDelete}
+        aria-label="Delete category"
+        title="Delete category"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+      </button>
     {/if}
-  </button>
+  </div>
 
   {#if expanded}
     <div class="section-content" transition:slide={{ duration: 300 }}>
@@ -39,6 +64,14 @@
 
 <style>
   .collapsible-section {
+    width: 100%;
+  }
+
+  .section-header-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
     width: 100%;
   }
 
@@ -54,9 +87,10 @@
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
-    margin-bottom: 12px;
     transition: background 0.2s ease;
     text-align: left;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .section-header:hover {
@@ -65,11 +99,13 @@
 
   .section-title {
     flex: 1;
+    min-width: 0;
   }
 
   .section-count {
     color: var(--text-muted);
     font-size: 12px;
+    flex-shrink: 0;
   }
 
   .chevron {
@@ -87,6 +123,32 @@
   .section-content {
     margin-bottom: 16px;
     width: 100%;
+  }
+
+  .delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    height: 32px;
+    width: 32px;
+  }
+
+  .delete-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .delete-btn:hover {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
   }
 </style>
 

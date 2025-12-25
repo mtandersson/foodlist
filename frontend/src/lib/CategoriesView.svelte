@@ -13,6 +13,7 @@
     onToggleComplete: (id: string) => void;
     onToggleStar: (id: string) => void;
     onRename: (id: string, name: string) => void;
+    onDeleteCategory: (id: string) => void;
     completedExpanded?: boolean;
     onToggleCompletedSection: () => void;
   }
@@ -25,6 +26,7 @@
     onToggleComplete,
     onToggleStar,
     onRename,
+    onDeleteCategory,
     completedExpanded = true,
     onToggleCompletedSection,
   }: Props = $props();
@@ -80,29 +82,28 @@
 
 <!-- Categories -->
 {#each categories as category (category.id)}
-  {#if todosForCategory(category.id).length > 0}
-    <CollapsibleSection
-      title={category.name}
-      count={todosForCategory(category.id).length}
-      expanded={expandedCategories.has(category.id)}
-      onToggle={() => toggleCategory(category.id)}
-    >
-      {#each todosForCategory(category.id) as todo (todo.id)}
-        <div
-          animate:flip={{ duration: 300 }}
-          transition:fade={{ duration: 200 }}
-        >
-          <TodoItem
-            {todo}
-            categoryName={null}
-            onToggleComplete={onToggleComplete}
-            onToggleStar={onToggleStar}
-            onRename={onRename}
-          />
-        </div>
-      {/each}
-    </CollapsibleSection>
-  {/if}
+  <CollapsibleSection
+    title={category.name}
+    count={todosForCategory(category.id).length}
+    expanded={expandedCategories.has(category.id)}
+    onToggle={() => toggleCategory(category.id)}
+    onDelete={todosForCategory(category.id).length === 0 ? () => onDeleteCategory(category.id) : undefined}
+  >
+    {#each todosForCategory(category.id) as todo (todo.id)}
+      <div
+        animate:flip={{ duration: 300 }}
+        transition:fade={{ duration: 200 }}
+      >
+        <TodoItem
+          {todo}
+          categoryName={null}
+          onToggleComplete={onToggleComplete}
+          onToggleStar={onToggleStar}
+          onRename={onRename}
+        />
+      </div>
+    {/each}
+  </CollapsibleSection>
 {/each}
 
 <!-- Completed section -->
