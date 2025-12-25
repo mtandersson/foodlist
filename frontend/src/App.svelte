@@ -11,8 +11,9 @@
     margin: 0;
     padding: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+    background: var(--primary-gradient);
     min-height: 100vh;
+    transition: background 0.3s ease;
   }
 
   :global(*) {
