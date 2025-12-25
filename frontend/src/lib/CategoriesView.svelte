@@ -39,49 +39,67 @@
   let draggedId: string | null = $state(null);
   let dragOverCategoryId: string | null = $state(null);
   let autoExpandTimer: number | null = null;
+  let isInitialized = false;
+  let lastCategoryIds: string[] = [];
 
-  // Load expanded state from localStorage
-  $effect(() => {
-    if (typeof localStorage !== 'undefined') {
-      const stored = localStorage.getItem('expandedCategories');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          expandedCategories = new Set(parsed);
-        } catch (e) {
-          console.error('Failed to parse expandedCategories from localStorage', e);
-        }
+  // Load expanded state from localStorage once on mount
+  if (typeof localStorage !== 'undefined' && !isInitialized) {
+    const stored = localStorage.getItem('expandedCategories');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        expandedCategories = new Set(parsed);
+      } catch (e) {
+        console.error('Failed to parse expandedCategories from localStorage', e);
       }
     }
-  });
+    isInitialized = true;
+  }
 
-  // Initialize new categories as expanded
+  // Initialize new categories as expanded and clean up deleted ones
   const categoryIds = $derived(categories.map((c) => c.id));
 
   $effect(() => {
+    if (!isInitialized) return;
+    
+    // Check if the set of category IDs actually changed (not just order)
+    const currentIdsSet = new Set(categoryIds);
+    const lastIdsSet = new Set(lastCategoryIds);
+    const hasNewCategories = categoryIds.some(id => !lastIdsSet.has(id));
+    const hasDeletedCategories = lastCategoryIds.some(id => !currentIdsSet.has(id));
+    
+    if (!hasNewCategories && !hasDeletedCategories) {
+      lastCategoryIds = categoryIds;
+      return;
+    }
+    
     let changed = false;
+    const newExpandedCategories = new Set(expandedCategories);
+    
     // Add any new categories to the expanded set
     categoryIds.forEach(id => {
-      if (!expandedCategories.has(id)) {
-        expandedCategories.add(id);
+      if (!newExpandedCategories.has(id)) {
+        newExpandedCategories.add(id);
         changed = true;
       }
     });
     
     // Remove deleted categories from expanded set
     const categoryIdsSet = new Set(categoryIds);
-    expandedCategories.forEach(id => {
+    newExpandedCategories.forEach(id => {
       if (id !== null && !categoryIdsSet.has(id)) {
-        expandedCategories.delete(id);
+        newExpandedCategories.delete(id);
         changed = true;
       }
     });
     
-    // Force reactivity and save to localStorage
+    // Only update if something actually changed
     if (changed) {
-      expandedCategories = expandedCategories;
+      expandedCategories = newExpandedCategories;
       saveExpandedState();
     }
+    
+    lastCategoryIds = categoryIds;
   });
 
   function saveExpandedState() {
