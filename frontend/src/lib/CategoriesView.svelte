@@ -16,6 +16,7 @@
     onDeleteCategory: (id: string) => void;
     onCategorizeTodo: (id: string, categoryId: string | null) => void;
     onReorderCategory: (id: string, sortOrder: number) => void;
+    onRenameCategory: (id: string, name: string) => void;
     onReorder: (id: string, newSortOrder: number) => void;
     completedExpanded?: boolean;
     onToggleCompletedSection: () => void;
@@ -32,6 +33,7 @@
     onDeleteCategory,
     onCategorizeTodo,
     onReorderCategory,
+    onRenameCategory,
     onReorder,
     completedExpanded = true,
     onToggleCompletedSection,
@@ -428,6 +430,7 @@
 
 <!-- Categories -->
 {#each categories as category, index (category.id)}
+  {#if todosForCategory(category.id).length > 0 || draggedId}
   <div
     class="category-wrapper"
     class:drag-over-category={draggedId && dropCategoryId === category.id}
@@ -444,6 +447,7 @@
       onDelete={todosForCategory(category.id).length === 0 ? () => onDeleteCategory(category.id) : undefined}
       onMoveUp={index > 0 ? () => handleMoveUp(category.id, index) : undefined}
       onMoveDown={index < categories.length - 1 ? () => handleMoveDown(category.id, index) : undefined}
+      onRename={(newName: string) => onRenameCategory(category.id, newName)}
     >
       {#if todosForCategory(category.id).length > 0 || draggedId}
         <div class="category-drop-zone" role="list">
@@ -486,6 +490,7 @@
       {/if}
     </CollapsibleSection>
   </div>
+  {/if}
 {/each}
 
 <!-- Completed section -->

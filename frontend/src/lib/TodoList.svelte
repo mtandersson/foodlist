@@ -565,6 +565,7 @@
         onDeleteCategory={handleDeleteCategory}
         onCategorizeTodo={handleCategorize}
         onReorderCategory={handleReorderCategory}
+        onRenameCategory={handleRenameCategory}
         onReorder={store.reorder}
         completedExpanded={completedExpanded}
         onToggleCompletedSection={toggleCompletedSection}

@@ -9,10 +9,15 @@
     onDelete?: () => void;
     onMoveUp?: () => void;
     onMoveDown?: () => void;
+    onRename?: (newName: string) => void;
     children?: import('svelte').Snippet;
   }
 
-  let { title, count, expanded = true, onToggle, onDelete, onMoveUp, onMoveDown, children }: Props = $props();
+  let { title, count, expanded = true, onToggle, onDelete, onMoveUp, onMoveDown, onRename, children }: Props = $props();
+
+  let isEditing = $state(false);
+  let editValue = $state('');
+  let inputElement: HTMLInputElement | undefined = $state();
 
   function handleDelete(e: MouseEvent) {
     e.stopPropagation();
@@ -34,6 +39,54 @@
       onMoveDown();
     }
   }
+
+  function handleStartEdit(e: MouseEvent) {
+    e.stopPropagation();
+    isEditing = true;
+    editValue = title;
+    // Focus the input after it's rendered
+    setTimeout(() => {
+      inputElement?.focus();
+      inputElement?.select();
+    }, 0);
+  }
+
+  function handleFinishEdit() {
+    const newName = editValue.trim();
+    if (newName && newName !== title && onRename) {
+      onRename(newName);
+    }
+    isEditing = false;
+  }
+
+  function handleEditKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleFinishEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      isEditing = false;
+    }
+  }
+
+  function handleEditClick(e: MouseEvent) {
+    e.stopPropagation();
+  }
+
+  function handleTitleDoubleClick(e: MouseEvent) {
+    if (onRename) {
+      e.stopPropagation();
+      handleStartEdit(e);
+    }
+  }
+
+  function handleTitleKeydown(e: KeyboardEvent) {
+    if (onRename && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleStartEdit(e as any);
+    }
+  }
 </script>
 
 <div class="collapsible-section">
@@ -49,12 +102,43 @@
       >
         <polyline points="9 18 15 12 9 6"></polyline>
       </svg>
-      <span class="section-title">{title}</span>
+      {#if isEditing}
+        <input
+          bind:this={inputElement}
+          bind:value={editValue}
+          class="title-input"
+          onclick={handleEditClick}
+          onkeydown={handleEditKeydown}
+          onblur={handleFinishEdit}
+          type="text"
+        />
+      {:else}
+        <span 
+          class="section-title" 
+          ondblclick={handleTitleDoubleClick}
+          onkeydown={handleTitleKeydown}
+          role={onRename ? "button" : undefined}
+          tabindex={onRename ? 0 : undefined}
+        >{title}</span>
+      {/if}
       {#if count !== undefined}
         <span class="section-count">{count}</span>
       {/if}
     </button>
     <div class="action-buttons">
+      {#if onRename && !isEditing}
+        <button 
+          class="edit-btn" 
+          onclick={handleStartEdit}
+          aria-label="Rename category"
+          title="Rename category"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+        </button>
+      {/if}
       {#if onMoveUp}
         <button 
           class="move-btn" 
@@ -144,6 +228,36 @@
     min-width: 0;
   }
 
+  .section-title[ondblclick] {
+    cursor: text;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    /* On desktop, show hover effect for double-click */
+    .section-title[ondblclick]:hover {
+      opacity: 0.8;
+    }
+  }
+
+  .title-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--surface-light);
+    border: var(--stroke-thin) solid var(--text-on-primary);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--text-on-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    outline: none;
+    transition: border-color var(--transition-normal);
+  }
+
+  .title-input:focus {
+    border-color: var(--text-on-primary);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  }
+
   .section-count {
     color: var(--text-muted);
     font-size: var(--font-size-xs);
@@ -172,6 +286,32 @@
     align-items: center;
     gap: var(--spacing-xs);
     flex-shrink: 0;
+  }
+
+  .edit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
+    flex-shrink: 0;
+    height: var(--button-height-sm);
+    width: var(--button-height-sm);
+  }
+
+  .edit-btn svg {
+    width: var(--icon-xs);
+    height: var(--icon-xs);
+  }
+
+  .edit-btn:hover {
+    background: var(--surface-muted);
+    color: var(--text-on-primary);
   }
 
   .move-btn {
