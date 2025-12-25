@@ -27,6 +27,10 @@
   // List title state
   let editingTitle = $state(false);
   let titleInputValue = $state('');
+  
+  // New category state
+  let creatingCategory = $state(false);
+  let newCategoryName = $state('');
 
   // Autocomplete state
   let showAutocomplete = $state(false);
@@ -176,11 +180,36 @@
   }
 
   function handleNewCategory() {
-    const name = prompt('Ny kategori', '');
-    if (name && name.trim()) {
-      handleCreateCategory(name.trim());
-    }
+    creatingCategory = true;
+    newCategoryName = '';
     closeMenu();
+    // Focus the input after it renders
+    setTimeout(() => {
+      const input = document.querySelector('.new-category-input') as HTMLInputElement;
+      input?.focus();
+    }, 0);
+  }
+
+  function finishCreatingCategory() {
+    const name = newCategoryName.trim();
+    if (name) {
+      handleCreateCategory(name);
+    }
+    creatingCategory = false;
+    newCategoryName = '';
+  }
+
+  function cancelCreatingCategory() {
+    creatingCategory = false;
+    newCategoryName = '';
+  }
+
+  function handleNewCategoryKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      finishCreatingCategory();
+    } else if (e.key === 'Escape') {
+      cancelCreatingCategory();
+    }
   }
 
   // Drag and drop state
@@ -310,6 +339,39 @@
         {:else}
           Frånkopplad
         {/if}
+      </div>
+    {/if}
+
+    <!-- New Category Input -->
+    {#if creatingCategory}
+      <div class="new-category-wrapper" transition:slide>
+        <div class="new-category-input-container">
+          <input
+            type="text"
+            class="new-category-input"
+            bind:value={newCategoryName}
+            onkeydown={handleNewCategoryKeydown}
+            onblur={finishCreatingCategory}
+            placeholder="Namn på ny kategori..."
+          />
+          <div class="new-category-actions">
+            <button
+              type="button"
+              class="new-category-btn primary"
+              onclick={finishCreatingCategory}
+              disabled={!newCategoryName.trim()}
+            >
+              Skapa
+            </button>
+            <button
+              type="button"
+              class="new-category-btn"
+              onclick={cancelCreatingCategory}
+            >
+              Avbryt
+            </button>
+          </div>
+        </div>
       </div>
     {/if}
 
@@ -597,6 +659,78 @@
     text-align: center;
     margin-bottom: 16px;
     font-size: 14px;
+  }
+
+  .new-category-wrapper {
+    margin-bottom: 16px;
+  }
+
+  .new-category-input-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .new-category-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 2px solid var(--surface-muted);
+    border-radius: 8px;
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+  }
+
+  .new-category-input:focus {
+    border-color: var(--text-primary);
+    background: var(--surface-muted-strong);
+  }
+
+  .new-category-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .new-category-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .new-category-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background: var(--surface-muted);
+    color: var(--text-primary);
+  }
+
+  .new-category-btn:hover:not(:disabled) {
+    background: var(--surface-muted-strong);
+    transform: translateY(-1px);
+  }
+
+  .new-category-btn.primary {
+    background: var(--text-on-primary);
+    color: var(--primary-bg);
+  }
+
+  .new-category-btn.primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .new-category-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .add-todo-bottom {
