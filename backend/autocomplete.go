@@ -43,9 +43,9 @@ func levenshteinDistance(s1, s2 string) int {
 				cost = 0
 			}
 			currRow[j] = min(
-				prevRow[j]+1,       // deletion
-				currRow[j-1]+1,     // insertion
-				prevRow[j-1]+cost,  // substitution
+				prevRow[j]+1,      // deletion
+				currRow[j-1]+1,    // insertion
+				prevRow[j-1]+cost, // substitution
 			)
 		}
 		prevRow, currRow = currRow, prevRow
@@ -56,10 +56,12 @@ func levenshteinDistance(s1, s2 string) int {
 
 // suggestionCandidate holds a suggestion with its ranking score
 type suggestionCandidate struct {
-	name      string
-	frequency int
-	distance  int
-	score     float64
+	name         string
+	frequency    int
+	distance     int
+	score        float64
+	categoryID   *string
+	categoryName *string
 }
 
 // containsEmoji checks if a string contains any emoji characters
@@ -95,11 +97,11 @@ func containsEmoji(s string) bool {
 }
 
 // getAutocompleteSuggestions returns up to 4 autocomplete suggestions based on query
-// It uses fuzzy matching with Levenshtein distance and ranks by frequency
-func (s *Server) getAutocompleteSuggestions(query string) []string {
+// It uses fuzzy matching with Levenshtein distance and ranks by frequency + recency of category
+func (s *Server) getAutocompleteSuggestions(query string) []AutocompleteSuggestion {
 	// Get all todo names from history with their frequencies
 	nameFrequency := s.state.GetNameFrequency()
-	
+
 	// Get active todo names to filter out (case-insensitive)
 	activeTodos := s.state.GetActiveTodoNames()
 	activeSet := make(map[string]bool)
@@ -112,7 +114,7 @@ func (s *Server) getAutocompleteSuggestions(query string) []string {
 
 	for name, freq := range nameFrequency {
 		nameLower := strings.ToLower(name)
-		
+
 		// Skip if this name is already in the active todo list
 		if activeSet[nameLower] {
 			continue
@@ -137,13 +139,27 @@ func (s *Server) getAutocompleteSuggestions(query string) []string {
 			} else {
 				// Calculate Levenshtein distance
 				distance = levenshteinDistance(query, name)
-				
+
 				// Only include if distance <= 3
 				if distance > 3 {
 					continue
 				}
-				
+
 				matchScore = float64(freq)*1000 - float64(distance)*100
+			}
+		}
+
+		// Attach last known category (recency-based suggestion)
+		var categoryID *string
+		var categoryName *string
+		if lastCat := s.state.GetLastCategoryForName(name); lastCat != nil {
+			categoryID = lastCat
+			if cat, ok := s.state.GetCategory(*lastCat); ok {
+				// Store a copy of the string value to avoid dangling pointer
+				nameCopy := cat.Name
+				categoryName = &nameCopy
+				// Prefer categorized suggestions slightly
+				matchScore += 200
 			}
 		}
 
@@ -153,10 +169,12 @@ func (s *Server) getAutocompleteSuggestions(query string) []string {
 		}
 
 		candidates = append(candidates, suggestionCandidate{
-			name:      name,
-			frequency: freq,
-			distance:  distance,
-			score:     matchScore,
+			name:         name,
+			frequency:    freq,
+			distance:     distance,
+			score:        matchScore,
+			categoryID:   categoryID,
+			categoryName: categoryName,
 		})
 	}
 
@@ -166,11 +184,14 @@ func (s *Server) getAutocompleteSuggestions(query string) []string {
 	})
 
 	// Take top 4
-	result := make([]string, 0, 4)
+	result := make([]AutocompleteSuggestion, 0, 4)
 	for i := 0; i < len(candidates) && i < 4; i++ {
-		result = append(result, candidates[i].name)
+		result = append(result, AutocompleteSuggestion{
+			Name:         candidates[i].name,
+			CategoryID:   candidates[i].categoryID,
+			CategoryName: candidates[i].categoryName,
+		})
 	}
 
 	return result
 }
-

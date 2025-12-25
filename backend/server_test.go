@@ -65,6 +65,13 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 		CreatedAt: now,
 		SortOrder: 1000,
 	})
+	server.store.Append(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
 
 	// Rebuild state from store
 	events, _ := server.store.ReadAll()
@@ -84,6 +91,8 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 	assert.Equal(t, "StateRollup", rollup.Type)
 	require.Len(t, rollup.Todos, 1)
 	assert.Equal(t, "todo-1", rollup.Todos[0].ID)
+	require.Len(t, rollup.Categories, 1)
+	assert.Equal(t, "Work", rollup.Categories[0].Name)
 }
 
 func TestServer_BroadcastEventToAllClients(t *testing.T) {
@@ -573,3 +582,58 @@ func TestServer_SetListTitle_BroadcastsToAllClients(t *testing.T) {
 	assert.Equal(t, "Shared List", event2.Title)
 }
 
+func TestCommandToEvent_DeleteCategoryRejectedWhenNotEmpty(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := NewEventStore(filepath.Join(tmpDir, "events.jsonl"))
+	require.NoError(t, err)
+	server := NewServer(store)
+
+	now := time.Now().UTC()
+	catID := "cat-1"
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        catID,
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+	server.state.Apply(TodoCreated{
+		Type:       "TodoCreated",
+		ID:         "todo-1",
+		Name:       "Task",
+		CreatedAt:  now,
+		SortOrder:  1000,
+		CategoryID: &catID,
+	})
+
+	_, err = server.commandToEvent(DeleteCategoryCommand{
+		BaseCommand: BaseCommand{Type: "DeleteCategory"},
+		ID:          catID,
+	})
+
+	assert.Error(t, err)
+}
+
+func TestCommandToEvent_CategorizeRequiresExistingCategory(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := NewEventStore(filepath.Join(tmpDir, "events.jsonl"))
+	require.NoError(t, err)
+	server := NewServer(store)
+
+	now := time.Now().UTC()
+	server.state.Apply(TodoCreated{
+		Type:      "TodoCreated",
+		ID:        "todo-1",
+		Name:      "Task",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	invalidCat := "missing"
+	_, err = server.commandToEvent(CategorizeTodoCommand{
+		BaseCommand: BaseCommand{Type: "CategorizeTodo"},
+		ID:          "todo-1",
+		CategoryID:  &invalidCat,
+	})
+	assert.Error(t, err)
+}

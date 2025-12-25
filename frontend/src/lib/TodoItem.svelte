@@ -3,12 +3,13 @@
 
   interface Props {
     todo: Todo;
+    categoryName?: string | null;
     onToggleComplete: (id: string) => void;
     onToggleStar: (id: string) => void;
     onRename: (id: string, name: string) => void;
   }
 
-  let { todo, onToggleComplete, onToggleStar, onRename }: Props = $props();
+  let { todo, categoryName = null, onToggleComplete, onToggleStar, onRename }: Props = $props();
 
   let isEditing = $state(false);
   let editName = $state('');
@@ -120,6 +121,12 @@
     </span>
   {/if}
 
+  {#if categoryName}
+    <span class="category-badge">
+      {categoryName}
+    </span>
+  {/if}
+
   <button 
     class="star-btn" 
     class:starred={todo.starred}
@@ -198,6 +205,17 @@
   .todo-name.strikethrough {
     text-decoration: line-through;
     color: var(--text-muted);
+  }
+
+  .category-badge {
+    margin-left: 8px;
+    padding: 4px 8px;
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
   }
 
   .edit-input {

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { TodoWebSocket, ConnectionState } from './websocket';
 import type {
   Todo,
+  Category,
   Event,
   ServerMessage,
   TodoCreated,
@@ -12,9 +13,19 @@ import type {
   TodoUnstarred,
   TodoReordered,
   TodoRenamed,
+  TodoCategorized,
+  CategoryCreated,
+  CategoryRenamed,
+  CategoryDeleted,
+  CategoryReordered,
   ListTitleChanged,
   Command,
   CreateTodo,
+  CreateCategory,
+  RenameCategory,
+  DeleteCategory,
+  ReorderCategory,
+  CategorizeTodo,
   CompleteTodo,
   UncompleteTodo,
   StarTodo,
@@ -23,17 +34,26 @@ import type {
   RenameTodo,
   SetListTitle,
   AutocompleteResponse,
+  AutocompleteSuggestion,
 } from './types';
 
 export interface TodoStore {
   todos: ReturnType<typeof writable<Todo[]>>;
   activeTodos: ReturnType<typeof derived<ReturnType<typeof writable<Todo[]>>, Todo[]>>;
   completedTodos: ReturnType<typeof derived<ReturnType<typeof writable<Todo[]>>, Todo[]>>;
+  categories: ReturnType<typeof derived<ReturnType<typeof writable<Map<string, Category>>>, Category[]>>;
+  categoryLookup: ReturnType<typeof derived<ReturnType<typeof writable<Map<string, Category>>>, Map<string, Category>>>;
+  activeTodosByCategory: ReturnType<typeof derived<ReturnType<typeof writable<Todo[]>>, Map<string | null, Todo[]>>>;
   connectionState: ReturnType<typeof writable<ConnectionState>>;
   userCount: ReturnType<typeof writable<number>>;
   listTitle: ReturnType<typeof writable<string>>;
-  autocompleteSuggestions: ReturnType<typeof writable<string[]>>;
-  createTodo: (name: string) => void;
+  autocompleteSuggestions: ReturnType<typeof writable<AutocompleteSuggestion[]>>;
+  createTodo: (name: string, categoryId?: string | null) => void;
+  createCategory: (name: string) => void;
+  renameCategory: (id: string, name: string) => void;
+  deleteCategory: (id: string) => void;
+  reorderCategory: (id: string, newSortOrder: number) => void;
+  categorizeTodo: (id: string, categoryId: string | null) => void;
   toggleComplete: (id: string) => void;
   toggleStar: (id: string) => void;
   reorder: (id: string, newSortOrder: number) => void;
@@ -46,10 +66,11 @@ export interface TodoStore {
 
 export function createTodoStore(wsUrl: string): TodoStore {
   const todosMap = writable<Map<string, Todo>>(new Map());
+  const categoriesMap = writable<Map<string, Category>>(new Map());
   const connectionState = writable<ConnectionState>(ConnectionState.CONNECTING);
   const userCount = writable<number>(0);
   const listTitle = writable<string>('My Todo List');
-  const autocompleteSuggestions = writable<string[]>([]);
+  const autocompleteSuggestions = writable<AutocompleteSuggestion[]>([]);
   
   // Track pending autocomplete request to match responses
   let pendingRequestId: string | null = null;
@@ -80,6 +101,29 @@ export function createTodoStore(wsUrl: string): TodoStore {
       })
   );
 
+  const categories = derived(categoriesMap, ($map) => {
+    const arr = Array.from($map.values());
+    return arr.sort((a, b) => b.sortOrder - a.sortOrder);
+  });
+
+  const categoryLookup = derived(categoriesMap, ($map) => new Map($map));
+
+  const activeTodosByCategory = derived(activeTodos, ($activeTodos) => {
+    const grouped = new Map<string | null, Todo[]>();
+    for (const todo of $activeTodos) {
+      const key = todo.categoryId ?? null;
+      const list = grouped.get(key) ?? [];
+      list.push(todo);
+      grouped.set(key, list);
+    }
+    // Sort each category's todos by sortOrder descending
+    for (const [key, list] of grouped) {
+      list.sort((a, b) => b.sortOrder - a.sortOrder);
+      grouped.set(key, list);
+    }
+    return grouped;
+  });
+
   // WebSocket connection
   const ws = new TodoWebSocket(wsUrl);
 
@@ -106,6 +150,13 @@ export function createTodoStore(wsUrl: string): TodoStore {
         map.set(todo.id, todo);
       }
       todosMap.set(map);
+      const catMap = new Map<string, Category>();
+      if ('categories' in message && Array.isArray(message.categories)) {
+        for (const cat of message.categories) {
+          catMap.set(cat.id, cat);
+        }
+      }
+      categoriesMap.set(catMap);
       listTitle.set(message.listTitle);
       return;
     }
@@ -133,6 +184,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
             completedAt: null,
             sortOrder: e.sortOrder,
             starred: false,
+            categoryId: e.categoryId ?? null,
           });
           break;
         }
@@ -191,6 +243,72 @@ export function createTodoStore(wsUrl: string): TodoStore {
           break;
         }
 
+        case 'TodoCategorized': {
+          const e = event as TodoCategorized;
+          const todo = newMap.get(e.id);
+          if (todo) {
+            newMap.set(e.id, { ...todo, categoryId: e.categoryId ?? null });
+          }
+          break;
+        }
+
+        case 'CategoryCreated': {
+          const e = event as CategoryCreated;
+          categoriesMap.update((catMap) => {
+            const mapCopy = new Map(catMap);
+            mapCopy.set(e.id, {
+              id: e.id,
+              name: e.name,
+              createdAt: e.createdAt,
+              sortOrder: e.sortOrder,
+            });
+            return mapCopy;
+          });
+          break;
+        }
+
+        case 'CategoryRenamed': {
+          const e = event as CategoryRenamed;
+          categoriesMap.update((catMap) => {
+            const mapCopy = new Map(catMap);
+            const cat = mapCopy.get(e.id);
+            if (cat) {
+              mapCopy.set(e.id, { ...cat, name: e.name });
+            }
+            return mapCopy;
+          });
+          break;
+        }
+
+        case 'CategoryDeleted': {
+          const e = event as CategoryDeleted;
+          categoriesMap.update((catMap) => {
+            const mapCopy = new Map(catMap);
+            mapCopy.delete(e.id);
+            return mapCopy;
+          });
+          // Clear categoryId for todos that referenced this category (shouldn't happen if validated server-side)
+          newMap.forEach((todo, id) => {
+            if (todo.categoryId === e.id) {
+              newMap.set(id, { ...todo, categoryId: null });
+            }
+          });
+          break;
+        }
+
+        case 'CategoryReordered': {
+          const e = event as CategoryReordered;
+          categoriesMap.update((catMap) => {
+            const mapCopy = new Map(catMap);
+            const cat = mapCopy.get(e.id);
+            if (cat) {
+              mapCopy.set(e.id, { ...cat, sortOrder: e.sortOrder });
+            }
+            return mapCopy;
+          });
+          break;
+        }
+
         case 'ListTitleChanged': {
           const e = event as ListTitleChanged;
           listTitle.set(e.title);
@@ -208,6 +326,12 @@ export function createTodoStore(wsUrl: string): TodoStore {
     return Math.max(...currentTodos.map((t) => t.sortOrder));
   }
 
+  function getHighestCategorySortOrder(): number {
+    const currentCategories = get(categories);
+    if (currentCategories.length === 0) return 0;
+    return Math.max(...currentCategories.map((c) => c.sortOrder));
+  }
+
   function sendCommand(command: Command, optimisticEvent?: Event) {
     // Apply optimistically if provided
     if (optimisticEvent) {
@@ -219,13 +343,14 @@ export function createTodoStore(wsUrl: string): TodoStore {
 
   // Public actions
 
-  function createTodo(name: string) {
+  function createTodo(name: string, categoryId: string | null = null) {
     const id = uuidv4();
     const command: CreateTodo = {
       type: 'CreateTodo',
       id,
       name,
       sortOrder: getHighestSortOrder() + 1000,
+      categoryId,
     };
     const optimistic: TodoCreated = {
       type: 'TodoCreated',
@@ -233,7 +358,50 @@ export function createTodoStore(wsUrl: string): TodoStore {
       name,
       createdAt: new Date().toISOString(),
       sortOrder: command.sortOrder ?? getHighestSortOrder() + 1000,
+      categoryId,
     };
+    sendCommand(command, optimistic);
+  }
+
+  function createCategory(name: string) {
+    const id = uuidv4();
+    const command: CreateCategory = {
+      type: 'CreateCategory',
+      id,
+      name,
+      sortOrder: getHighestCategorySortOrder() + 1000,
+    };
+    const optimistic: CategoryCreated = {
+      type: 'CategoryCreated',
+      id,
+      name,
+      createdAt: new Date().toISOString(),
+      sortOrder: command.sortOrder ?? getHighestCategorySortOrder() + 1000,
+    };
+    sendCommand(command, optimistic);
+  }
+
+  function renameCategory(id: string, name: string) {
+    const command: RenameCategory = { type: 'RenameCategory', id, name };
+    const optimistic: CategoryRenamed = { type: 'CategoryRenamed', id, name };
+    sendCommand(command, optimistic);
+  }
+
+  function deleteCategory(id: string) {
+    const command: DeleteCategory = { type: 'DeleteCategory', id };
+    // Do not optimistically remove; wait for server validation
+    sendCommand(command);
+  }
+
+  function reorderCategory(id: string, newSortOrder: number) {
+    const command: ReorderCategory = { type: 'ReorderCategory', id, sortOrder: newSortOrder };
+    const optimistic: CategoryReordered = { type: 'CategoryReordered', id, sortOrder: newSortOrder };
+    sendCommand(command, optimistic);
+  }
+
+  function categorizeTodo(id: string, categoryId: string | null) {
+    const command: CategorizeTodo = { type: 'CategorizeTodo', id, categoryId };
+    const optimistic: TodoCategorized = { type: 'TodoCategorized', id, categoryId };
     sendCommand(command, optimistic);
   }
 
@@ -312,11 +480,19 @@ export function createTodoStore(wsUrl: string): TodoStore {
     todos: todos as any, // Cast to satisfy interface
     activeTodos: activeTodos as any,
     completedTodos: completedTodos as any,
+    categories: categories as any,
+    categoryLookup: categoryLookup as any,
+    activeTodosByCategory: activeTodosByCategory as any,
     connectionState,
     userCount,
     listTitle,
     autocompleteSuggestions,
     createTodo,
+    createCategory,
+    renameCategory,
+    deleteCategory,
+    reorderCategory,
+    categorizeTodo,
     toggleComplete,
     toggleStar,
     reorder,

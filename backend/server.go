@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -53,6 +54,37 @@ type CreateTodoCommand struct {
 	ID        string  `json:"id"`
 	Name      string  `json:"name"`
 	SortOrder float64 `json:"sortOrder,omitempty"`
+	CategoryID *string `json:"categoryId,omitempty"`
+}
+
+type CategorizeTodoCommand struct {
+	BaseCommand
+	ID         string  `json:"id"`
+	CategoryID *string `json:"categoryId"`
+}
+
+type CreateCategoryCommand struct {
+	BaseCommand
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	SortOrder float64 `json:"sortOrder,omitempty"`
+}
+
+type RenameCategoryCommand struct {
+	BaseCommand
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type DeleteCategoryCommand struct {
+	BaseCommand
+	ID string `json:"id"`
+}
+
+type ReorderCategoryCommand struct {
+	BaseCommand
+	ID        string  `json:"id"`
+	SortOrder float64 `json:"sortOrder"`
 }
 
 type CompleteTodoCommand struct {
@@ -154,6 +186,7 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	rollup := StateRollup{
 		Type:      "StateRollup",
 		Todos:     s.state.GetTodos(),
+		Categories: s.state.GetCategories(),
 		ListTitle: s.state.GetListTitle(),
 	}
 	rollupData, err := json.Marshal(rollup)
@@ -319,6 +352,36 @@ func ParseCommand(data []byte) (Command, error) {
 			return nil, err
 		}
 		return cmd, nil
+	case "CategorizeTodo":
+		var cmd CategorizeTodoCommand
+		if err := json.Unmarshal(data, &cmd); err != nil {
+			return nil, err
+		}
+		return cmd, nil
+	case "CreateCategory":
+		var cmd CreateCategoryCommand
+		if err := json.Unmarshal(data, &cmd); err != nil {
+			return nil, err
+		}
+		return cmd, nil
+	case "RenameCategory":
+		var cmd RenameCategoryCommand
+		if err := json.Unmarshal(data, &cmd); err != nil {
+			return nil, err
+		}
+		return cmd, nil
+	case "DeleteCategory":
+		var cmd DeleteCategoryCommand
+		if err := json.Unmarshal(data, &cmd); err != nil {
+			return nil, err
+		}
+		return cmd, nil
+	case "ReorderCategory":
+		var cmd ReorderCategoryCommand
+		if err := json.Unmarshal(data, &cmd); err != nil {
+			return nil, err
+		}
+		return cmd, nil
 	case "CompleteTodo":
 		var cmd CompleteTodoCommand
 		if err := json.Unmarshal(data, &cmd); err != nil {
@@ -374,12 +437,80 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		if c.ID == "" {
 			return nil, nil
 		}
+		var categoryID *string
+		if c.CategoryID != nil {
+			categoryID = c.CategoryID
+		}
+		sortOrder := s.state.GetHighestSortOrder() + 1000
+		if c.SortOrder != 0 {
+			sortOrder = int(c.SortOrder)
+		}
 		return TodoCreated{
 			Type:      "TodoCreated",
 			ID:        c.ID,
 			Name:      c.Name,
 			CreatedAt: time.Now().UTC(),
-			SortOrder: s.state.GetHighestSortOrder() + 1000,
+			SortOrder: sortOrder,
+			CategoryID: categoryID,
+		}, nil
+	case CategorizeTodoCommand:
+		// Validate category exists if provided
+		if c.CategoryID != nil {
+			if _, ok := s.state.GetCategory(*c.CategoryID); !ok {
+				return nil, fmt.Errorf("category does not exist")
+			}
+		}
+		if _, ok := s.state.GetTodo(c.ID); !ok {
+			return nil, fmt.Errorf("todo not found")
+		}
+		return TodoCategorized{
+			Type:       "TodoCategorized",
+			ID:         c.ID,
+			CategoryID: c.CategoryID,
+		}, nil
+	case CreateCategoryCommand:
+		if c.ID == "" {
+			return nil, fmt.Errorf("missing category id")
+		}
+		sortOrder := s.state.GetHighestCategorySortOrder() + 1000
+		if c.SortOrder != 0 {
+			sortOrder = int(c.SortOrder)
+		}
+		return CategoryCreated{
+			Type:      "CategoryCreated",
+			ID:        c.ID,
+			Name:      c.Name,
+			CreatedAt: time.Now().UTC(),
+			SortOrder: sortOrder,
+		}, nil
+	case RenameCategoryCommand:
+		if _, ok := s.state.GetCategory(c.ID); !ok {
+			return nil, fmt.Errorf("category not found")
+		}
+		return CategoryRenamed{
+			Type: "CategoryRenamed",
+			ID:   c.ID,
+			Name: c.Name,
+		}, nil
+	case DeleteCategoryCommand:
+		if s.state.CategoryHasTodos(c.ID) {
+			return nil, fmt.Errorf("cannot delete non-empty category")
+		}
+		if _, ok := s.state.GetCategory(c.ID); !ok {
+			return nil, fmt.Errorf("category not found")
+		}
+		return CategoryDeleted{
+			Type: "CategoryDeleted",
+			ID:   c.ID,
+		}, nil
+	case ReorderCategoryCommand:
+		if _, ok := s.state.GetCategory(c.ID); !ok {
+			return nil, fmt.Errorf("category not found")
+		}
+		return CategoryReordered{
+			Type:      "CategoryReordered",
+			ID:        c.ID,
+			SortOrder: int(c.SortOrder),
 		}, nil
 	case CompleteTodoCommand:
 		return TodoCompleted{

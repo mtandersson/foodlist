@@ -4,7 +4,9 @@
   import { fade, slide } from 'svelte/transition';
   import { createTodoStore } from './store';
   import TodoItem from './TodoItem.svelte';
-  import type { Todo } from './types';
+  import ModeSwitch from './ModeSwitch.svelte';
+  import CategoriesView from './CategoriesView.svelte';
+  import type { Todo, AutocompleteSuggestion } from './types';
 
   // Determine WebSocket URL
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -13,10 +15,12 @@
     : `${wsProtocol}//${window.location.host}/ws`;
 
   const store = createTodoStore(wsUrl);
-  const { activeTodos, completedTodos, connectionState, userCount, listTitle, autocompleteSuggestions } = store;
+  const { activeTodos, completedTodos, categories, activeTodosByCategory, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions } = store;
 
   let newTodoName = $state('');
   let completedExpanded = $state(true);
+  let viewMode: 'normal' | 'categories' = $state((typeof localStorage !== 'undefined' && (localStorage.getItem('viewMode') as 'normal' | 'categories')) || 'normal');
+  let pendingCategoryId: string | null = $state(null);
   
   // List title state
   let editingTitle = $state(false);
@@ -30,8 +34,9 @@
   function handleAddTodo() {
     const name = newTodoName.trim();
     if (name) {
-      store.createTodo(name);
+      store.createTodo(name, pendingCategoryId);
       newTodoName = '';
+      pendingCategoryId = null;
       hideAutocomplete();
     }
   }
@@ -66,6 +71,7 @@
     store.requestAutocomplete(newTodoName);
     showAutocomplete = true;
     selectedAutocompleteIndex = -1;
+    pendingCategoryId = null;
   }
 
   function handleInputFocus() {
@@ -85,8 +91,9 @@
     }, 150);
   }
 
-  function selectSuggestion(suggestion: string) {
-    newTodoName = suggestion;
+  function selectSuggestion(suggestion: AutocompleteSuggestion) {
+    newTodoName = suggestion.name;
+    pendingCategoryId = suggestion.categoryId ?? null;
     hideAutocomplete();
     // Immediately add the todo
     handleAddTodo();
@@ -100,6 +107,39 @@
 
   function toggleCompletedSection() {
     completedExpanded = !completedExpanded;
+  }
+
+  function handleModeChange(mode: 'normal' | 'categories') {
+    viewMode = mode;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('viewMode', mode);
+    }
+  }
+
+  function getCategoryName(categoryId: string | null | undefined): string | null {
+    if (!categoryId) return null;
+    const cat = $categoryLookup.get(categoryId);
+    return cat ? cat.name : null;
+  }
+
+  function handleCategorize(id: string, categoryId: string | null) {
+    store.categorizeTodo(id, categoryId);
+  }
+
+  function handleCreateCategory(name: string) {
+    store.createCategory(name);
+  }
+
+  function handleRenameCategory(id: string, name: string) {
+    store.renameCategory(id, name);
+  }
+
+  function handleDeleteCategory(id: string) {
+    store.deleteCategory(id);
+  }
+
+  function handleReorderCategory(id: string, sortOrder: number) {
+    store.reorderCategory(id, sortOrder);
   }
 
   // Title editing
@@ -209,6 +249,7 @@
       </h1>
     {/if}
     <div class="header-right">
+      <ModeSwitch value={viewMode} on:change={(e) => handleModeChange(e.detail)} />
       <span class="member-count" aria-label="Connected users">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -242,64 +283,82 @@
       </div>
     {/if}
 
-    <!-- Active todos -->
-    <div class="todos-section">
-      {#each $activeTodos as todo (todo.id)}
-        <div
-          animate:flip={{ duration: 300 }}
-          transition:fade={{ duration: 200 }}
-          draggable="true"
-          ondragstart={(e) => handleDragStart(e, todo)}
-          ondragover={(e) => handleDragOver(e, todo)}
-          ondragleave={handleDragLeave}
-          ondrop={(e) => handleDrop(e, todo)}
-          ondragend={handleDragEnd}
-          class:dragging={draggedId === todo.id}
-          class:drag-over={dragOverId === todo.id}
-        >
-          <TodoItem
-            {todo}
-            onToggleComplete={store.toggleComplete}
-            onToggleStar={store.toggleStar}
-            onRename={store.rename}
-          />
-        </div>
-      {/each}
-    </div>
+    {#if viewMode === 'normal'}
+      <!-- Active todos -->
+      <div class="todos-section">
+        {#each $activeTodos as todo (todo.id)}
+          <div
+            animate:flip={{ duration: 300 }}
+            transition:fade={{ duration: 200 }}
+            draggable="true"
+            ondragstart={(e) => handleDragStart(e, todo)}
+            ondragover={(e) => handleDragOver(e, todo)}
+            ondragleave={handleDragLeave}
+            ondrop={(e) => handleDrop(e, todo)}
+            ondragend={handleDragEnd}
+            class:dragging={draggedId === todo.id}
+            class:drag-over={dragOverId === todo.id}
+          >
+            <TodoItem
+              {todo}
+              categoryName={getCategoryName(todo.categoryId ?? null)}
+              onToggleComplete={store.toggleComplete}
+              onToggleStar={store.toggleStar}
+              onRename={store.rename}
+            />
+          </div>
+        {/each}
+      </div>
 
-    <!-- Completed section -->
-    {#if $completedTodos.length > 0}
-      <button class="completed-header" onclick={toggleCompletedSection}>
-        <svg 
-          class="chevron" 
-          class:expanded={completedExpanded}
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          stroke-width="2"
-        >
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-        Slutfört
-      </button>
+      <!-- Completed section -->
+      {#if $completedTodos.length > 0}
+        <button class="completed-header" onclick={toggleCompletedSection}>
+          <svg 
+            class="chevron" 
+            class:expanded={completedExpanded}
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            stroke-width="2"
+          >
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+          Slutfört
+        </button>
 
-      {#if completedExpanded}
-        <div class="completed-section" transition:slide={{ duration: 300 }}>
-          {#each $completedTodos as todo (todo.id)}
-            <div
-              animate:flip={{ duration: 300 }}
-              transition:fade={{ duration: 200 }}
-            >
-              <TodoItem
-                {todo}
-                onToggleComplete={store.toggleComplete}
-                onToggleStar={store.toggleStar}
-                onRename={store.rename}
-              />
-            </div>
-          {/each}
-        </div>
+        {#if completedExpanded}
+          <div class="completed-section" transition:slide={{ duration: 300 }}>
+            {#each $completedTodos as todo (todo.id)}
+              <div
+                animate:flip={{ duration: 300 }}
+                transition:fade={{ duration: 200 }}
+              >
+                <TodoItem
+                  {todo}
+                  categoryName={getCategoryName(todo.categoryId ?? null)}
+                  onToggleComplete={store.toggleComplete}
+                  onToggleStar={store.toggleStar}
+                  onRename={store.rename}
+                />
+              </div>
+            {/each}
+          </div>
+        {/if}
       {/if}
+    {:else}
+      <CategoriesView
+        categories={$categories}
+        activeTodosByCategory={$activeTodosByCategory}
+        completedTodos={$completedTodos}
+        getCategoryName={getCategoryName}
+        onCreateCategory={handleCreateCategory}
+        onRenameCategory={handleRenameCategory}
+        onDeleteCategory={handleDeleteCategory}
+        onReorderCategory={handleReorderCategory}
+        onCategorizeTodo={handleCategorize}
+        onToggleComplete={store.toggleComplete}
+        onToggleStar={store.toggleStar}
+      />
     {/if}
   </div>
 
@@ -315,7 +374,14 @@
             onmousedown={() => selectSuggestion(suggestion)}
             onmouseenter={() => selectedAutocompleteIndex = index}
           >
-            {suggestion}
+            <div class="autocomplete-item-main">
+              <span>{suggestion.name}</span>
+              {#if suggestion.categoryName || suggestion.categoryId}
+                <span class="autocomplete-badge">
+                  {suggestion.categoryName ?? getCategoryName(suggestion.categoryId)}
+                </span>
+              {/if}
+            </div>
           </button>
         {/each}
       </div>
@@ -625,6 +691,22 @@
   .autocomplete-item:hover,
   .autocomplete-item.selected {
     background: var(--surface-muted);
+  }
+
+  .autocomplete-item-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .autocomplete-badge {
+    background: var(--surface-muted-strong);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .autocomplete-item:first-child {

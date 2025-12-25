@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { get } from 'svelte/store';
-import type { Todo, StateRollup, TodoCreated, TodoCompleted, Event, ServerMessage, ListTitleChanged, AutocompleteResponse } from './types';
+import type { Todo, Category, StateRollup, TodoCreated, TodoCompleted, Event, ServerMessage, ListTitleChanged, AutocompleteResponse, AutocompleteSuggestion } from './types';
 
 // Mock handlers storage
 let messageHandler: ((msg: ServerMessage) => void) | null = null;
@@ -70,6 +70,8 @@ describe('TodoStore', () => {
         { id: '1', name: 'Task 1', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false },
         { id: '2', name: 'Task 2', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false },
       ],
+      categories: [],
+      listTitle: 'My Todo List',
     };
     
     messageHandler!(rollup);
@@ -87,7 +89,7 @@ describe('TodoStore', () => {
     const store = createTodoStore('ws://localhost:8080/ws');
     
     // Initialize with empty rollup
-    messageHandler!({ type: 'StateRollup', todos: [] });
+    messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'Title' });
     
     const event: TodoCreated = {
       type: 'TodoCreated',
@@ -106,12 +108,51 @@ describe('TodoStore', () => {
     store.destroy();
   });
 
+  it('should load categories from rollup and expose categoryLookup', () => {
+    const store = createTodoStore('ws://localhost:8080/ws');
+
+    messageHandler!({
+      type: 'StateRollup',
+      todos: [{ id: '1', name: 'Task', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: 'cat-1' }],
+      categories: [{ id: 'cat-1', name: 'Work', createdAt: '2024-01-01T00:00:00Z', sortOrder: 1000 }],
+      listTitle: 'My Todo List',
+    });
+
+    const categories = get(store.categories);
+    expect(categories).toHaveLength(1);
+    expect(categories[0].name).toBe('Work');
+    expect(get(store.categoryLookup).get('cat-1')?.name).toBe('Work');
+
+    store.destroy();
+  });
+
+  it('should send categorize todo command', () => {
+    const store = createTodoStore('ws://localhost:8080/ws');
+    messageHandler!({
+      type: 'StateRollup',
+      todos: [{ id: '1', name: 'Task', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: null }],
+      categories: [],
+      listTitle: 'My Todo List',
+    });
+
+    store.categorizeTodo('1', 'cat-2');
+
+    const sentEvent = JSON.parse(mockSend.mock.calls[0][0]);
+    expect(sentEvent.type).toBe('CategorizeTodo');
+    expect(sentEvent.id).toBe('1');
+    expect(sentEvent.categoryId).toBe('cat-2');
+
+    store.destroy();
+  });
+
   it('should apply TodoCompleted event', () => {
     const store = createTodoStore('ws://localhost:8080/ws');
     
     messageHandler!({
       type: 'StateRollup',
       todos: [{ id: '1', name: 'Task', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false }],
+      categories: [],
+      listTitle: 'My Todo List',
     });
     
     const completed: TodoCompleted = {
@@ -167,6 +208,8 @@ describe('TodoStore', () => {
         { id: '2', name: 'High', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 3000, starred: false },
         { id: '3', name: 'Mid', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false },
       ],
+      categories: [],
+      listTitle: 'My Todo List',
     });
     
     const todos = get(store.todos);
@@ -185,6 +228,8 @@ describe('TodoStore', () => {
       todos: [
         { id: '1', name: 'Task 1', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 5000, starred: false },
       ],
+      categories: [],
+      listTitle: 'My Todo List',
     });
     
     store.createTodo('New task');
@@ -251,6 +296,8 @@ describe('TodoStore', () => {
         { id: '2', name: 'Task 2', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false },
         { id: '3', name: 'Task 3', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 3000, starred: false },
       ],
+      categories: [],
+      listTitle: 'My Todo List',
     });
     
     // Move task 1 to position between 2 and 3 (sortOrder 2500)
@@ -280,6 +327,8 @@ describe('TodoStore', () => {
         sortOrder: 1000,
         starred: false,
       }],
+      categories: [],
+      listTitle: 'My Todo List',
     });
 
     store.toggleStar('1');
@@ -304,6 +353,8 @@ describe('TodoStore', () => {
         sortOrder: 1000,
         starred: true,
       }],
+      categories: [],
+      listTitle: 'My Todo List',
     });
 
     store.toggleStar('1');
@@ -328,6 +379,8 @@ describe('TodoStore', () => {
         sortOrder: 1000,
         starred: false,
       }],
+      categories: [],
+      listTitle: 'My Todo List',
     });
 
     store.toggleComplete('1');
@@ -352,6 +405,8 @@ describe('TodoStore', () => {
         sortOrder: 1000,
         starred: false,
       }],
+      categories: [],
+      listTitle: 'My Todo List',
     });
 
     store.toggleComplete('1');
@@ -396,6 +451,8 @@ describe('TodoStore', () => {
         sortOrder: 1000,
         starred: false,
       }],
+      categories: [],
+      listTitle: 'My Todo List',
     });
 
     store.rename('1', 'New Name');
@@ -417,6 +474,8 @@ describe('TodoStore', () => {
         { id: '1', name: 'Active', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false },
         { id: '2', name: 'Done', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T00:00:00Z', sortOrder: 2000, starred: false },
       ],
+      categories: [],
+      listTitle: 'My Todo List',
     });
     
     const active = get(store.activeTodos);
@@ -440,6 +499,8 @@ describe('TodoStore', () => {
         { id: '2', name: 'Completed Last', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 1000, starred: false },
         { id: '3', name: 'Completed Middle', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false },
       ],
+      categories: [],
+      listTitle: 'My Todo List',
     });
     
     const completed = get(store.completedTodos);
@@ -460,6 +521,7 @@ describe('TodoStore', () => {
     messageHandler!({
       type: 'StateRollup',
       todos: [],
+      categories: [],
       listTitle: 'Initial Title',
     } as StateRollup);
     
@@ -496,6 +558,7 @@ describe('TodoStore', () => {
     messageHandler!({
       type: 'StateRollup',
       todos: [],
+      categories: [],
       listTitle: 'Old Title',
     } as StateRollup);
     
@@ -535,12 +598,15 @@ describe('TodoStore', () => {
       // Simulate response
       autocompleteHandler!({
         type: 'AutocompleteResponse',
-        suggestions: ['Milk', 'Milo'],
+        suggestions: [
+          { name: 'Milk', categoryId: null, categoryName: null },
+          { name: 'Milo', categoryId: null, categoryName: null },
+        ] as AutocompleteSuggestion[],
         requestId: requestId,
       });
       
       const suggestions = get(store.autocompleteSuggestions);
-      expect(suggestions).toEqual(['Milk', 'Milo']);
+      expect(suggestions.map((s) => s.name)).toEqual(['Milk', 'Milo']);
       
       store.destroy();
     });
@@ -554,7 +620,10 @@ describe('TodoStore', () => {
       // Simulate response with wrong requestId
       autocompleteHandler!({
         type: 'AutocompleteResponse',
-        suggestions: ['Wrong', 'Response'],
+        suggestions: [
+          { name: 'Wrong', categoryId: null, categoryName: null },
+          { name: 'Response', categoryId: null, categoryName: null },
+        ] as AutocompleteSuggestion[],
         requestId: 'wrong-id',
       });
       
@@ -573,11 +642,11 @@ describe('TodoStore', () => {
       const requestId = mockSendAutocomplete.mock.calls[0][0].requestId;
       autocompleteHandler!({
         type: 'AutocompleteResponse',
-        suggestions: ['Milk'],
+        suggestions: [{ name: 'Milk', categoryId: null, categoryName: null }],
         requestId: requestId,
       });
       
-      expect(get(store.autocompleteSuggestions)).toEqual(['Milk']);
+      expect(get(store.autocompleteSuggestions).map((s) => s.name)).toEqual(['Milk']);
       
       // Clear autocomplete
       store.clearAutocomplete();
@@ -603,7 +672,7 @@ describe('TodoStore', () => {
       // Response from first request arrives (stale)
       autocompleteHandler!({
         type: 'AutocompleteResponse',
-        suggestions: ['Meat'],
+        suggestions: [{ name: 'Meat', categoryId: null, categoryName: null }],
         requestId: firstRequestId,
       });
       
@@ -613,12 +682,12 @@ describe('TodoStore', () => {
       // Response from third request arrives
       autocompleteHandler!({
         type: 'AutocompleteResponse',
-        suggestions: ['Milk'],
+        suggestions: [{ name: 'Milk', categoryId: null, categoryName: null }],
         requestId: thirdRequestId,
       });
       
       // Should update with latest
-      expect(get(store.autocompleteSuggestions)).toEqual(['Milk']);
+      expect(get(store.autocompleteSuggestions).map((s) => s.name)).toEqual(['Milk']);
       
       store.destroy();
     });

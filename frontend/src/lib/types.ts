@@ -9,6 +9,14 @@ export interface Todo {
   completedAt: string | null
   sortOrder: number
   starred: boolean
+  categoryId?: string | null
+}
+
+export interface Category {
+  id: string
+  name: string
+  createdAt: string
+  sortOrder: number
 }
 
 // Event types
@@ -18,6 +26,7 @@ export interface TodoCreated {
   name: string
   createdAt: string
   sortOrder: number
+  categoryId?: string | null
 }
 
 export interface TodoCompleted {
@@ -54,6 +63,37 @@ export interface TodoRenamed {
   name: string
 }
 
+export interface TodoCategorized {
+  type: "TodoCategorized"
+  id: string
+  categoryId: string | null
+}
+
+export interface CategoryCreated {
+  type: "CategoryCreated"
+  id: string
+  name: string
+  createdAt: string
+  sortOrder: number
+}
+
+export interface CategoryRenamed {
+  type: "CategoryRenamed"
+  id: string
+  name: string
+}
+
+export interface CategoryDeleted {
+  type: "CategoryDeleted"
+  id: string
+}
+
+export interface CategoryReordered {
+  type: "CategoryReordered"
+  id: string
+  sortOrder: number
+}
+
 export interface ListTitleChanged {
   type: "ListTitleChanged"
   title: string
@@ -65,6 +105,37 @@ export interface CreateTodo {
   id: string
   name: string
   sortOrder?: number
+  categoryId?: string | null
+}
+
+export interface CategorizeTodo {
+  type: "CategorizeTodo"
+  id: string
+  categoryId: string | null
+}
+
+export interface CreateCategory {
+  type: "CreateCategory"
+  id: string
+  name: string
+  sortOrder?: number
+}
+
+export interface RenameCategory {
+  type: "RenameCategory"
+  id: string
+  name: string
+}
+
+export interface DeleteCategory {
+  type: "DeleteCategory"
+  id: string
+}
+
+export interface ReorderCategory {
+  type: "ReorderCategory"
+  id: string
+  sortOrder: number
 }
 
 export interface CompleteTodo {
@@ -107,6 +178,7 @@ export interface SetListTitle {
 export interface StateRollup {
   type: "StateRollup"
   todos: Todo[]
+  categories: Category[]
   listTitle: string
 }
 
@@ -119,6 +191,11 @@ export type Event =
   | TodoUnstarred
   | TodoReordered
   | TodoRenamed
+  | TodoCategorized
+  | CategoryCreated
+  | CategoryRenamed
+  | CategoryDeleted
+  | CategoryReordered
   | ListTitleChanged
 
 export interface ClientCount {
@@ -133,9 +210,15 @@ export interface AutocompleteRequest {
   requestId: string
 }
 
+export interface AutocompleteSuggestion {
+  name: string
+  categoryId: string | null
+  categoryName: string | null
+}
+
 export interface AutocompleteResponse {
   type: "AutocompleteResponse"
-  suggestions: string[]
+  suggestions: AutocompleteSuggestion[]
   requestId: string
 }
 
@@ -149,6 +232,11 @@ export type Command =
   | UnstarTodo
   | ReorderTodo
   | RenameTodo
+  | CategorizeTodo
+  | CreateCategory
+  | RenameCategory
+  | DeleteCategory
+  | ReorderCategory
   | SetListTitle
 
 // Type guards

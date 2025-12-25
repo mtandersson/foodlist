@@ -14,6 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func suggestionNames(list []AutocompleteSuggestion) []string {
+	names := make([]string, 0, len(list))
+	for _, s := range list {
+		names = append(names, s.Name)
+	}
+	return names
+}
+
 // Test Levenshtein distance calculation
 func TestLevenshteinDistance_EmptyStrings(t *testing.T) {
 	assert.Equal(t, 0, levenshteinDistance("", ""))
@@ -137,11 +145,11 @@ func TestAutocomplete_EmptyQueryReturnsFrequentItems(t *testing.T) {
 	require.NotEmpty(t, suggestions)
 
 	// Milk (freq 3) should be first
-	assert.Equal(t, "Milk", suggestions[0])
+	assert.Equal(t, "Milk", suggestions[0].Name)
 
 	// Butter should NOT be in suggestions (it's active)
 	for _, s := range suggestions {
-		assert.NotEqual(t, "Butter", s)
+		assert.NotEqual(t, "Butter", s.Name)
 	}
 }
 
@@ -153,7 +161,7 @@ func TestAutocomplete_PartialMatchPrefixPriority(t *testing.T) {
 	suggestions := server.getAutocompleteSuggestions("Mi")
 
 	require.NotEmpty(t, suggestions)
-	assert.Contains(t, suggestions, "Milk")
+	assert.Contains(t, suggestionNames(suggestions), "Milk")
 }
 
 func TestAutocomplete_FilterOutActiveTodos(t *testing.T) {
@@ -164,7 +172,7 @@ func TestAutocomplete_FilterOutActiveTodos(t *testing.T) {
 	suggestions := server.getAutocompleteSuggestions("But")
 
 	for _, s := range suggestions {
-		assert.NotEqual(t, "Butter", s)
+		assert.NotEqual(t, "Butter", s.Name)
 	}
 }
 
@@ -176,7 +184,7 @@ func TestAutocomplete_FuzzyMatch(t *testing.T) {
 	suggestions := server.getAutocompleteSuggestions("Mlk")
 
 	require.NotEmpty(t, suggestions)
-	assert.Contains(t, suggestions, "Milk")
+	assert.Contains(t, suggestionNames(suggestions), "Milk")
 }
 
 func TestAutocomplete_MaxFourSuggestions(t *testing.T) {
@@ -206,11 +214,11 @@ func TestAutocomplete_CaseInsensitiveMatching(t *testing.T) {
 
 	// "milk" lowercase should match "Milk"
 	suggestions1 := server.getAutocompleteSuggestions("milk")
-	assert.Contains(t, suggestions1, "Milk")
+	assert.Contains(t, suggestionNames(suggestions1), "Milk")
 
 	// "BREAD" uppercase should match "Bread"
 	suggestions2 := server.getAutocompleteSuggestions("BREAD")
-	assert.Contains(t, suggestions2, "Bread")
+	assert.Contains(t, suggestionNames(suggestions2), "Bread")
 }
 
 func TestAutocomplete_FrequencyRanking(t *testing.T) {
@@ -225,7 +233,7 @@ func TestAutocomplete_FrequencyRanking(t *testing.T) {
 	breadIdx := -1
 	eggsIdx := -1
 	for i, s := range suggestions {
-		switch s {
+		switch s.Name {
 		case "Milk":
 			milkIdx = i
 		case "Bread":
@@ -255,9 +263,9 @@ func TestAutocomplete_DistanceLimit(t *testing.T) {
 
 	// Should be empty or not contain our items
 	for _, s := range suggestions {
-		assert.NotEqual(t, "Milk", s)
-		assert.NotEqual(t, "Bread", s)
-		assert.NotEqual(t, "Eggs", s)
+		assert.NotEqual(t, "Milk", s.Name)
+		assert.NotEqual(t, "Bread", s.Name)
+		assert.NotEqual(t, "Eggs", s.Name)
 	}
 }
 
@@ -294,7 +302,7 @@ func TestAutocomplete_WebSocketIntegration(t *testing.T) {
 
 	assert.Equal(t, "AutocompleteResponse", response.Type)
 	assert.Equal(t, "test-123", response.RequestID)
-	assert.Contains(t, response.Suggestions, "Milk")
+	assert.Contains(t, suggestionNames(response.Suggestions), "Milk")
 }
 
 func TestAutocomplete_ResponseOnlyToRequestingClient(t *testing.T) {
@@ -358,7 +366,7 @@ func TestAutocomplete_SubstringMatch(t *testing.T) {
 	// "Milk" should match "Whole Milk" (substring)
 	suggestions := server.getAutocompleteSuggestions("Milk")
 
-	assert.Contains(t, suggestions, "Whole Milk")
+	assert.Contains(t, suggestionNames(suggestions), "Whole Milk")
 }
 
 func TestContainsEmoji(t *testing.T) {
@@ -389,8 +397,8 @@ func TestAutocomplete_PrefersEmojis(t *testing.T) {
 	suggestions := server.getAutocompleteSuggestions("Milk")
 
 	require.Len(t, suggestions, 2)
-	assert.Equal(t, "Milk 🥛", suggestions[0]) // Emoji version first
-	assert.Equal(t, "Milk", suggestions[1])
+	assert.Equal(t, "Milk 🥛", suggestions[0].Name) // Emoji version first
+	assert.Equal(t, "Milk", suggestions[1].Name)
 }
 
 func TestAutocomplete_EmptyQueryPrefersEmojis(t *testing.T) {
@@ -411,7 +419,26 @@ func TestAutocomplete_EmptyQueryPrefersEmojis(t *testing.T) {
 	suggestions := server.getAutocompleteSuggestions("")
 
 	require.Len(t, suggestions, 2)
-	assert.Equal(t, "Bananas 🍌", suggestions[0]) // Emoji version first
-	assert.Equal(t, "Apples", suggestions[1])
+	assert.Equal(t, "Bananas 🍌", suggestions[0].Name) // Emoji version first
+	assert.Equal(t, "Apples", suggestions[1].Name)
+}
+
+func TestAutocomplete_ReturnsCategoryContext(t *testing.T) {
+	tmpDir := t.TempDir()
+	filePath := filepath.Join(tmpDir, "events.jsonl")
+	store, _ := NewEventStore(filePath)
+	server := NewServer(store)
+
+	now := time.Now()
+	catID := "cat-1"
+	store.Append(CategoryCreated{Type: "CategoryCreated", ID: catID, Name: "Office", CreatedAt: now, SortOrder: 1000})
+	store.Append(TodoCreated{Type: "TodoCreated", ID: "1", Name: "Desk", CreatedAt: now, SortOrder: 1000, CategoryID: &catID})
+	store.Append(TodoCompleted{Type: "TodoCompleted", ID: "1", CompletedAt: now})
+	server.LoadEvents()
+
+	suggestions := server.getAutocompleteSuggestions("Desk")
+	require.NotEmpty(t, suggestions)
+	assert.Equal(t, &catID, suggestions[0].CategoryID)
+	assert.Equal(t, "Office", *suggestions[0].CategoryName)
 }
 

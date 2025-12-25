@@ -508,4 +508,45 @@ describe("Todo App", () => {
       cy.get(".autocomplete-item").should("have.length.at.most", 4)
     })
   })
+
+  describe("Categories Mode", () => {
+    it("switches to categories mode and back", () => {
+      cy.contains("button", "Kategorier").click()
+      cy.contains("Ny kategori").should("be.visible")
+      cy.contains("button", "Normal").click()
+      cy.contains("Ny kategori").should("not.exist")
+    })
+
+    it("creates category and moves todo into it via modal", () => {
+      const todoName = `Cat move ${Date.now()}`
+      const categoryName = `WorkCat ${Date.now()}`
+
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.contains(todoName).should("be.visible")
+
+      cy.contains("button", "Kategorier").click()
+      cy.contains("Ny kategori").should("be.visible")
+
+      cy.get('input[placeholder="Namn på kategori"]').type(`${categoryName}{enter}`)
+      cy.contains(".category-card", categoryName).should("exist")
+
+      cy.contains(".todo-row", todoName).click()
+      cy.contains(".modal-option", categoryName).click()
+
+      cy.contains(".category-card", categoryName).within(() => {
+        cy.contains(todoName).should("exist")
+        cy.get('[data-cy="delete-category"]').should("be.disabled")
+      })
+    })
+
+    it("deletes an empty category", () => {
+      const categoryName = `TempCat ${Date.now()}`
+      cy.contains("button", "Kategorier").click()
+      cy.get('input[placeholder="Namn på kategori"]').type(`${categoryName}{enter}`)
+      cy.contains(".category-card", categoryName).within(() => {
+        cy.get('[data-cy="delete-category"]').click()
+      })
+      cy.contains(".category-card", categoryName).should("not.exist")
+    })
+  })
 })

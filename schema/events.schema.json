@@ -19,7 +19,8 @@
         "type": {"const": "CreateTodo"},
         "id": {"type": "string", "format": "uuid"},
         "name": {"type": "string"},
-        "sortOrder": {"type": "integer"}
+        "sortOrder": {"type": "integer"},
+        "categoryId": {"type": ["string", "null"], "format": "uuid"}
       },
       "required": ["type", "id", "name"],
       "additionalProperties": false
@@ -87,6 +88,56 @@
         "title": {"type": "string"}
       },
       "required": ["type", "title"],
+      "additionalProperties": false
+    },
+    "CategorizeTodo": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CategorizeTodo"},
+        "id": {"type": "string", "format": "uuid"},
+        "categoryId": {"type": ["string", "null"], "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "CreateCategory": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CreateCategory"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "name"],
+      "additionalProperties": false
+    },
+    "RenameCategory": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "RenameCategory"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"}
+      },
+      "required": ["type", "id", "name"],
+      "additionalProperties": false
+    },
+    "DeleteCategory": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "DeleteCategory"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "ReorderCategory": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "ReorderCategory"},
+        "id": {"type": "string", "format": "uuid"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "sortOrder"],
       "additionalProperties": false
     },
     "TodoCreated": {
@@ -159,6 +210,57 @@
       "required": ["type", "id", "name"],
       "additionalProperties": false
     },
+    "TodoCategorized": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "TodoCategorized"},
+        "id": {"type": "string", "format": "uuid"},
+        "categoryId": {"type": ["string", "null"], "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "CategoryCreated": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CategoryCreated"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "name", "createdAt", "sortOrder"],
+      "additionalProperties": false
+    },
+    "CategoryRenamed": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CategoryRenamed"},
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"}
+      },
+      "required": ["type", "id", "name"],
+      "additionalProperties": false
+    },
+    "CategoryDeleted": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CategoryDeleted"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "CategoryReordered": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "CategoryReordered"},
+        "id": {"type": "string", "format": "uuid"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["type", "id", "sortOrder"],
+      "additionalProperties": false
+    },
     "ListTitleChanged": {
       "type": "object",
       "properties": {
@@ -177,9 +279,13 @@
           "type": "array",
           "items": {"$ref": "#/definitions/Todo"}
         },
+        "categories": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Category"}
+        },
         "listTitle": {"type": "string"}
       },
-      "required": ["type", "todos", "listTitle"],
+      "required": ["type", "todos", "categories", "listTitle"],
       "additionalProperties": false
     },
     "AutocompleteRequest": {
@@ -200,11 +306,22 @@
         "type": {"const": "AutocompleteResponse"},
         "suggestions": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {"$ref": "#/definitions/AutocompleteSuggestion"}
         },
         "requestId": {"type": "string"}
       },
       "required": ["type", "suggestions", "requestId"],
+      "additionalProperties": false
+    },
+    "AutocompleteSuggestion": {
+      "type": "object",
+      "description": "Autocomplete suggestion with optional category",
+      "properties": {
+        "name": {"type": "string"},
+        "categoryId": {"type": ["string", "null"], "format": "uuid"},
+        "categoryName": {"type": ["string", "null"]}
+      },
+      "required": ["name"],
       "additionalProperties": false
     },
     "Todo": {
@@ -216,9 +333,22 @@
         "createdAt": {"type": "string", "format": "date-time"},
         "completedAt": {"type": ["string", "null"], "format": "date-time"},
         "sortOrder": {"type": "integer"},
-        "starred": {"type": "boolean"}
+        "starred": {"type": "boolean"},
+        "categoryId": {"type": ["string", "null"], "format": "uuid"}
       },
       "required": ["id", "name", "createdAt", "sortOrder", "starred"],
+      "additionalProperties": false
+    },
+    "Category": {
+      "type": "object",
+      "description": "A category projected from events",
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "sortOrder": {"type": "integer"}
+      },
+      "required": ["id", "name", "createdAt", "sortOrder"],
       "additionalProperties": false
     },
     "Event": {
@@ -230,6 +360,11 @@
         {"$ref": "#/definitions/TodoUnstarred"},
         {"$ref": "#/definitions/TodoReordered"},
         {"$ref": "#/definitions/TodoRenamed"},
+        {"$ref": "#/definitions/TodoCategorized"},
+        {"$ref": "#/definitions/CategoryCreated"},
+        {"$ref": "#/definitions/CategoryRenamed"},
+        {"$ref": "#/definitions/CategoryDeleted"},
+        {"$ref": "#/definitions/CategoryReordered"},
         {"$ref": "#/definitions/ListTitleChanged"}
       ]
     },
@@ -242,6 +377,11 @@
         {"$ref": "#/definitions/UnstarTodo"},
         {"$ref": "#/definitions/ReorderTodo"},
         {"$ref": "#/definitions/RenameTodo"},
+        {"$ref": "#/definitions/CategorizeTodo"},
+        {"$ref": "#/definitions/CreateCategory"},
+        {"$ref": "#/definitions/RenameCategory"},
+        {"$ref": "#/definitions/DeleteCategory"},
+        {"$ref": "#/definitions/ReorderCategory"},
         {"$ref": "#/definitions/SetListTitle"}
       ]
     },
@@ -254,6 +394,11 @@
         {"$ref": "#/definitions/TodoUnstarred"},
         {"$ref": "#/definitions/TodoReordered"},
         {"$ref": "#/definitions/TodoRenamed"},
+        {"$ref": "#/definitions/TodoCategorized"},
+        {"$ref": "#/definitions/CategoryCreated"},
+        {"$ref": "#/definitions/CategoryRenamed"},
+        {"$ref": "#/definitions/CategoryDeleted"},
+        {"$ref": "#/definitions/CategoryReordered"},
         {"$ref": "#/definitions/ListTitleChanged"},
         {"$ref": "#/definitions/StateRollup"},
         {"$ref": "#/definitions/ClientCount"},

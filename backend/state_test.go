@@ -397,3 +397,47 @@ func TestState_GetListTitle(t *testing.T) {
 	assert.Equal(t, "My Todo List", state.GetListTitle())
 }
 
+func TestState_CategoryProjectionAndCategorization(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+	ptr := func(s string) *string { return &s }
+
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Inbox",
+		CreatedAt: now,
+		SortOrder: 2000,
+	})
+	state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-2",
+		Name:      "Work",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	cats := state.GetCategories()
+	require.Len(t, cats, 2)
+	assert.Equal(t, "cat-1", cats[0].ID) // highest sortOrder first
+
+	// Create todo in cat-1
+	state.Apply(TodoCreated{
+		Type:       "TodoCreated",
+		ID:         "todo-1",
+		Name:       "Task",
+		CreatedAt:  now,
+		SortOrder:  100,
+		CategoryID: ptr("cat-1"),
+	})
+	assert.True(t, state.CategoryHasTodos("cat-1"))
+
+	// Move to uncategorized
+	state.Apply(TodoCategorized{
+		Type:       "TodoCategorized",
+		ID:         "todo-1",
+		CategoryID: nil,
+	})
+	assert.False(t, state.CategoryHasTodos("cat-1"))
+}
+

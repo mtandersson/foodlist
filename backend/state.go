@@ -7,19 +7,23 @@ import (
 
 // State holds the current state of all todos, projected from events
 type State struct {
-	todos         map[string]*Todo
-	listTitle     string
-	nameFrequency map[string]int // Tracks frequency of todo names (case-insensitive key -> count)
-	nameCanonical map[string]string // Maps lowercase name to most recent casing
+	todos            map[string]*Todo
+	categories       map[string]*Category
+	listTitle        string
+	nameFrequency    map[string]int     // Tracks frequency of todo names (case-insensitive key -> count)
+	nameCanonical    map[string]string  // Maps lowercase name to most recent casing
+	nameLastCategory map[string]*string // Tracks last categoryId used for a name (lowercase)
 }
 
 // NewState creates a new empty state
 func NewState() *State {
 	return &State{
-		todos:         make(map[string]*Todo),
-		listTitle:     "My Todo List",
-		nameFrequency: make(map[string]int),
-		nameCanonical: make(map[string]string),
+		todos:            make(map[string]*Todo),
+		categories:       make(map[string]*Category),
+		listTitle:        "My Todo List",
+		nameFrequency:    make(map[string]int),
+		nameCanonical:    make(map[string]string),
+		nameLastCategory: make(map[string]*string),
 	}
 }
 
@@ -28,14 +32,16 @@ func (s *State) Apply(event Event) {
 	switch e := event.(type) {
 	case TodoCreated:
 		s.todos[e.ID] = &Todo{
-			ID:        e.ID,
-			Name:      e.Name,
-			CreatedAt: e.CreatedAt,
-			SortOrder: e.SortOrder,
-			Starred:   false,
+			ID:         e.ID,
+			Name:       e.Name,
+			CreatedAt:  e.CreatedAt,
+			SortOrder:  e.SortOrder,
+			Starred:    false,
+			CategoryID: e.CategoryID,
 		}
 		// Track name frequency for autocomplete
 		s.trackNameFrequency(e.Name)
+		s.trackLastCategory(e.Name, e.CategoryID)
 
 	case TodoCompleted:
 		if todo, ok := s.todos[e.ID]; ok {
@@ -68,10 +74,38 @@ func (s *State) Apply(event Event) {
 			todo.Name = e.Name
 			// Track name frequency for autocomplete
 			s.trackNameFrequency(e.Name)
+			s.trackLastCategory(e.Name, todo.CategoryID)
 		}
 
 	case ListTitleChanged:
 		s.listTitle = e.Title
+
+	case TodoCategorized:
+		if todo, ok := s.todos[e.ID]; ok {
+			todo.CategoryID = e.CategoryID
+			s.trackLastCategory(todo.Name, e.CategoryID)
+		}
+
+	case CategoryCreated:
+		s.categories[e.ID] = &Category{
+			ID:        e.ID,
+			Name:      e.Name,
+			CreatedAt: e.CreatedAt,
+			SortOrder: e.SortOrder,
+		}
+
+	case CategoryRenamed:
+		if cat, ok := s.categories[e.ID]; ok {
+			cat.Name = e.Name
+		}
+
+	case CategoryDeleted:
+		delete(s.categories, e.ID)
+
+	case CategoryReordered:
+		if cat, ok := s.categories[e.ID]; ok {
+			cat.SortOrder = e.SortOrder
+		}
 	}
 }
 
@@ -81,6 +115,18 @@ func (s *State) trackNameFrequency(name string) {
 	s.nameFrequency[nameLower]++
 	// Always update canonical to most recent casing
 	s.nameCanonical[nameLower] = name
+}
+
+// trackLastCategory remembers the most recent category assignment for a name
+func (s *State) trackLastCategory(name string, categoryID *string) {
+	nameLower := strings.ToLower(name)
+	if categoryID == nil {
+		s.nameLastCategory[nameLower] = nil
+		return
+	}
+	// Store a copy of the string value to avoid dangling pointer
+	valueCopy := *categoryID
+	s.nameLastCategory[nameLower] = &valueCopy
 }
 
 // ApplyEvents applies multiple events to the state
@@ -127,6 +173,17 @@ func (s *State) GetHighestSortOrder() int {
 	return highest
 }
 
+// GetHighestCategorySortOrder returns the highest sortOrder among categories
+func (s *State) GetHighestCategorySortOrder() int {
+	highest := 0
+	for _, cat := range s.categories {
+		if cat.SortOrder > highest {
+			highest = cat.SortOrder
+		}
+	}
+	return highest
+}
+
 // TodoCount returns the number of todos
 func (s *State) TodoCount() int {
 	return len(s.todos)
@@ -135,6 +192,27 @@ func (s *State) TodoCount() int {
 // GetListTitle returns the current list title
 func (s *State) GetListTitle() string {
 	return s.listTitle
+}
+
+// GetCategories returns all categories sorted by sortOrder (descending)
+func (s *State) GetCategories() []Category {
+	cats := make([]Category, 0, len(s.categories))
+	for _, cat := range s.categories {
+		cats = append(cats, *cat)
+	}
+	sort.Slice(cats, func(i, j int) bool {
+		return cats[i].SortOrder > cats[j].SortOrder
+	})
+	return cats
+}
+
+// GetCategory returns a single category by ID (returns pointer to internal state, not a copy)
+func (s *State) GetCategory(id string) (*Category, bool) {
+	cat, ok := s.categories[id]
+	if !ok {
+		return nil, false
+	}
+	return cat, true
 }
 
 // GetNameFrequency returns a map of todo names (canonical casing) to their frequency count
@@ -156,4 +234,19 @@ func (s *State) GetActiveTodoNames() []string {
 		}
 	}
 	return names
+}
+
+// CategoryHasTodos returns true if any todo is assigned to the given categoryId
+func (s *State) CategoryHasTodos(categoryID string) bool {
+	for _, todo := range s.todos {
+		if todo.CategoryID != nil && *todo.CategoryID == categoryID {
+			return true
+		}
+	}
+	return false
+}
+
+// GetLastCategoryForName returns the last category used for a given name (if any)
+func (s *State) GetLastCategoryForName(name string) *string {
+	return s.nameLastCategory[strings.ToLower(name)]
 }
