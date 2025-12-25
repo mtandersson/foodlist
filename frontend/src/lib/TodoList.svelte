@@ -499,6 +499,7 @@
         >
           {#each $completedTodos as todo (todo.id)}
             <div
+              class="todo-wrapper"
               animate:flip={{ duration: 300 }}
               transition:fade={{ duration: 200 }}
             >
@@ -957,6 +958,8 @@
     position: relative;
     flex-shrink: 0;
     margin-bottom: var(--spacing-2xl);
+    /* Match scrollable-content's scrollbar gutter + padding-right */
+    padding-right: calc(var(--scrollbar-width) + var(--spacing-xs));
   }
 
   .autocomplete-dropdown {

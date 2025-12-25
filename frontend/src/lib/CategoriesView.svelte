@@ -497,6 +497,7 @@
   >
     {#each completedTodos as todo (todo.id)}
       <div
+        class="todo-wrapper"
         animate:flip={{ duration: 300 }}
         transition:fade={{ duration: 200 }}
       >
