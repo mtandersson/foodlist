@@ -209,14 +209,14 @@
 
   .category-badge {
     padding: 4px 12px;
-    background: rgba(255, 255, 255, 0.15);
-    color: var(--text-on-primary);
+    background: var(--primary-color);
+    color: white;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 500;
     line-height: 1.4;
     white-space: nowrap;
-    opacity: 0.9;
+    flex-shrink: 0;
   }
 
   .edit-input {
