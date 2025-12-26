@@ -332,6 +332,7 @@
 <!-- Uncategorized todos (no header, just the items) -->
 <div 
   class="todos-section"
+  data-testid="uncategorized-section"
   class:drag-over-uncategorized={draggedId && dropCategoryId === null}
   ondragover={(e) => handleDragOverCategory(e, null)}
   ondragleave={(e) => handleDragLeaveCategory(e)}
@@ -381,6 +382,8 @@
   {#if todosForCategory(category.id).length > 0 || draggedId}
   <div
     class="category-wrapper"
+    data-testid="category-card"
+    data-category-name={category.name}
     class:drag-over-category={draggedId && dropCategoryId === category.id}
     ondragover={(e) => handleDragOverCategory(e, category.id)}
     ondragleave={(e) => handleDragLeaveCategory(e)}

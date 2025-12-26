@@ -16,9 +16,10 @@
   }
 </script>
 
-<div class="mode-switch" role="group" aria-label="Visa-läge">
+<div class="mode-switch" data-testid="mode-switch" role="group" aria-label="Visa-läge">
   <button
     type="button"
+    data-testid="mode-normal"
     class:selected={value === 'normal'}
     aria-pressed={value === 'normal'}
     onclick={() => select('normal')}
@@ -28,6 +29,7 @@
   </button>
   <button
     type="button"
+    data-testid="mode-categories"
     class:selected={value === 'categories'}
     aria-pressed={value === 'categories'}
     onclick={() => select('categories')}

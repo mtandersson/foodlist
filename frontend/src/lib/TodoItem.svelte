@@ -97,9 +97,10 @@
   }
 </script>
 
-<div class="todo-item" class:completed={todo.completedAt !== null}>
+<div class="todo-item" data-testid="todo-item" class:completed={todo.completedAt !== null}>
   <button 
     class="checkbox" 
+    data-testid="todo-checkbox"
     class:checked={todo.completedAt !== null}
     onclick={handleCheckClick}
     aria-label={todo.completedAt ? 'Mark as incomplete' : 'Mark as complete'}
@@ -115,6 +116,7 @@
     <input
       type="text"
       class="edit-input"
+      data-testid="todo-edit-input"
       bind:value={editName}
       onblur={finishEditing}
       onkeydown={handleKeydown}
@@ -125,6 +127,7 @@
       role="button"
       tabindex="0"
       class="todo-name" 
+      data-testid="todo-name"
       class:strikethrough={todo.completedAt !== null}
       class:long-pressing={isLongPressing}
       ondblclick={startEditing}
@@ -138,13 +141,14 @@
   {/if}
 
   {#if categoryName}
-    <span class="category-badge">
+    <span class="category-badge" data-testid="category-badge">
       {categoryName}
     </span>
   {/if}
 
   <button 
     class="star-btn" 
+    data-testid="todo-star-button"
     class:starred={todo.starred}
     onclick={handleStarClick}
     aria-label={todo.starred ? 'Unstar' : 'Star'}

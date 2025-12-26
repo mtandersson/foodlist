@@ -458,25 +458,26 @@
   });
 </script>
 
-<div class="todo-list-container">
-  <header class="header">
+<div class="todo-list-container" data-testid="todo-list-container">
+  <header class="header" data-testid="header">
     {#if editingTitle}
       <input
         type="text"
         class="title-input"
+        data-testid="title-input"
         bind:value={titleInputValue}
         onkeydown={handleTitleKeydown}
         onblur={finishEditingTitle}
         autofocus
       />
     {:else}
-      <h1 class="title" onclick={startEditingTitle} role="button" tabindex="0">
+      <h1 class="title" data-testid="title" onclick={startEditingTitle} role="button" tabindex="0">
         {$listTitle}
       </h1>
     {/if}
     <div class="header-right">
       <ModeSwitch value={viewMode} on:change={(e) => handleModeChange(e.detail)} />
-      <span class="member-count" aria-label="Connected users">
+      <span class="member-count" data-testid="member-count" aria-label="Connected users">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
@@ -486,7 +487,7 @@
         {$userCount}
       </span>
       <div class="menu-wrapper">
-        <button class="menu-btn" aria-label="Menu" onclick={toggleMenu}>
+        <button class="menu-btn" data-testid="menu-button" aria-label="Menu" onclick={toggleMenu}>
           <svg viewBox="0 0 24 24" fill="currentColor">
             <circle cx="12" cy="5" r="2"></circle>
             <circle cx="12" cy="12" r="2"></circle>
@@ -494,13 +495,13 @@
           </svg>
         </button>
         {#if menuOpen}
-          <div class="menu-dropdown">
-            <button class="menu-item" onclick={handleNewCategory}>
+          <div class="menu-dropdown" data-testid="menu-dropdown">
+            <button class="menu-item" data-testid="new-category-button" onclick={handleNewCategory}>
               <span class="menu-icon">➕</span>
               Ny kategori
             </button>
           </div>
-          <button class="menu-backdrop" onclick={closeMenu} aria-label="Close menu"></button>
+          <button class="menu-backdrop" data-testid="menu-backdrop" onclick={closeMenu} aria-label="Close menu"></button>
         {/if}
       </div>
     </div>
@@ -509,7 +510,7 @@
   <div class="scrollable-content">
     <!-- Connection status indicator -->
     {#if $connectionState !== 'CONNECTED'}
-      <div class="connection-status" transition:slide>
+      <div class="connection-status" data-testid="connection-status" transition:slide>
         {#if $connectionState === 'CONNECTING'}
           Ansluter...
         {:else if $connectionState === 'RECONNECTING'}
@@ -522,11 +523,12 @@
 
     <!-- New Category Input -->
     {#if creatingCategory}
-      <div class="new-category-wrapper" transition:slide>
+      <div class="new-category-wrapper" data-testid="new-category-wrapper" transition:slide>
         <div class="new-category-input-container">
           <input
             type="text"
             class="new-category-input"
+            data-testid="new-category-input"
             class:error={categoryError}
             bind:value={newCategoryName}
             onkeydown={handleNewCategoryKeydown}
@@ -563,6 +565,7 @@
       <!-- Active todos -->
       <div
         class="todos-section"
+        data-testid="todos-section"
         ondragover={handleDragOverList}
         ondrop={handleDrop}
         role="list"
@@ -570,6 +573,7 @@
         {#each $activeTodos as todo (todo.id)}
           <div
             class="todo-container"
+            data-testid="todo-container"
             class:spacer-top={dropTargetId === todo.id && dropPosition === 'above'}
             class:spacer-bottom={dropTargetId === todo.id && dropPosition === 'below'}
             animate:flip={{ duration: isDragging ? 0 : 300 }}
@@ -577,6 +581,7 @@
           >
             <div
               class="todo-wrapper"
+              data-testid="todo-wrapper"
               role="listitem"
               aria-grabbed={draggedId === todo.id}
               class:drop-above={dropTargetId === todo.id && dropPosition === 'above'}
@@ -603,17 +608,19 @@
 
       <!-- Completed section -->
       {#if $completedTodos.length > 0}
-        <CollapsibleSection
-          title="Slutfört"
-          expanded={completedExpanded}
-          onToggle={toggleCompletedSection}
-        >
-          {#each $completedTodos as todo (todo.id)}
-            <div
-              class="todo-wrapper"
-              animate:flip={{ duration: 300 }}
-              transition:fade={{ duration: 200 }}
-            >
+        <div data-testid="completed-section">
+          <CollapsibleSection
+            title="Slutfört"
+            expanded={completedExpanded}
+            onToggle={toggleCompletedSection}
+          >
+            {#each $completedTodos as todo (todo.id)}
+              <div
+                class="todo-wrapper"
+                data-testid="completed-todo-wrapper"
+                animate:flip={{ duration: 300 }}
+                transition:fade={{ duration: 200 }}
+              >
               <TodoItem
                 {todo}
                 categoryName={getCategoryName(todo.categoryId ?? null)}
@@ -624,6 +631,7 @@
             </div>
           {/each}
         </CollapsibleSection>
+      </div>
       {/if}
     {:else}
       <CategoriesView
@@ -649,13 +657,14 @@
   </div>
 
   <!-- Add todo input at bottom -->
-  <div class="add-todo-wrapper">
+  <div class="add-todo-wrapper" data-testid="add-todo-wrapper">
     {#if showAutocomplete && $autocompleteSuggestions.length > 0}
-      <div class="autocomplete-dropdown" transition:slide={{ duration: 150 }}>
+      <div class="autocomplete-dropdown" data-testid="autocomplete-dropdown" transition:slide={{ duration: 150 }}>
         {#each $autocompleteSuggestions as suggestion, index}
           <button
             type="button"
             class="autocomplete-item"
+            data-testid="autocomplete-item"
             class:selected={index === selectedAutocompleteIndex}
             onmousedown={() => selectSuggestion(suggestion)}
             onmouseenter={() => selectedAutocompleteIndex = index}
@@ -672,7 +681,7 @@
         {/each}
       </div>
     {/if}
-    <form class="add-todo-bottom" onsubmit={(e) => { e.preventDefault(); handleAddTodo(); }}>
+    <form class="add-todo-bottom" data-testid="add-todo-form" onsubmit={(e) => { e.preventDefault(); handleAddTodo(); }}>
       <div class="add-todo-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -681,6 +690,7 @@
       </div>
       <input
         type="text"
+        data-testid="add-todo-input"
         placeholder="Lägg till en uppgift"
         bind:value={newTodoName}
         onkeydown={handleKeydown}

@@ -89,9 +89,9 @@
   }
 </script>
 
-<div class="collapsible-section">
-  <div class="section-header-wrapper">
-    <button class="section-header" onclick={onToggle}>
+<div class="collapsible-section" data-testid="collapsible-section">
+  <div class="section-header-wrapper" data-testid="section-header-wrapper">
+    <button class="section-header" data-testid="section-header" onclick={onToggle}>
       <svg 
         class="chevron" 
         class:expanded={expanded}

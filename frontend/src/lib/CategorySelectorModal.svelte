@@ -27,16 +27,18 @@
 
 <div 
   class="modal-backdrop" 
+  data-testid="category-selector-modal"
   onclick={handleBackdropClick}
   role="dialog"
   aria-modal="true"
   aria-labelledby="modal-title"
 >
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 id="modal-title">Välj kategori</h2>
+  <div class="modal-content" data-testid="modal-content">
+    <div class="modal-header" data-testid="modal-header">
+      <h2 id="modal-title" data-testid="modal-title">Välj kategori</h2>
       <button 
         class="close-btn" 
+        data-testid="modal-close-button"
         onclick={onCancel}
         aria-label="Stäng"
       >
@@ -44,14 +46,15 @@
       </button>
     </div>
     
-    <div class="modal-subheader">
+    <div class="modal-subheader" data-testid="modal-subtitle">
       {todoName}
     </div>
     
-    <div class="category-list">
+    <div class="category-list" data-testid="category-list">
       {#each categories as category (category.id)}
         <button
           class="category-option"
+          data-testid="category-option"
           onclick={() => onSelect(category.id)}
         >
           <span class="category-name">{category.name}</span>
@@ -59,8 +62,8 @@
       {/each}
     </div>
     
-    <div class="modal-footer">
-      <button class="cancel-btn" onclick={onCancel}>
+    <div class="modal-footer" data-testid="modal-footer">
+      <button class="cancel-btn" data-testid="modal-cancel-button" onclick={onCancel}>
         Avbryt
       </button>
     </div>
