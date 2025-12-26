@@ -2,13 +2,13 @@
   "name": "FoodList",
   "short_name": "FoodList",
   "description": "A beautiful, real-time shopping list app",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#6366f1",
   "theme_color": "#6366f1",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
