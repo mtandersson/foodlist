@@ -1,3 +1,10 @@
+## [1.1.0](https://github.com/mtandersson/foodlist/compare/v1.0.2...v1.1.0) (2025-12-26)
+
+### Features
+
+* **ui:** replace span with button for section titles and todo items ([490659b](https://github.com/mtandersson/foodlist/commit/490659be1dc99536bc15043ff7398eb832ea1f2d))
+* **ui:** replace span with button for section titles and todo items ([#41](https://github.com/mtandersson/foodlist/issues/41)) ([b37339e](https://github.com/mtandersson/foodlist/commit/b37339ee93b78204f04648357f5fbfa2f318cc4c))
+
 ## [1.0.2](https://github.com/mtandersson/foodlist/compare/v1.0.1...v1.0.2) (2025-12-26)
 
 ### Bug Fixes
