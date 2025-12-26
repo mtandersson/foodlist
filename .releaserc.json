@@ -1,6 +1,5 @@
 {
   "branches": ["main"],
-  "repositoryUrl": "https://github.com/${GH_OWNER}/${GH_REPO}",
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
