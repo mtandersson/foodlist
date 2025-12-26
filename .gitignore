@@ -38,3 +38,4 @@ frontend/coverage/
 # Event logs (optional - uncomment if you don't want to track these)
 # backend/events.jsonl
 
+backend/events.jsonl
