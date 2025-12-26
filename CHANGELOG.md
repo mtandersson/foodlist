@@ -1,3 +1,19 @@
+## [1.2.0](https://github.com/mtandersson/foodlist/compare/v1.1.1...v1.2.0) (2025-12-26)
+
+### Features
+
+* **backend:** log client IP and proxy headers on new websocket connection ([c071786](https://github.com/mtandersson/foodlist/commit/c0717863aec32bdccf101744e17d8a94fc8ee27b))
+
+### Chores
+
+* **backend:** implement configuration management using environment variables ([4ee95e0](https://github.com/mtandersson/foodlist/commit/4ee95e02f873c7d24fe59d2b124ad2c1d1d320e4))
+* **backend:** update dependencies in go.mod and go.sum ([4cd3243](https://github.com/mtandersson/foodlist/commit/4cd3243b0fe13931d7ef1f641a24bbcafc0537be))
+* **ci:** update daily chore release workflow and improve documentation ([02142fa](https://github.com/mtandersson/foodlist/commit/02142fa75fb69d2c9012e57ce6f16d66906fd1ac))
+* **deps:** update actions/checkout action to v6 ([afc2d08](https://github.com/mtandersson/foodlist/commit/afc2d0804c13588a99b3f69ba7ebe493e05eabf5))
+* **deps:** update actions/checkout action to v6 ([#31](https://github.com/mtandersson/foodlist/issues/31)) ([2cb28f7](https://github.com/mtandersson/foodlist/commit/2cb28f7a9e3119766a86ed56024c0e4d66bfbe91))
+* **release:** update release workflow to include platform-specific … ([#44](https://github.com/mtandersson/foodlist/issues/44)) ([72f5926](https://github.com/mtandersson/foodlist/commit/72f5926db3163deae31bb98f9ff7177cbc8b79bf))
+* **release:** update release workflow to include platform-specific binaries ([db3ed62](https://github.com/mtandersson/foodlist/commit/db3ed628078f4298963bb4b3a5dfdd716684eed9))
+
 ## [1.1.1](https://github.com/mtandersson/foodlist/compare/v1.1.0...v1.1.1) (2025-12-26)
 
 ### Bug Fixes
