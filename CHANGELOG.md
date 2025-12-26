@@ -1,3 +1,27 @@
+## [1.0.2](https://github.com/mtandersson/foodlist/compare/v1.0.1...v1.0.2) (2025-12-26)
+
+### Bug Fixes
+
+* **ci:** add root package.json for semantic-release dependencies ([64da3eb](https://github.com/mtandersson/foodlist/commit/64da3eb9609e6759e98e2142d68a5525a98c3093))
+* **ci:** add root package.json for semantic-release dependencies ([#35](https://github.com/mtandersson/foodlist/issues/35)) ([85c2e56](https://github.com/mtandersson/foodlist/commit/85c2e56fd90842a12eba5d2324d2879184aa11c3))
+
+### Continuous Integration
+
+* add all checks passed job to CI workflow ([18ea7e5](https://github.com/mtandersson/foodlist/commit/18ea7e52c1577bc9b5f24b61e4bf34045f104846))
+* add all checks passed job to CI workflow ([#40](https://github.com/mtandersson/foodlist/issues/40)) ([896a007](https://github.com/mtandersson/foodlist/commit/896a007c39b3376aa71d88c23f127a72d754dc3d))
+
+### Chores
+
+* allow web dev ([0879be5](https://github.com/mtandersson/foodlist/commit/0879be5d97bd05f7326511d98c62c0e584ab0ee8))
+* **ci:** change permissions for generate relasese ([cafd2f9](https://github.com/mtandersson/foodlist/commit/cafd2f90ed878c47cc399463cb0022fcae015e6c))
+* **ci:** remove auto-merge workflow and release configuration ([973afbb](https://github.com/mtandersson/foodlist/commit/973afbb77becf0b4eb63f5302033cfa9f30ff8fd))
+* **ci:** update GitHub Actions workflows to use v4 of actions ([8070e8a](https://github.com/mtandersson/foodlist/commit/8070e8ae536d5ebccfe97fff9339360468497c1c))
+* **deps:** update jsdom to ^27.4.0 ([9b10a90](https://github.com/mtandersson/foodlist/commit/9b10a90f3d61baad7e419e9c43e7c3323559eecc))
+* **deps:** update semantic-release monorepo ([#36](https://github.com/mtandersson/foodlist/issues/36)) ([7a34a9d](https://github.com/mtandersson/foodlist/commit/7a34a9d2f22e7f2d0290a84d2e1ef8af8b3d1f2e))
+* **package:** update repository URL in package.json ([4df43e1](https://github.com/mtandersson/foodlist/commit/4df43e1eec79cb0e8501f3688f0309f132f2c635))
+* **package:** update repository URL in package.json ([#39](https://github.com/mtandersson/foodlist/issues/39)) ([eabc325](https://github.com/mtandersson/foodlist/commit/eabc3254391644ea3db5c2b1ad88b09436b1da19))
+* **release:** update release rules for docs, style, and test types ([3698161](https://github.com/mtandersson/foodlist/commit/3698161189e51d4e8be2739ac3c17d44d64ceb7f))
+
 ## [1.0.1](https://github.com/mtandersson/foodlist/compare/v1.0.0...v1.0.1) (2025-12-26)
 
 
