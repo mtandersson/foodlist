@@ -82,6 +82,10 @@ module.exports = {
             path: "dist/foodlist-windows-amd64.zip",
             label: "FoodList for Windows (x64)",
           },
+          {
+            path: "dist/foodlist-full.tar.gz",
+            label: "FoodList Complete Package (Linux x64 + Frontend)",
+          },
         ],
       },
     ],
