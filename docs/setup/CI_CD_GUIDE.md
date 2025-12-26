@@ -108,7 +108,7 @@ The project starts at version `0.0.1` (defined in `VERSION` file).
 
 ## Configuration Files
 
-### `.releaserc.json`
+### `.releaserc.cjs`
 
 Semantic-release configuration:
 
@@ -266,7 +266,7 @@ npx semantic-release --dry-run
    - Use `fix:` for patches
    - Use `feat:` for minor versions
    - Use `feat!:` or `BREAKING CHANGE:` for major versions
-3. Check `.releaserc.json` configuration
+3. Check `.releaserc.cjs` configuration
 
 ### CI Tests Failing
 
@@ -282,7 +282,7 @@ npx semantic-release --dry-run
 
 ### Change Branch Strategy
 
-Edit `.releaserc.json`:
+Edit `.releaserc.cjs`:
 
 ```json
 {
