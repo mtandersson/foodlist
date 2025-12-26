@@ -62,8 +62,26 @@ module.exports = {
       "@semantic-release/github",
       {
         assets: [
-          {path: "dist/*.tar.gz", label: "Binary archives"},
-          {path: "dist/*.zip", label: "Binary archives (Windows)"},
+          {
+            path: "dist/foodlist-linux-amd64.tar.gz",
+            label: "FoodList for Linux (x64)",
+          },
+          {
+            path: "dist/foodlist-linux-arm64.tar.gz",
+            label: "FoodList for Linux (ARM64)",
+          },
+          {
+            path: "dist/foodlist-darwin-amd64.tar.gz",
+            label: "FoodList for macOS (Intel)",
+          },
+          {
+            path: "dist/foodlist-darwin-arm64.tar.gz",
+            label: "FoodList for macOS (Apple Silicon)",
+          },
+          {
+            path: "dist/foodlist-windows-amd64.zip",
+            label: "FoodList for Windows (x64)",
+          },
         ],
       },
     ],
