@@ -1084,7 +1084,10 @@
     align-items: center;
     gap: var(--spacing-lg);
     padding: var(--font-size-xl) var(--spacing-xl);
+    background: rgba(255, 255, 255, 0.1); /* Fallback */
     background: var(--surface-muted);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     cursor: text;
@@ -1092,12 +1095,13 @@
   }
 
   .add-todo-bottom:hover {
+    background: rgba(255, 255, 255, 0.15);
     background: var(--surface-muted-strong);
     box-shadow: var(--shadow-lg);
   }
 
   .add-todo-bottom:focus-within {
-    background: var(--card-bg);
+    background: var(--card-bg); /* Opaque when focused for readability */
     box-shadow: var(--shadow-focus);
   }
 

@@ -12,8 +12,8 @@
   --card-bg: white;
   --card-bg-rgb: 255, 255, 255;
   --surface-light: rgba(var(--card-bg-rgb), 0.1);
-  --surface-muted: rgba(var(--card-bg-rgb), 0.2);
-  --surface-muted-strong: rgba(var(--card-bg-rgb), 0.3);
+  --surface-muted: rgba(var(--card-bg-rgb), 0.15); /* More transparent for glass effect */
+  --surface-muted-strong: rgba(var(--card-bg-rgb), 0.25);
 
   /* Text */
   --text-on-primary: #ffffff;
@@ -198,7 +198,7 @@
   box-sizing: border-box;
 }
 
-body {
+body, html {
   margin: 0;
   padding: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
