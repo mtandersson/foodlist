@@ -268,7 +268,7 @@ docs(readme): update installation instructions
 feat(api)!: change event format (breaking change)
 ```
 
-See `CONTRIBUTING.md` for detailed guidelines.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for detailed guidelines.
 
 ### Using Cursor IDE
 
@@ -281,7 +281,7 @@ When committing in Cursor:
 3. Press **Cmd+K** (Mac) or **Ctrl+K** (Windows/Linux)
 4. Cursor will suggest a properly formatted conventional commit
 
-See `CURSOR_COMMIT_SETUP.md` for configuration details.
+See [`docs/guides/CURSOR_COMMIT_SETUP.md`](docs/guides/CURSOR_COMMIT_SETUP.md) for configuration details.
 
 ### Automated Releases
 
@@ -326,12 +326,13 @@ Replace `OWNER` with your GitHub username or organization.
 ### Dependency Updates (Renovate)
 
 Renovate is configured to automatically update dependencies:
+
 - Go modules (backend)
 - npm packages (frontend, e2e)
 - GitHub Actions
 - Docker images
 
-**Setup:** See `RENOVATE_SETUP.md` for configuration options.
+**Setup:** See [`docs/setup/RENOVATE_SETUP.md`](docs/setup/RENOVATE_SETUP.md) for configuration options.
 
 **Recommended:** Install the [Renovate GitHub App](https://github.com/apps/renovate) for zero-configuration automated updates.
 
@@ -349,15 +350,38 @@ This will validate your commit messages before they're committed.
 
 ## Contributing
 
-Please read `CONTRIBUTING.md` for details on our conventional commit guidelines and development workflow.
+Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for details on our conventional commit guidelines and development workflow.
 
 ## Documentation
 
-- `CONTRIBUTING.md` - Conventional commits guide and development workflow
-- `AI_QUICK_GUIDE.md` - TDD workflow and architecture guide
-- `AI_DEVELOPMENT_GUIDE.md` - Detailed development instructions
-- `DOCKER.md` - Container deployment guide (Podman/Docker)
-- `TEST_COVERAGE_REPORT.md` - Test coverage details
+### Core Documentation
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) - Conventional commits guide and development workflow
+- [`CHANGELOG.md`](CHANGELOG.md) - Version history and release notes
+
+### Setup & Configuration
+
+- [`docs/setup/CI_CD_GUIDE.md`](docs/setup/CI_CD_GUIDE.md) - CI/CD pipeline documentation
+- [`docs/setup/DOCKER.md`](docs/setup/DOCKER.md) - Container deployment guide (Podman/Docker)
+- [`docs/setup/RENOVATE_SETUP.md`](docs/setup/RENOVATE_SETUP.md) - Dependency update automation
+
+### Development Guides
+
+- [`docs/guides/AI_DEVELOPMENT_GUIDE.md`](docs/guides/AI_DEVELOPMENT_GUIDE.md) - Detailed development instructions
+- [`docs/guides/AI_QUICK_GUIDE.md`](docs/guides/AI_QUICK_GUIDE.md) - TDD workflow and architecture guide
+- [`docs/guides/CURSOR_QUICK_START.md`](docs/guides/CURSOR_QUICK_START.md) - Getting started with Cursor IDE
+- [`docs/guides/COMMIT_QUICK_REFERENCE.md`](docs/guides/COMMIT_QUICK_REFERENCE.md) - Quick commit message reference
+- [`docs/guides/TEST_COVERAGE_REPORT.md`](docs/guides/TEST_COVERAGE_REPORT.md) - Test coverage details
+
+### Features
+
+- [`docs/features/LOCAL_STORAGE_PERSISTENCE.md`](docs/features/LOCAL_STORAGE_PERSISTENCE.md) - Offline persistence implementation
+- [`docs/features/MOBILE_CATEGORY_SELECTION.md`](docs/features/MOBILE_CATEGORY_SELECTION.md) - Mobile UI enhancements
+
+### Architecture
+
+- [`docs/architecture/STRUCTURED_LOGGING.md`](docs/architecture/STRUCTURED_LOGGING.md) - Logging implementation details
+- [`docs/architecture/WEBSOCKET_NETWORK_FIX.md`](docs/architecture/WEBSOCKET_NETWORK_FIX.md) - WebSocket architecture
 
 ## License
 

@@ -5,6 +5,7 @@
 This project uses **Conventional Commits** specification. All commit messages MUST follow this format:
 
 ### Format
+
 ```
 <type>(<scope>): <subject>
 
@@ -14,6 +15,7 @@ This project uses **Conventional Commits** specification. All commit messages MU
 ```
 
 ### Types (REQUIRED)
+
 - **feat**: New feature (minor version bump)
 - **fix**: Bug fix (patch version bump)
 - **docs**: Documentation only changes
@@ -26,6 +28,7 @@ This project uses **Conventional Commits** specification. All commit messages MU
 - **chore**: Other changes that don't modify src/test files
 
 ### Scopes (OPTIONAL)
+
 - `backend` - Go backend code
 - `frontend` - Svelte frontend code
 - `ui` - User interface components
@@ -39,6 +42,7 @@ This project uses **Conventional Commits** specification. All commit messages MU
 - `e2e` - End-to-end tests
 
 ### Subject Rules
+
 - Use imperative mood: "add" not "added" or "adds"
 - Don't capitalize first letter
 - No period at the end
@@ -46,7 +50,9 @@ This project uses **Conventional Commits** specification. All commit messages MU
 - Be specific and descriptive
 
 ### Breaking Changes
+
 Add `!` after type/scope OR include `BREAKING CHANGE:` in footer:
+
 ```
 feat(api)!: change response format
 ```
@@ -54,6 +60,7 @@ feat(api)!: change response format
 ### Commit Message Examples
 
 **Features:**
+
 ```
 feat(backend): add user preferences endpoint
 feat(ui): implement dark mode toggle
@@ -62,6 +69,7 @@ feat(store): add optimistic updates
 ```
 
 **Bug Fixes:**
+
 ```
 fix(auth): resolve token expiration issue
 fix(ui): correct button alignment in modal
@@ -70,6 +78,7 @@ fix(store): handle race condition in state update
 ```
 
 **Documentation:**
+
 ```
 docs(readme): add installation instructions
 docs(api): document new endpoints
@@ -77,6 +86,7 @@ docs(contributing): update commit guidelines
 ```
 
 **Refactoring:**
+
 ```
 refactor(store): simplify state management
 refactor(backend): extract event handling logic
@@ -84,6 +94,7 @@ refactor(ui): componentize todo list
 ```
 
 **Performance:**
+
 ```
 perf(backend): optimize event store queries
 perf(ui): implement virtual scrolling
@@ -91,6 +102,7 @@ perf(websocket): reduce message overhead
 ```
 
 **Tests:**
+
 ```
 test(backend): add integration tests for auth
 test(ui): add TodoItem component tests
@@ -98,6 +110,7 @@ test(e2e): add category selection tests
 ```
 
 **CI/CD:**
+
 ```
 ci: add GitHub Actions workflows
 ci(release): update semantic-release config
@@ -105,6 +118,7 @@ ci(build): optimize Docker build cache
 ```
 
 **Breaking Changes:**
+
 ```
 feat(api)!: change event structure to include timestamps
 
@@ -113,6 +127,7 @@ Clients must be updated to handle the new structure.
 ```
 
 ### When Suggesting Commits
+
 1. Analyze the changed files to determine appropriate type and scope
 2. Generate a clear, specific subject line
 3. If changes are complex, include a body explaining WHY
@@ -120,6 +135,7 @@ Clients must be updated to handle the new structure.
 5. Reference related issues in footer (e.g., "Closes #123")
 
 ### Validation
+
 All commits are validated by semantic-release. Invalid commits will cause CI to fail or releases to be skipped.
 
 ## Project Context
@@ -131,6 +147,7 @@ All commits are validated by semantic-release. Invalid commits will cause CI to 
 - **Versioning**: Semantic versioning (0.0.1 starting version)
 
 ## File Organization
+
 - `/backend` - Go backend code
 - `/frontend` - Svelte frontend code
 - `/e2e` - Cypress end-to-end tests
@@ -138,8 +155,9 @@ All commits are validated by semantic-release. Invalid commits will cause CI to 
 - `/.github` - GitHub Actions workflows and templates
 
 ## When in Doubt
-Refer to:
-- `CONTRIBUTING.md` - Full conventional commits guide
-- `COMMIT_QUICK_REFERENCE.md` - Quick reference
-- `CI_CD_GUIDE.md` - CI/CD pipeline documentation
 
+Refer to:
+
+- `CONTRIBUTING.md` - Full conventional commits guide
+- `docs/guides/COMMIT_QUICK_REFERENCE.md` - Quick reference
+- `docs/setup/CI_CD_GUIDE.md` - CI/CD pipeline documentation
