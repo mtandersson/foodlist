@@ -1190,6 +1190,12 @@
     transition: transform var(--duration-instant);
   }
 
+  @media (max-width: 768px) {
+    .todo-wrapper {
+      margin-bottom: var(--spacing-xs);
+    }
+  }
+
   .todo-wrapper.dragging {
     opacity: var(--opacity-dragging);
   }

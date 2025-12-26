@@ -163,6 +163,13 @@
     box-shadow: var(--shadow-sm);
   }
 
+  @media (max-width: 768px) {
+    .todo-item {
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+  }
+
   .todo-item.completed {
     opacity: var(--opacity-completed);
   }
