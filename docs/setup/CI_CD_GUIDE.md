@@ -9,40 +9,48 @@ This project uses GitHub Actions for continuous integration and automated releas
 ### 1. CI Workflow (`.github/workflows/ci.yml`)
 
 **Triggers:**
+
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop` branches
 
 **Jobs:**
 
 #### Backend Tests
+
 - Sets up Go 1.25.5
 - Runs `go test` with race detection and coverage
 - Uploads coverage to Codecov
 
 #### Frontend Tests
+
 - Sets up Node.js 20
 - Runs type checking with `svelte-check`
 - Runs Vitest tests with coverage
 - Uploads coverage to Codecov
 
 #### Lint
+
 - Runs golangci-lint on backend code
 
 #### Build Docker
+
 - Tests Docker image build
 - Uses build cache for faster builds
 
 ### 2. Release Workflow (`.github/workflows/release.yml`)
 
 **Triggers:**
+
 - Push to `main` branch only
 
 **Jobs:**
 
 #### Test
+
 - Runs backend and frontend tests before release
 
 #### Release
+
 - Uses semantic-release to:
   - Analyze commit messages
   - Determine next version
@@ -53,6 +61,7 @@ This project uses GitHub Actions for continuous integration and automated releas
   - Update CHANGELOG.md
 
 #### Build and Push
+
 - Builds multi-platform Docker images (amd64, arm64)
 - Pushes to GitHub Container Registry
 - Tags with both version and `latest`
@@ -65,12 +74,14 @@ This project uses GitHub Actions for continuous integration and automated releas
 ### 3. Renovate Workflow (`.github/workflows/renovate.yml`)
 
 **Triggers:**
+
 - Schedule: Every Monday at 3:00 AM UTC
 - Manual: Via workflow_dispatch
 
 **Purpose:** Automated dependency updates
 
 **What it does:**
+
 - Scans for outdated dependencies (Go, npm, GitHub Actions, Docker)
 - Creates PRs with updates using semantic commits
 - Format: `chore(deps): update <package> to <version>`
@@ -93,14 +104,14 @@ MAJOR.MINOR.PATCH
 
 Based on conventional commit messages:
 
-| Commit Type | Example | Version Bump | Description |
-|-------------|---------|--------------|-------------|
-| `feat:` | `feat(api): add new endpoint` | MINOR (0.1.0 → 0.2.0) | New features |
-| `fix:` | `fix(ui): resolve button bug` | PATCH (0.1.0 → 0.1.1) | Bug fixes |
-| `feat!:` or `BREAKING CHANGE:` | `feat(api)!: change response format` | MAJOR (0.1.0 → 1.0.0) | Breaking changes |
-| `docs:` | `docs: update README` | PATCH | Documentation |
-| `perf:` | `perf: optimize query` | PATCH | Performance |
-| Other | `chore:`, `refactor:`, `test:`, `ci:`, `build:` | PATCH | Other changes |
+| Commit Type                    | Example                                         | Version Bump          | Description      |
+| ------------------------------ | ----------------------------------------------- | --------------------- | ---------------- |
+| `feat:`                        | `feat(api): add new endpoint`                   | MINOR (0.1.0 → 0.2.0) | New features     |
+| `fix:`                         | `fix(ui): resolve button bug`                   | PATCH (0.1.0 → 0.1.1) | Bug fixes        |
+| `feat!:` or `BREAKING CHANGE:` | `feat(api)!: change response format`            | MAJOR (0.1.0 → 1.0.0) | Breaking changes |
+| `docs:`                        | `docs: update README`                           | PATCH                 | Documentation    |
+| `perf:`                        | `perf: optimize query`                          | PATCH                 | Performance      |
+| Other                          | `chore:`, `refactor:`, `test:`, `ci:`, `build:` | PATCH                 | Other changes    |
 
 ### Initial Version
 
@@ -116,12 +127,12 @@ Semantic-release configuration:
 {
   "branches": ["main"],
   "plugins": [
-    "@semantic-release/commit-analyzer",      // Analyze commits
+    "@semantic-release/commit-analyzer", // Analyze commits
     "@semantic-release/release-notes-generator", // Generate notes
-    "@semantic-release/changelog",            // Update CHANGELOG.md
-    "@semantic-release/exec",                 // Update VERSION file
-    "@semantic-release/github",               // Create GitHub release
-    "@semantic-release/git"                   // Commit changes
+    "@semantic-release/changelog", // Update CHANGELOG.md
+    "@semantic-release/exec", // Update VERSION file
+    "@semantic-release/github", // Create GitHub release
+    "@semantic-release/git" // Commit changes
   ]
 }
 ```
@@ -129,12 +140,14 @@ Semantic-release configuration:
 ### `VERSION`
 
 Current version file (managed by semantic-release):
+
 - Updated automatically on each release
 - Used by build scripts and Docker tags
 
 ### `CHANGELOG.md`
 
 Automatically generated changelog:
+
 - Updated on each release
 - Organized by version and commit type
 - Includes links to commits and PRs
@@ -142,6 +155,7 @@ Automatically generated changelog:
 ### `commitlint.config.js`
 
 Commitlint configuration for local validation:
+
 - Enforces conventional commit format
 - Validates commit message structure
 - Can be integrated with Git hooks
@@ -173,6 +187,7 @@ git push origin main
 ```
 
 **Result:**
+
 1. CI workflow runs first
 2. If tests pass, Release workflow triggers:
    - Analyzes commits since last release
@@ -242,6 +257,7 @@ npx semantic-release --dry-run
 **Problem:** Pushed to main but no release was created.
 
 **Solutions:**
+
 1. Check commit messages follow conventional format
 2. Ensure commits include releasable types (`feat`, `fix`, etc.)
 3. View workflow logs in GitHub Actions tab
@@ -252,6 +268,7 @@ npx semantic-release --dry-run
 **Problem:** Docker image build or push failed.
 
 **Solutions:**
+
 1. Check GitHub Container Registry permissions
 2. Ensure GITHUB_TOKEN has write permissions
 3. Repository settings → Actions → General → Workflow permissions → "Read and write permissions"
@@ -261,6 +278,7 @@ npx semantic-release --dry-run
 **Problem:** Version bumped incorrectly (e.g., minor instead of patch).
 
 **Solutions:**
+
 1. Review commit messages between releases
 2. Ensure commit types are correct:
    - Use `fix:` for patches
@@ -273,6 +291,7 @@ npx semantic-release --dry-run
 **Problem:** CI tests fail but pass locally.
 
 **Solutions:**
+
 1. Check Go and Node.js versions match CI (Go 1.25.5, Node 20)
 2. Ensure `go.mod` and `package-lock.json` are committed
 3. Run tests in same environment: `make test`
@@ -286,10 +305,7 @@ Edit `.releaserc.cjs`:
 
 ```json
 {
-  "branches": [
-    "main",
-    { "name": "beta", "prerelease": true }
-  ]
+  "branches": ["main", {"name": "beta", "prerelease": true}]
 }
 ```
 
@@ -320,12 +336,14 @@ on:
 ## GitHub Secrets
 
 No manual secrets needed! The workflows use:
+
 - `GITHUB_TOKEN` - Automatically provided by GitHub Actions
 - Has permissions for releases, packages, and commits
 
 ## Monitoring
 
 Check pipeline status:
+
 1. Go to repository on GitHub
 2. Click "Actions" tab
 3. View workflow runs
@@ -334,21 +352,25 @@ Check pipeline status:
 ## Best Practices
 
 1. **Write Clear Commits**
+
    - Use descriptive commit messages
    - Follow conventional format strictly
    - Include scope when relevant
 
 2. **Test Before Merging**
+
    - Always test locally: `make test`
    - Review CI results on PRs
    - Don't merge failing PRs
 
 3. **Meaningful Releases**
+
    - Group related changes
    - Don't push every commit to main
    - Use feature branches for development
 
 4. **Document Changes**
+
    - Commit messages become release notes
    - Write for users, not just developers
    - Include context and reasoning
@@ -365,4 +387,3 @@ Check pipeline status:
 - [Semantic Release](https://semantic-release.gitbook.io/)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
-

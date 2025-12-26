@@ -1,9 +1,14 @@
 /* Global styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
   /* Light mode theme palette */
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+  --primary-gradient: linear-gradient(
+    135deg,
+    #6366f1 0%,
+    #8b5cf6 50%,
+    #a78bfa 100%
+  );
   --primary-color: #6366f1;
   --primary-color-rgb: 99, 102, 241;
   /* Background helpers (iOS uses background-color for the status-bar/safe-area) */
@@ -17,7 +22,10 @@
   --card-bg: white;
   --card-bg-rgb: 255, 255, 255;
   --surface-light: rgba(var(--card-bg-rgb), 0.1);
-  --surface-muted: rgba(var(--card-bg-rgb), 0.15); /* More transparent for glass effect */
+  --surface-muted: rgba(
+    var(--card-bg-rgb),
+    0.15
+  ); /* More transparent for glass effect */
   --surface-muted-strong: rgba(var(--card-bg-rgb), 0.25);
 
   /* Text */
@@ -147,7 +155,7 @@
 
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root:not([data-theme="light"]) {
     /* Dark mode theme palette */
     --primary-gradient: #000000;
     --primary-color: #818cf8;
@@ -177,7 +185,7 @@
 }
 
 /* Manual dark mode override */
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   /* Dark mode theme palette */
   --primary-gradient: #000000;
   --primary-color: #818cf8;
@@ -209,10 +217,12 @@
   box-sizing: border-box;
 }
 
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, sans-serif;
   background-color: var(--app-bg-color);
   background-image: var(--app-bg-image);
   background-attachment: fixed;
