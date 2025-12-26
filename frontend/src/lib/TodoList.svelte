@@ -494,12 +494,11 @@
         bind:value={titleInputValue}
         onkeydown={handleTitleKeydown}
         onblur={finishEditingTitle}
-        autofocus
       />
     {:else}
-      <h1 class="title" onclick={startEditingTitle} role="button" tabindex="0">
+      <button class="title" onclick={startEditingTitle} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEditingTitle(); } }}>
         {$listTitle}
-      </h1>
+      </button>
     {/if}
     <div class="header-right">
       <ModeSwitch value={viewMode} on:change={(e) => handleModeChange(e.detail)} />
@@ -948,6 +947,10 @@
     transition: opacity var(--transition-normal);
     padding: var(--spacing-sm);
     border-radius: var(--radius-sm);
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-family: inherit;
   }
 
   .title:hover {

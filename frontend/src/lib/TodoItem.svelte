@@ -114,23 +114,22 @@
       bind:value={editName}
       onblur={finishEditing}
       onkeydown={handleKeydown}
-      autofocus
     />
   {:else}
-    <span 
-      role="button"
-      tabindex="0"
-      class="todo-name" 
+    <button
+      type="button"
+      class="todo-name-button" 
       class:strikethrough={todo.completedAt !== null}
       class:long-pressing={isLongPressing}
       ondblclick={startEditing}
       ontouchstart={handleTouchStart}
       ontouchend={handleTouchEnd}
       ontouchmove={handleTouchMove}
+      onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); } }}
       aria-label="Double-click or long-press to edit"
     >
       {todo.name}
-    </span>
+    </button>
   {/if}
 
   {#if categoryName}
@@ -184,7 +183,7 @@
     padding: 0;
   }
 
-  .todo-name {
+  .todo-name-button {
     flex: 1;
     font-size: var(--font-size-base);
     color: var(--text-secondary);
@@ -193,14 +192,20 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
+    background: transparent;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font-family: inherit;
+    width: 100%;
   }
 
-  .todo-name.long-pressing {
+  .todo-name-button.long-pressing {
     opacity: var(--opacity-subtle);
     transform: scale(0.98);
   }
 
-  .todo-name.strikethrough {
+  .todo-name-button.strikethrough {
     text-decoration: line-through;
     color: var(--text-muted);
   }

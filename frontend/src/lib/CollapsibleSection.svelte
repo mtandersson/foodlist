@@ -113,13 +113,16 @@
           type="text"
         />
       {:else}
-        <span 
-          class="section-title" 
-          ondblclick={handleTitleDoubleClick}
-          onkeydown={handleTitleKeydown}
-          role={onRename ? "button" : undefined}
-          tabindex={onRename ? 0 : undefined}
-        >{title}</span>
+        {#if onRename}
+          <button 
+            class="section-title-button" 
+            ondblclick={handleTitleDoubleClick}
+            onkeydown={handleTitleKeydown}
+            type="button"
+          >{title}</button>
+        {:else}
+          <span class="section-title">{title}</span>
+        {/if}
       {/if}
       {#if count !== undefined}
         <span class="section-count">{count}</span>
@@ -233,13 +236,21 @@
     min-width: 0;
   }
 
-  .section-title[ondblclick] {
+  .section-title-button {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    padding: 0;
     cursor: text;
   }
 
   @media (hover: hover) and (pointer: fine) {
     /* On desktop, show hover effect for double-click */
-    .section-title[ondblclick]:hover {
+    .section-title-button:hover {
       opacity: 0.8;
     }
   }
