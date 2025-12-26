@@ -847,7 +847,7 @@
   }
 
   .title {
-    color: var(--primary-color);
+    color: var(--text-on-primary);
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     margin: 0;
@@ -868,12 +868,12 @@
   }
 
   .title-input {
-    color: var(--primary-color);
+    color: var(--text-on-primary);
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     margin: 0;
     padding: var(--spacing-sm);
-    border: var(--stroke-thin) solid var(--primary-color);
+    border: var(--stroke-thin) solid var(--text-on-primary);
     border-radius: var(--radius-sm);
     background: var(--surface-muted);
     width: 100%;
@@ -1015,7 +1015,8 @@
     width: var(--icon-xl);
     height: var(--icon-xl);
     flex-shrink: 0;
-    color: var(--text-muted);
+    color: var(--text-on-primary);
+    opacity: 0.7;
   }
 
   .add-todo-icon svg {
@@ -1028,18 +1029,20 @@
     border: none;
     outline: none;
     font-size: var(--font-size-lg);
-    color: var(--text-muted);
+    color: var(--text-on-primary);
     background: transparent;
     font-family: inherit;
-    transition: color var(--transition-normal);
+    transition: opacity var(--transition-normal);
+    opacity: 0.8;
   }
 
   .add-todo-bottom input:focus {
-    color: var(--text-primary);
+    opacity: 1;
   }
 
   .add-todo-bottom input::placeholder {
-    color: var(--text-muted);
+    color: var(--text-on-primary);
+    opacity: 0.6;
   }
 
   .todos-section {
