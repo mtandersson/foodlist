@@ -282,7 +282,7 @@ func TestEventStore_ReadAll_SkipEmptyLines(t *testing.T) {
 	os.WriteFile(filePath, []byte(`{"type":"TodoCreated","id":"1","name":"Task","createdAt":"2024-01-01T00:00:00Z","sortOrder":1000}
 
 {"type":"TodoCompleted","id":"1","completedAt":"2024-01-01T00:00:00Z"}
-`), 0644)
+`), 0o644)
 
 	store, err := NewEventStore(filePath)
 	require.NoError(t, err)
@@ -301,7 +301,7 @@ func TestEventStore_ReadAll_InvalidEvent(t *testing.T) {
 	// Create file with invalid event
 	os.WriteFile(filePath, []byte(`{"type":"TodoCreated","id":"1","name":"Task","createdAt":"2024-01-01T00:00:00Z","sortOrder":1000}
 {"type":"UnknownEvent","id":"2"}
-`), 0644)
+`), 0o644)
 
 	store, err := NewEventStore(filePath)
 	require.NoError(t, err)
@@ -320,7 +320,7 @@ func TestEventStore_ReadAll_MalformedJSON(t *testing.T) {
 	// Create file with malformed JSON
 	os.WriteFile(filePath, []byte(`{"type":"TodoCreated","id":"1","name":"Task","createdAt":"2024-01-01T00:00:00Z","sortOrder":1000}
 not valid json
-`), 0644)
+`), 0o644)
 
 	store, err := NewEventStore(filePath)
 	require.NoError(t, err)

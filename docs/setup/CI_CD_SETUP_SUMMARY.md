@@ -10,7 +10,6 @@
 - **Jobs:**
   - Backend tests (Go 1.25.5)
   - Frontend tests (Node 20, Vitest, Svelte type checking)
-  - E2E tests (Cypress)
   - Linting (golangci-lint)
   - Docker build validation
 - **Triggers:** Push/PR to `main` or `develop` branches
@@ -195,7 +194,6 @@ Push to main
 CI Workflow
     ├─ Backend Tests
     ├─ Frontend Tests
-    ├─ E2E Tests
     ├─ Linting
     └─ Docker Build
     ↓ (if pass)

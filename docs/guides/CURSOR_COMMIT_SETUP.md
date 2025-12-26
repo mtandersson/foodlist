@@ -119,7 +119,6 @@ Available scopes (use in parentheses):
 - `ci` - CI/CD workflows
 - `docs` - Documentation
 - `tests` - Test files
-- `e2e` - End-to-end tests
 
 ## Verification
 

@@ -39,7 +39,6 @@ This project uses **Conventional Commits** specification. All commit messages MU
 - `ci` - CI/CD workflows
 - `docs` - Documentation files
 - `tests` - Test files
-- `e2e` - End-to-end tests
 
 ### Subject Rules
 
@@ -106,7 +105,6 @@ perf(websocket): reduce message overhead
 ```
 test(backend): add integration tests for auth
 test(ui): add TodoItem component tests
-test(e2e): add category selection tests
 ```
 
 **CI/CD:**
@@ -150,7 +148,6 @@ All commits are validated by semantic-release. Invalid commits will cause CI to 
 
 - `/backend` - Go backend code
 - `/frontend` - Svelte frontend code
-- `/e2e` - Cypress end-to-end tests
 - `/schema` - Event schema definitions
 - `/.github` - GitHub Actions workflows and templates
 

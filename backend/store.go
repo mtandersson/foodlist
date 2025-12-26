@@ -24,7 +24,7 @@ type writeRequest struct {
 // The file is created if it doesn't exist.
 func NewEventStore(filePath string) (*EventStore, error) {
 	// Open file for appending (create if not exists)
-	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open event store file: %w", err)
 	}

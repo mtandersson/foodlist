@@ -59,7 +59,7 @@ Cursor will suggest commits in this format:
 - `chore` - Maintenance
 
 ### Scopes
-- `backend`, `frontend`, `ui`, `api`, `websocket`, `store`, `docker`, `ci`, `docs`, `tests`, `e2e`
+- `backend`, `frontend`, `ui`, `api`, `websocket`, `store`, `docker`, `ci`, `docs`, `tests`
 
 ## Breaking Changes
 

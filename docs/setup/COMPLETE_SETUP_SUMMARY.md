@@ -118,7 +118,6 @@ Step-by-step:
 3. CI Workflow runs:
    • Backend tests
    • Frontend tests
-   • E2E tests
    • Linting
    • Docker build
    ↓

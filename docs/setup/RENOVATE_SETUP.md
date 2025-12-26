@@ -5,7 +5,7 @@
 Renovate is configured to automatically update dependencies across:
 
 - Go modules (backend/go.mod)
-- npm packages (frontend/package.json, e2e/package.json)
+- npm packages (frontend/package.json)
 - GitHub Actions workflows
 - Docker base images
 

@@ -16,7 +16,6 @@ These instructions guide AI assistants (Cursor, Aider, etc.) through building ev
 - Test coverage should include:
   - Unit tests for individual functions/methods
   - Integration tests for component interactions
-  - E2E tests for complete user flows
 
 ### 2. Schema-First Design
 
@@ -292,55 +291,13 @@ Add transitions for:
 - Focus management
 - Screen reader support
 
-### Phase 5: End-to-End Testing (1 hour)
-
-#### 5.1 Setup Cypress/Playwright
-
-```bash
-npm install -D cypress
-npx cypress open
-```
-
-#### 5.2 Write E2E Tests
-
-```javascript
-describe("Todo App", () => {
-  it("should create a new todo")
-  it("should complete a todo")
-  it("should star a todo and move to top")
-  it("should persist todos after reload")
-  it("should sync between tabs")
-  it("should handle offline/reconnection")
-})
-```
-
-**Each test should:**
-
-- Start from clean state
-- Perform user actions
-- Verify UI updates
-- Check persistence
-- Test real-time sync
-
-#### 5.3 Multi-Client Testing
-
-```javascript
-it("should sync between two tabs", () => {
-  // Create todo in tab 1
-  // Verify appears in tab 2
-  // Complete in tab 2
-  // Verify completed in tab 1
-})
-```
-
-### Phase 6: Integration & Polish (1 hour)
+### Phase 5: Integration & Polish (1 hour)
 
 1. **Run all tests together:**
 
    ```bash
    cd backend && go test ./...
    cd frontend && npm test
-   cd e2e && npm test
    ```
 
 2. **Fix any flaky tests**
@@ -374,17 +331,6 @@ it("should sync between two tabs", () => {
 - [ ] Events broadcast to all clients
 - [ ] State rollup on connect
 - [ ] Client disconnect handling
-
-### E2E Tests
-
-- [ ] Create todo flow
-- [ ] Complete todo flow
-- [ ] Star todo flow
-- [ ] Reorder todos via drag & drop
-- [ ] Multi-tab sync
-- [ ] Persistence across reload
-- [ ] Offline behavior
-- [ ] Reconnection recovery
 
 ## Best Practices
 
@@ -462,9 +408,8 @@ ws.onMessage((serverEvent) => {
 3. **Forgetting to close connections:** Always defer close() or use cleanup
 4. **Not handling reconnection:** WebSocket will disconnect, plan for it
 5. **Ignoring optimistic update conflicts:** Have a reconciliation strategy
-6. **Skipping E2E tests:** They catch integration issues unit tests miss
-7. **Not testing multi-client scenarios:** Real-time sync is core functionality
-8. **Hardcoding URLs/ports:** Use environment variables
+6. **Not testing multi-client scenarios:** Real-time sync is core functionality
+7. **Hardcoding URLs/ports:** Use environment variables
 9. **Not cleaning up test data:** Each test should start clean
 10. **Skipping animation testing:** Verify transitions don't break UX
 11. **Using magic numbers in CSS:** Always use CSS custom properties (variables)
@@ -499,7 +444,6 @@ A successfully completed implementation should have:
 
 - [ ] **All backend tests passing** (unit + integration)
 - [ ] **All frontend tests passing** (unit + integration)
-- [ ] **All E2E tests passing**
 - [ ] **No console errors** in browser
 - [ ] **No memory leaks** (check with browser devtools)
 - [ ] **Handles 100+ concurrent clients**
@@ -532,7 +476,6 @@ A successfully completed implementation should have:
 **Day 3: Polish & Testing (3-4 hours)**
 
 - UI styling and animations (1.5 hours)
-- E2E test suite (1.5 hours)
 - Bug fixes and refinements (1 hour)
 - Documentation (30 min)
 
@@ -579,7 +522,6 @@ cat events.jsonl | jq -r '.type' | sort | uniq -c
 3. Add state projection handler
 4. Write tests for new event
 5. Update frontend UI
-6. Add E2E test
 
 ### Performance Optimization
 
@@ -614,11 +556,6 @@ npm test -- --watch              # Watch mode
 npm run dev                      # Dev server
 npm run build                    # Production build
 npm run check                    # Type checking
-
-# E2E
-cd e2e
-npm test                         # Run Cypress headless
-npm run test:open                # Open Cypress GUI
 
 # Full test suite
 ./run-all-tests.sh               # Custom script to run everything

@@ -209,7 +209,6 @@ foodlist/
 │       │   ├── websocket.ts  # WebSocket client
 │       │   └── *.svelte      # UI components
 │       └── App.svelte
-├── e2e/             # Cypress E2E tests
 ├── schema/          # Event schema definitions
 │   ├── events.schema.json
 │   └── generate.sh
@@ -224,9 +223,6 @@ cd backend && go test -v -cover ./...
 
 # Frontend tests
 cd frontend && npm test
-
-# E2E tests
-cd e2e && npx cypress run
 
 # All tests
 make test
@@ -291,7 +287,6 @@ When you push to `main` branch:
 
    - Backend tests (Go)
    - Frontend tests (Vitest)
-   - E2E tests (Cypress)
    - Linting (golangci-lint)
    - Docker build
 
@@ -328,7 +323,7 @@ Replace `OWNER` with your GitHub username or organization.
 Renovate is configured to automatically update dependencies:
 
 - Go modules (backend)
-- npm packages (frontend, e2e)
+- npm packages (frontend)
 - GitHub Actions
 - Docker images
 

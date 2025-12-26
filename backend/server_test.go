@@ -80,26 +80,45 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Should receive state rollup first, then client count
-	_, msg, err := conn.ReadMessage()
-	require.NoError(t, err)
-
+	// Should receive state rollup and client count (order may vary due to concurrency)
 	var rollup StateRollup
-	err = json.Unmarshal(msg, &rollup)
-	require.NoError(t, err)
+	var clientCount ClientCountMessage
+	rollupReceived := false
+	clientCountReceived := false
 
-	assert.Equal(t, "StateRollup", rollup.Type)
+	// Read up to 2 messages
+	for i := 0; i < 2; i++ {
+		_, msg, err := conn.ReadMessage()
+		require.NoError(t, err)
+
+		// Try to unmarshal as StateRollup
+		var tempRollup StateRollup
+		if err := json.Unmarshal(msg, &tempRollup); err == nil && tempRollup.Type == "StateRollup" {
+			rollup = tempRollup
+			rollupReceived = true
+			continue
+		}
+
+		// Try to unmarshal as ClientCount
+		var tempCount ClientCountMessage
+		if err := json.Unmarshal(msg, &tempCount); err == nil && tempCount.Type == "ClientCount" {
+			clientCount = tempCount
+			clientCountReceived = true
+			continue
+		}
+	}
+
+	// Verify we received both messages
+	require.True(t, rollupReceived, "Should receive StateRollup message")
+	require.True(t, clientCountReceived, "Should receive ClientCount message")
+
+	// Verify StateRollup content
 	require.Len(t, rollup.Todos, 1)
 	assert.Equal(t, "todo-1", rollup.Todos[0].ID)
 	require.Len(t, rollup.Categories, 1)
 	assert.Equal(t, "Work", rollup.Categories[0].Name)
 
-	// Also read the client count message
-	_, msg2, err := conn.ReadMessage()
-	require.NoError(t, err)
-	var clientCount ClientCountMessage
-	json.Unmarshal(msg2, &clientCount)
-	assert.Equal(t, "ClientCount", clientCount.Type)
+	// Verify ClientCount
 	assert.Equal(t, 1, clientCount.Count)
 }
 
@@ -366,8 +385,8 @@ func TestServer_ServeStaticFiles(t *testing.T) {
 
 	// Create a test static file
 	staticDir := filepath.Join(tmpDir, "static")
-	os.MkdirAll(staticDir, 0755)
-	os.WriteFile(filepath.Join(staticDir, "index.html"), []byte("<html>test</html>"), 0644)
+	os.MkdirAll(staticDir, 0o755)
+	os.WriteFile(filepath.Join(staticDir, "index.html"), []byte("<html>test</html>"), 0o644)
 
 	store, _ := NewEventStore(filePath)
 	server := NewServer(store)
@@ -427,7 +446,7 @@ func TestServer_LoadEvents_InvalidStore(t *testing.T) {
 	filePath := filepath.Join(tmpDir, "events.jsonl")
 
 	// Create store with invalid event
-	os.WriteFile(filePath, []byte(`{"type":"UnknownEvent","id":"1"}`), 0644)
+	os.WriteFile(filePath, []byte(`{"type":"UnknownEvent","id":"1"}`), 0o644)
 
 	store, _ := NewEventStore(filePath)
 	defer store.Close()
