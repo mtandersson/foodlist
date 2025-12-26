@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "cypress run",
+    "test": "./run-e2e-tests.sh",
+    "test:ci": "cypress run",
     "test:open": "cypress open"
   },
   "keywords": [],

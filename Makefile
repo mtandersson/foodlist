@@ -24,8 +24,11 @@ help:
 	@echo "  make dev            - Run with live reload (logfmt logging)"
 	@echo "  make dev-json       - Run with live reload (JSON logging)"
 	@echo "  make dev-network    - Run with live reload, accessible from network (for phone testing)"
-	@echo "  make test           - Run all tests"
+	@echo "  make test           - Run backend and frontend unit tests"
+	@echo "  make test-e2e       - Run E2E tests with isolated test server"
+	@echo "  make test-all       - Run all tests (unit + e2e)"
 	@echo "  make test-logging   - Test structured logging formats"
+	@echo "  make lint           - Run Go linters"
 	@echo "  make clean          - Clean build artifacts"
 	@echo ""
 	@echo "Container:"
@@ -98,6 +101,13 @@ test:
 	cd backend && go test -v -race -cover ./...
 	@echo "Running frontend tests..."
 	cd frontend && npm test
+
+test-e2e:
+	@echo "Running E2E tests with isolated test server..."
+	cd e2e && npm run test
+
+test-all: test test-e2e
+	@echo "All tests passed!"
 
 clean:
 	@echo "Cleaning build artifacts..."

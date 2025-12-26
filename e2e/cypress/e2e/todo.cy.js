@@ -37,9 +37,7 @@ describe("Todo App", () => {
       const todoName = `Complete test ${Date.now()}`
 
       // Create todo
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${todoName}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${todoName}{enter}`)
       cy.contains(todoName).should("be.visible")
 
       // Find and click the checkbox
@@ -52,21 +50,21 @@ describe("Todo App", () => {
       cy.get('[data-testid="completed-section"]').should("be.visible")
 
       // Todo should be in completed section with strikethrough
-      cy.contains(todoName)
-        .should("have.class", "strikethrough")
+      cy.contains(todoName).should("have.class", "strikethrough")
     })
 
     it("should star a todo", () => {
       const todoName = `Star test ${Date.now()}`
 
       // Create todo
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${todoName}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${todoName}{enter}`)
       cy.contains(todoName).should("be.visible")
 
       // Find and click the star button
-      cy.contains(todoName).parent().find('[data-testid="todo-star-button"]').click()
+      cy.contains(todoName)
+        .parent()
+        .find('[data-testid="todo-star-button"]')
+        .click()
 
       // Star should be filled (has starred class)
       cy.contains(todoName)
@@ -79,9 +77,7 @@ describe("Todo App", () => {
       const todoName = `Uncomplete test ${Date.now()}`
 
       // Create and complete todo
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${todoName}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${todoName}{enter}`)
       cy.contains(todoName)
         .parent()
         .find('[data-testid="todo-checkbox"]')
@@ -104,9 +100,7 @@ describe("Todo App", () => {
       const todoName = `Toggle test ${Date.now()}`
 
       // Create and complete todo
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${todoName}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${todoName}{enter}`)
       cy.contains(todoName)
         .parent()
         .find('[data-testid="todo-checkbox"]')
@@ -139,9 +133,7 @@ describe("Todo App", () => {
       const todoName = `Persist test ${Date.now()}`
 
       // Create todo
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${todoName}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${todoName}{enter}`)
       cy.contains(todoName).should("be.visible")
 
       // Wait for persistence
@@ -161,9 +153,7 @@ describe("Todo App", () => {
       const todoName = `Sync test ${Date.now()}`
 
       // Create todo in first tab
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${todoName}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${todoName}{enter}`)
       cy.contains(todoName).should("be.visible")
 
       // Wait for sync
@@ -185,9 +175,7 @@ describe("Todo App", () => {
       const todoName = `Optimistic test ${Date.now()}`
 
       // Type and submit - should appear immediately
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${todoName}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${todoName}{enter}`)
 
       // Should appear immediately (optimistic update)
       cy.contains(todoName).should("be.visible")
@@ -224,7 +212,10 @@ describe("Todo App", () => {
       cy.wait(100)
 
       // Star the first (older) todo
-      cy.contains(todo1).parent().find('[data-testid="todo-star-button"]').click()
+      cy.contains(todo1)
+        .parent()
+        .find('[data-testid="todo-star-button"]')
+        .click()
 
       // Wait for animation
       cy.wait(300)
@@ -249,22 +240,13 @@ describe("Todo App", () => {
       cy.wait(100)
 
       // Complete them in order: 1, 2, 3 with delays
-      cy.contains(todo1)
-        .parent()
-        .find('[data-testid="todo-checkbox"]')
-        .click()
+      cy.contains(todo1).parent().find('[data-testid="todo-checkbox"]').click()
       cy.wait(200)
 
-      cy.contains(todo2)
-        .parent()
-        .find('[data-testid="todo-checkbox"]')
-        .click()
+      cy.contains(todo2).parent().find('[data-testid="todo-checkbox"]').click()
       cy.wait(200)
 
-      cy.contains(todo3)
-        .parent()
-        .find('[data-testid="todo-checkbox"]')
-        .click()
+      cy.contains(todo3).parent().find('[data-testid="todo-checkbox"]').click()
       cy.wait(300)
 
       // Completed section should be visible
@@ -305,19 +287,24 @@ describe("Todo App", () => {
 
     it("should cancel editing on Escape", () => {
       // Get the original title first
-      cy.get('[data-testid="title"]').invoke('text').then((originalTitle) => {
-        // Click on title to edit
-        cy.get('[data-testid="title"]').click()
+      cy.get('[data-testid="title"]')
+        .invoke("text")
+        .then((originalTitle) => {
+          // Click on title to edit
+          cy.get('[data-testid="title"]').click()
 
-        // Type something
-        cy.get('[data-testid="title-input"]').clear().type("New Title")
+          // Type something
+          cy.get('[data-testid="title-input"]').clear().type("New Title")
 
-        // Press Escape
-        cy.get('[data-testid="title-input"]').type("{esc}")
+          // Press Escape
+          cy.get('[data-testid="title-input"]').type("{esc}")
 
-        // Should still show original title
-        cy.get('[data-testid="title"]').should("contain", originalTitle.trim())
-      })
+          // Should still show original title
+          cy.get('[data-testid="title"]').should(
+            "contain",
+            originalTitle.trim()
+          )
+        })
     })
   })
 
@@ -331,17 +318,12 @@ describe("Todo App", () => {
         "Autocomplete Eggs",
       ]
       items.forEach((item) => {
-        cy.get('[data-testid="add-todo-input"]').type(
-          `${item}{enter}`
-        )
+        cy.get('[data-testid="add-todo-input"]').type(`${item}{enter}`)
         cy.wait(200)
       })
       // Complete them so they show up in autocomplete
       items.forEach((item) => {
-        cy.contains(item)
-          .parent()
-          .find('[data-testid="todo-checkbox"]')
-          .click()
+        cy.contains(item).parent().find('[data-testid="todo-checkbox"]').click()
         cy.wait(200)
       })
     })
@@ -359,9 +341,7 @@ describe("Todo App", () => {
 
     it("should show suggestions matching the query", () => {
       // Type something that matches historical items
-      cy.get('[data-testid="add-todo-input"]')
-        .focus()
-        .type("Autocomplete M")
+      cy.get('[data-testid="add-todo-input"]').focus().type("Autocomplete M")
 
       cy.wait(300)
 
@@ -373,14 +353,14 @@ describe("Todo App", () => {
 
     it("should fill input when clicking a suggestion", () => {
       // Type to trigger autocomplete
-      cy.get('[data-testid="add-todo-input"]')
-        .focus()
-        .type("Autocomplete M")
+      cy.get('[data-testid="add-todo-input"]').focus().type("Autocomplete M")
 
       cy.wait(300)
 
       // Click on a suggestion
-      cy.get('[data-testid="autocomplete-dropdown"]').contains("Autocomplete Milk").click()
+      cy.get('[data-testid="autocomplete-dropdown"]')
+        .contains("Autocomplete Milk")
+        .click()
 
       // The input should be cleared (item was added) and new todo should appear
       cy.get('[data-testid="todos-section"]')
@@ -407,9 +387,7 @@ describe("Todo App", () => {
     it("should not show items that are already active", () => {
       // Add an item that won't be completed (active)
       const activeTodo = `Active Item ${Date.now()}`
-      cy.get('[data-testid="add-todo-input"]').type(
-        `${activeTodo}{enter}`
-      )
+      cy.get('[data-testid="add-todo-input"]').type(`${activeTodo}{enter}`)
       cy.wait(300)
 
       // Now type the same name - it should not appear in autocomplete
@@ -421,14 +399,15 @@ describe("Todo App", () => {
       cy.wait(300)
 
       // The active item should not be in suggestions
-      cy.get('[data-testid="autocomplete-dropdown"]').should("not.contain", activeTodo)
+      cy.get('[data-testid="autocomplete-dropdown"]').should(
+        "not.contain",
+        activeTodo
+      )
     })
 
     it("should navigate suggestions with arrow keys", () => {
       // Type to trigger autocomplete
-      cy.get('[data-testid="add-todo-input"]')
-        .focus()
-        .type("Autocomplete")
+      cy.get('[data-testid="add-todo-input"]').focus().type("Autocomplete")
 
       cy.wait(300)
 
@@ -448,14 +427,14 @@ describe("Todo App", () => {
       cy.get('[data-testid="add-todo-input"]').type("{uparrow}")
 
       // First item should be selected again
-      cy.get('[data-testid="autocomplete-item"]').first().should("have.class", "selected")
+      cy.get('[data-testid="autocomplete-item"]')
+        .first()
+        .should("have.class", "selected")
     })
 
     it("should add selected suggestion when pressing Enter", () => {
       // Type to trigger autocomplete
-      cy.get('[data-testid="add-todo-input"]')
-        .focus()
-        .type("Autocomplete B")
+      cy.get('[data-testid="add-todo-input"]').focus().type("Autocomplete B")
 
       cy.wait(300)
 
@@ -480,7 +459,10 @@ describe("Todo App", () => {
 
       // Should show autocomplete with most used items
       cy.get('[data-testid="autocomplete-dropdown"]').should("be.visible")
-      cy.get('[data-testid="autocomplete-item"]').should("have.length.at.least", 1)
+      cy.get('[data-testid="autocomplete-item"]').should(
+        "have.length.at.least",
+        1
+      )
     })
 
     it("should hide autocomplete when input loses focus", () => {
@@ -503,9 +485,7 @@ describe("Todo App", () => {
     it("should limit suggestions to maximum 4 items", () => {
       // Create many historical items
       for (let i = 0; i < 6; i++) {
-        cy.get('[data-testid="add-todo-input"]').type(
-          `LimitTest${i}{enter}`
-        )
+        cy.get('[data-testid="add-todo-input"]').type(`LimitTest${i}{enter}`)
         cy.wait(100)
         cy.contains(`LimitTest${i}`)
           .parent()
@@ -515,14 +495,15 @@ describe("Todo App", () => {
       }
 
       // Type to trigger autocomplete
-      cy.get('[data-testid="add-todo-input"]')
-        .focus()
-        .type("LimitTest")
+      cy.get('[data-testid="add-todo-input"]').focus().type("LimitTest")
 
       cy.wait(300)
 
       // Should show max 4 items
-      cy.get('[data-testid="autocomplete-item"]').should("have.length.at.most", 4)
+      cy.get('[data-testid="autocomplete-item"]').should(
+        "have.length.at.most",
+        4
+      )
     })
   })
 
@@ -551,7 +532,7 @@ describe("Todo App", () => {
       // Find the todo and click it to open the modal
       cy.contains('[data-testid="todo-name"]', todoName).click()
       cy.wait(200)
-      
+
       // Select category from modal
       cy.get('[data-testid="category-option"]').contains(categoryName).click()
       cy.wait(300)
@@ -566,10 +547,10 @@ describe("Todo App", () => {
       cy.get('[data-testid="mode-categories"]').click()
       cy.wait(300)
       createCategory(categoryName)
-      
+
       // Find the category section and delete it
       cy.get(`[data-category-name="${categoryName}"]`)
-        .find('.delete-btn')
+        .find(".delete-btn")
         .click()
       cy.wait(200)
       cy.get(`[data-category-name="${categoryName}"]`).should("not.exist")
@@ -600,9 +581,9 @@ describe("Todo App", () => {
 
       // Simulate mobile tap on the todo name (using trigger with touch event)
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100) // Quick tap - less than 500ms
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       // Wait a bit for the modal to appear
       cy.wait(300)
@@ -613,7 +594,9 @@ describe("Todo App", () => {
       cy.get('[data-testid="modal-subtitle"]').should("contain", todoName)
 
       // Should show the category option
-      cy.get('[data-testid="category-option"]').contains(categoryName).should("be.visible")
+      cy.get('[data-testid="category-option"]')
+        .contains(categoryName)
+        .should("be.visible")
     })
 
     it("assigns category when selecting from mobile modal", () => {
@@ -631,9 +614,9 @@ describe("Todo App", () => {
 
       // Tap the todo to open category selector
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
@@ -661,9 +644,9 @@ describe("Todo App", () => {
 
       // Open modal
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
@@ -692,9 +675,9 @@ describe("Todo App", () => {
 
       // Open modal
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
@@ -718,9 +701,9 @@ describe("Todo App", () => {
 
       // Open modal
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
@@ -748,9 +731,9 @@ describe("Todo App", () => {
 
       // Assign to first category
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
       cy.wait(300)
       cy.get('[data-testid="category-option"]').contains(cat1).click()
       cy.wait(500)
@@ -763,9 +746,9 @@ describe("Todo App", () => {
       // Now tap again to change category
       cy.get(`[data-category-name="${cat1}"]`).within(() => {
         cy.contains('[data-testid="todo-name"]', todoName)
-          .trigger("touchstart", { force: true })
+          .trigger("touchstart", {force: true})
           .wait(100)
-          .trigger("touchend", { force: true })
+          .trigger("touchend", {force: true})
       })
       cy.wait(300)
 
@@ -803,9 +786,9 @@ describe("Todo App", () => {
 
       // Try to tap the todo in Normal view
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
@@ -826,9 +809,9 @@ describe("Todo App", () => {
 
       // Simulate long press (touchstart, wait > 500ms, touchend)
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(600) // Long press - more than 500ms
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
@@ -838,7 +821,7 @@ describe("Todo App", () => {
       // Edit input should appear instead (long press triggers edit mode)
       cy.get('[data-testid="todo-edit-input"]').should("be.visible")
     })
-    
+
     it("handles multiple categories in modal", () => {
       const todoName = `Multi Cat ${Date.now()}`
       const cat1 = `Cat1 ${Date.now()}`
@@ -858,17 +841,23 @@ describe("Todo App", () => {
 
       // Open modal
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
       // Should show all three categories
       cy.get('[data-testid="category-option"]').should("have.length", 3)
-      cy.get('[data-testid="category-option"]').contains(cat1).should("be.visible")
-      cy.get('[data-testid="category-option"]').contains(cat2).should("be.visible")
-      cy.get('[data-testid="category-option"]').contains(cat3).should("be.visible")
+      cy.get('[data-testid="category-option"]')
+        .contains(cat1)
+        .should("be.visible")
+      cy.get('[data-testid="category-option"]')
+        .contains(cat2)
+        .should("be.visible")
+      cy.get('[data-testid="category-option"]')
+        .contains(cat3)
+        .should("be.visible")
 
       // Select the second category
       cy.get('[data-testid="category-option"]').contains(cat2).click()
@@ -896,9 +885,9 @@ describe("Todo App", () => {
 
       // Try to tap the todo
       cy.contains('[data-testid="todo-name"]', todoName)
-        .trigger("touchstart", { force: true })
+        .trigger("touchstart", {force: true})
         .wait(100)
-        .trigger("touchend", { force: true })
+        .trigger("touchend", {force: true})
 
       cy.wait(300)
 
