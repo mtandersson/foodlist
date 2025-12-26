@@ -66,6 +66,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.12.0"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Create release
         id: semantic
@@ -76,16 +80,6 @@ jobs:
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
-        with:
-          semantic_version: 23
-          extra_plugins: |
-            @semantic-release/commit-analyzer
-            @semantic-release/release-notes-generator
-            @semantic-release/changelog
-            @semantic-release/exec
-            @semantic-release/github
-            @semantic-release/git
-            conventional-changelog-conventionalcommits
 
   build-and-push:
     name: Build and Push Docker Image
