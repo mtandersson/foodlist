@@ -180,6 +180,23 @@ func (s *Server) Run() {
 
 // HandleWebSocket handles WebSocket upgrade and client communication
 func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	// Extract client IP and proxy headers
+	clientIP := r.RemoteAddr
+	xForwardedFor := r.Header.Get("X-Forwarded-For")
+	xRealIP := r.Header.Get("X-Real-IP")
+
+	// Log new WebSocket connection with IP and proxy headers
+	logAttrs := []any{
+		"remote_addr", clientIP,
+	}
+	if xForwardedFor != "" {
+		logAttrs = append(logAttrs, "x_forwarded_for", xForwardedFor)
+	}
+	if xRealIP != "" {
+		logAttrs = append(logAttrs, "x_real_ip", xRealIP)
+	}
+	slog.Info("new websocket connection", logAttrs...)
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error("failed to upgrade connection", "error", err)

@@ -61,8 +61,15 @@ time=2025-12-25T07:34:47.003+01:00 level=INFO msg="logger configured" format=log
 time=2025-12-25T07:34:47.006+01:00 level=INFO msg="initializing event store" file=/path/to/events.jsonl
 time=2025-12-25T07:34:47.007+01:00 level=INFO msg="loaded events from store" event_count=40
 time=2025-12-25T07:34:47.008+01:00 level=INFO msg="starting server" port=8080 websocket_endpoint=ws://localhost:8080/ws
-time=2025-12-25T07:34:47.121+01:00 level=INFO msg="client connected" total_clients=1
+time=2025-12-25T07:34:47.121+01:00 level=INFO msg="new websocket connection" remote_addr=192.168.1.100:54321
+time=2025-12-25T07:34:47.122+01:00 level=INFO msg="client connected" total_clients=1
 time=2025-12-25T07:34:48.456+01:00 level=INFO msg="command received" type=CreateTodo message={"type":"CreateTodo",...}
+```
+
+**With proxy headers (behind load balancer/reverse proxy):**
+
+```
+time=2025-12-25T07:34:47.121+01:00 level=INFO msg="new websocket connection" remote_addr=10.0.0.5:54321 x_forwarded_for="203.0.113.195, 198.51.100.178" x_real_ip=203.0.113.195
 ```
 
 ### JSON
@@ -72,8 +79,22 @@ time=2025-12-25T07:34:48.456+01:00 level=INFO msg="command received" type=Create
 {"time":"2025-12-25T07:34:47.006+01:00","level":"INFO","msg":"initializing event store","file":"/path/to/events.jsonl"}
 {"time":"2025-12-25T07:34:47.007+01:00","level":"INFO","msg":"loaded events from store","event_count":40}
 {"time":"2025-12-25T07:34:47.008+01:00","level":"INFO","msg":"starting server","port":"8080","websocket_endpoint":"ws://localhost:8080/ws"}
-{"time":"2025-12-25T07:34:47.121+01:00","level":"INFO","msg":"client connected","total_clients":1}
+{"time":"2025-12-25T07:34:47.121+01:00","level":"INFO","msg":"new websocket connection","remote_addr":"192.168.1.100:54321"}
+{"time":"2025-12-25T07:34:47.122+01:00","level":"INFO","msg":"client connected","total_clients":1}
 {"time":"2025-12-25T07:34:48.456+01:00","level":"INFO","msg":"command received","type":"CreateTodo","message":"{\"type\":\"CreateTodo\",...}"}
+```
+
+**With proxy headers (behind load balancer/reverse proxy):**
+
+```json
+{
+  "time": "2025-12-25T07:34:47.121+01:00",
+  "level": "INFO",
+  "msg": "new websocket connection",
+  "remote_addr": "10.0.0.5:54321",
+  "x_forwarded_for": "203.0.113.195, 198.51.100.178",
+  "x_real_ip": "203.0.113.195"
+}
 ```
 
 ## Structured Log Fields
@@ -104,6 +125,12 @@ time=2025-12-25T07:34:48.456+01:00 level=INFO msg="command received" type=Create
 - `event_type`: Event type for persistence/broadcast
 - `error`: Error message for failures
 - `requested_format`: For invalid LOG_FORMAT values
+
+#### WebSocket Connections
+
+- `remote_addr`: Client's remote address (IP:port)
+- `x_forwarded_for`: X-Forwarded-For header value (if present, when behind proxy/load balancer)
+- `x_real_ip`: X-Real-IP header value (if present, alternative proxy header)
 
 ## Benefits
 
