@@ -1,4 +1,4 @@
-.PHONY: help build run stop clean logs test docker-build docker-run docker-stop docker-clean dev-json dev-network test-logging
+.PHONY: help build run stop clean logs test docker-build docker-run docker-stop docker-clean dev-json dev-network dev-secure dev-secure-net test-logging
 
 # Detect container runtime (prefer podman over docker)
 CONTAINER_RUNTIME := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
@@ -21,9 +21,11 @@ help:
 	@echo "Development:"
 	@echo "  make build          - Build frontend and backend"
 	@echo "  make run            - Run development servers"
-	@echo "  make dev            - Run with live reload (logfmt logging)"
+	@echo "  make dev            - Run with live reload (logfmt logging, no security)"
 	@echo "  make dev-json       - Run with live reload (JSON logging)"
 	@echo "  make dev-network    - Run with live reload, accessible from network (for phone testing)"
+	@echo "  make dev-secure     - Run secure mode (no hot reload), serves from /dev/"
+	@echo "  make dev-secure-net - Run secure mode (no hot reload) with network access"
 	@echo "  make test           - Run all tests"
 	@echo "  make test-logging   - Test structured logging formats"
 	@echo "  make clean          - Clean build artifacts"
@@ -55,9 +57,28 @@ dev:
 	@echo "Starting frontend (Vite dev server with auto-reload)..."
 	cd frontend && npm install
 	cd frontend && npm run dev -- --host --port 5173 &
-	@echo "Starting backend with live-reload (air)..."
+	@echo "Starting backend with live-reload (air) - NO SECURITY..."
 	@(sleep 3 && open http://localhost:5173) &
-	cd backend && air
+	cd backend && SHARED_SECRET= CIDR_WHITELIST= air
+
+dev-secure:
+	@test -f backend/.env || { echo "❌ backend/.env not found. Security features require .env file."; exit 1; }
+	@echo ""
+	@echo "🔒 Secure mode (no hot reload)"
+	@echo "   Serving from: /dev/"
+	@echo ""
+	@echo "Building frontend (production build)..."
+	cd frontend && npm install && npm run build
+	@echo "Building backend..."
+	cd backend && go build -o foodlist
+	@echo "Stopping anything already listening on :8080..."
+	@lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+	@echo ""
+	@echo "✅ Starting backend (serves frontend/dist) ..."
+	@echo "   Open: http://localhost:8080/      (redirects to /dev/)"
+	@echo "   Open: http://localhost:8080/dev/  (direct)"
+	@echo ""
+	cd backend && BIND_ADDR=localhost ./foodlist
 
 dev-json:
 	@command -v air >/dev/null || { echo "❌ 'air' not installed. Install with: go install github.com/air-verse/air@latest"; exit 1; }
@@ -74,7 +95,7 @@ dev-network:
 	cd frontend && npm install
 	cd frontend && npm run dev -- --host 0.0.0.0 --port 5173 &
 	@echo ""
-	@echo "Starting backend with live-reload (air) - network accessible..."
+	@echo "Starting backend with live-reload (air) - network accessible - NO SECURITY..."
 	@echo ""
 	@echo "🌐 Network Access Enabled:"
 	@echo "   Frontend: http://$(shell ipconfig getifaddr en0 || hostname -I | awk '{print $$1}'):5173"
@@ -83,7 +104,30 @@ dev-network:
 	@echo "📱 Use the frontend URL above to access from your phone"
 	@echo ""
 	@(sleep 3 && open http://localhost:5173) &
-	cd backend && BIND_ADDR=0.0.0.0 air
+	cd backend && BIND_ADDR=0.0.0.0 SHARED_SECRET= CIDR_WHITELIST= air
+
+dev-secure-net:
+	@test -f backend/.env || { echo "❌ backend/.env not found. Security features require .env file."; exit 1; }
+	@echo ""
+	@echo "🔒 Secure mode + network access (no hot reload)"
+	@echo "   Serving from: /dev/"
+	@echo ""
+	@echo "Building frontend (production build)..."
+	cd frontend && npm install && npm run build
+	@echo "Building backend..."
+	cd backend && go build -o foodlist
+	@echo "Stopping anything already listening on :8080..."
+	@lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+	@echo ""
+	@echo "🌐 Network Access Enabled:"
+	@echo "   Localhost:    http://localhost:8080/      (redirects to /dev/)"
+	@echo "   Localhost:    http://localhost:8080/dev/  (direct)"
+	@echo "   Phone/Tablet: http://$(shell ipconfig getifaddr en0 || hostname -I | awk '{print $$1}'):8080/dev/"
+	@echo ""
+	@echo "📱 IMPORTANT: With default whitelist (127.0.0.1 only),"
+	@echo "   phones MUST use /dev/ (root / will be 404)."
+	@echo ""
+	cd backend && BIND_ADDR=0.0.0.0 ./foodlist
 
 test-logging:
 	@echo "Testing structured logging formats..."

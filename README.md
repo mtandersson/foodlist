@@ -10,6 +10,8 @@ A real-time, event-sourced todo list application built with Go, Svelte, and WebS
 - Persistent storage
 - Live reload for development
 - Structured logging with multiple formats
+- **IP-based access control with CIDR whitelisting**
+- **Secret path routing for secure access**
 
 ## Quick Start
 
@@ -51,6 +53,8 @@ make docker-run
 - `DATA_DIR` - Directory for event storage (default: `.`)
 - `STATIC_DIR` - Directory for static files (default: `../frontend/dist`)
 - `LOG_FORMAT` - Log output format: `logfmt` or `json` (default: `logfmt`)
+- `SHARED_SECRET` - Secret path component for secure access (optional, e.g., `my-secret-123`)
+- `CIDR_WHITELIST` - Comma-separated CIDR blocks for IP whitelisting (optional, e.g., `192.168.1.0/24,10.0.0.0/8`)
 
 ### Structured Logging
 
@@ -372,6 +376,7 @@ Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for details on our conventional
 
 - [`docs/features/LOCAL_STORAGE_PERSISTENCE.md`](docs/features/LOCAL_STORAGE_PERSISTENCE.md) - Offline persistence implementation
 - [`docs/features/MOBILE_CATEGORY_SELECTION.md`](docs/features/MOBILE_CATEGORY_SELECTION.md) - Mobile UI enhancements
+- [`docs/features/IP_WHITELIST_SECURITY.md`](docs/features/IP_WHITELIST_SECURITY.md) - IP whitelisting and secret path routing
 
 ### Architecture
 

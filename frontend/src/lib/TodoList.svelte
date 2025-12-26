@@ -13,12 +13,13 @@
   import type { Todo, AutocompleteSuggestion } from './types';
 
   // Determine WebSocket URL
-  // In dev mode, use Vite proxy on port 5173 (works for both localhost and network access)
-  // In production, use the same host that served the page
+  // Use the same path as the current page (to support secret paths like /secret-123/ws)
+  // Extract the base path from the current location (everything before the last segment)
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = import.meta.env.DEV 
-    ? `${wsProtocol}//${window.location.host}/ws`
-    : `${wsProtocol}//${window.location.host}/ws`;
+  const basePath = window.location.pathname.endsWith('/') 
+    ? window.location.pathname 
+    : window.location.pathname + '/';
+  const wsUrl = `${wsProtocol}//${window.location.host}${basePath}ws`;
 
   const store = createTodoStore(wsUrl);
   const { activeTodos, completedTodos, categories, activeTodosByCategory, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced } = store;
