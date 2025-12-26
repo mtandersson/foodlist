@@ -191,9 +191,8 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		sendCh: make(chan []byte, 256),
 	}
 
-	s.register <- client
-
-	// Send state rollup to new client
+	// Send state rollup to new client BEFORE registering
+	// This ensures StateRollup is always the first message
 	rollup := StateRollup{
 		Type:       "StateRollup",
 		Todos:      s.state.GetTodos(),
@@ -210,6 +209,10 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Start goroutines for reading and writing
 	go s.writePump(client)
 	go s.readPump(client)
+
+	// Register client last (triggers broadcastClientCount)
+	// By this point, writePump is already running and will send StateRollup first
+	s.register <- client
 }
 
 // broadcastClientCount sends the current number of connected clients to all clients

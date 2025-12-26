@@ -95,7 +95,7 @@ lint:
 
 test:
 	@echo "Running backend tests..."
-	cd backend && go test -v -cover ./...
+	cd backend && go test -v -race -cover ./...
 	@echo "Running frontend tests..."
 	cd frontend && npm test
 
