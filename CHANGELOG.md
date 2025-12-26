@@ -1,3 +1,10 @@
+## [1.4.0](https://github.com/mtandersson/foodlist/compare/v1.3.0...v1.4.0) (2025-12-26)
+
+### Features
+
+* **backend:** add HTTP logging middleware for request details ([dd08a81](https://github.com/mtandersson/foodlist/commit/dd08a8185bb94918693d28c5a00993fa122349fb))
+* **backend:** add HTTP logging middleware for request details ([#49](https://github.com/mtandersson/foodlist/issues/49)) ([a484ed8](https://github.com/mtandersson/foodlist/commit/a484ed8016354b4709ff52bdc77f773bf2d3d00f))
+
 ## [1.3.0](https://github.com/mtandersson/foodlist/compare/v1.2.0...v1.3.0) (2025-12-26)
 
 ### Features
