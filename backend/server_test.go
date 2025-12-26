@@ -197,10 +197,7 @@ func TestServer_PersistEventToStore(t *testing.T) {
 	conn.ReadMessage() // CommandResponse
 	conn.ReadMessage() // Event broadcast
 
-	// Give a moment for persistence
-	time.Sleep(50 * time.Millisecond)
-
-	// Read events from store
+	// Read events from store - the event is persisted synchronously before broadcast
 	events, err := server.store.ReadAll()
 	require.NoError(t, err)
 	require.Len(t, events, 1)
@@ -233,9 +230,9 @@ func TestServer_UpdateStateOnEvent(t *testing.T) {
 	// Wait for processing
 	conn.ReadMessage() // CommandResponse
 	conn.ReadMessage() // Event broadcast
-	time.Sleep(50 * time.Millisecond)
 
 	// Connect new client and verify state includes new todo
+	// State is updated synchronously, so it should be immediately available
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
@@ -265,8 +262,7 @@ func TestServer_HandleClientDisconnect(t *testing.T) {
 	// Disconnect client 1
 	conn1.Close()
 
-	// Give time for disconnect handling and read the client count update
-	time.Sleep(50 * time.Millisecond)
+	// Client count update is sent synchronously to remaining clients
 	conn2.ReadMessage() // client count (1) after disconnect
 
 	// Client 2 should still be able to receive events
@@ -529,11 +525,8 @@ func TestServer_WritePump_HandleClosedConnection(t *testing.T) {
 	// Close connection immediately
 	conn.Close()
 
-	// Wait a bit for cleanup
-	time.Sleep(100 * time.Millisecond)
-
-	// Server should handle it gracefully (no panic)
-	// We can verify by connecting another client
+	// Verify server handles it gracefully by connecting another client
+	// If cleanup wasn't handled properly, this would fail or panic
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
