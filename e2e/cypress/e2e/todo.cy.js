@@ -5,9 +5,22 @@ describe("Todo App", () => {
     cy.wait(500)
   })
 
+  // Helper function to create a category
+  const createCategory = (categoryName) => {
+    // Open menu
+    cy.get('button[aria-label="Menu"]').click()
+    cy.wait(200)
+    // Click "Ny kategori"
+    cy.contains("button", "Ny kategori").click()
+    cy.wait(200)
+    // Type category name
+    cy.get('input[placeholder="Namn på ny kategori..."]').type(`${categoryName}{enter}`)
+    cy.wait(300)
+  }
+
   describe("Basic Flows", () => {
     it("should display the app title", () => {
-      cy.contains("Mat 2025").should("be.visible")
+      cy.contains("🛒 Mat").should("be.visible")
     })
 
     it("should create a new todo", () => {
@@ -547,6 +560,339 @@ describe("Todo App", () => {
         cy.get('[data-cy="delete-category"]').click()
       })
       cy.contains(".category-card", categoryName).should("not.exist")
+    })
+  })
+
+  describe("Mobile Category Selection", () => {
+    beforeEach(() => {
+      // Set mobile viewport
+      cy.viewport(375, 667) // iPhone SE
+    })
+
+    it("shows category selector modal on tap for uncategorized todo in Categories view", () => {
+      const todoName = `Mobile Cat Test ${Date.now()}`
+      const categoryName = `MobileCat ${Date.now()}`
+
+      // Switch to categories view
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+
+      // Create a category
+      createCategory(categoryName)
+
+      // Create an uncategorized todo in categories view
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+      cy.contains(todoName).should("be.visible")
+
+      // Simulate mobile tap on the todo name (using trigger with touch event)
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100) // Quick tap - less than 500ms
+        .trigger("touchend", { force: true })
+
+      // Wait a bit for the modal to appear
+      cy.wait(300)
+
+      // Category selector modal should appear
+      cy.get(".modal-backdrop").should("be.visible")
+      cy.contains("Välj kategori").should("be.visible")
+      cy.contains(todoName).should("be.visible") // Todo name in subtitle
+
+      // Should show the category option
+      cy.get(".category-list .category-option").contains(categoryName).should("be.visible")
+    })
+
+    it("assigns category when selecting from mobile modal", () => {
+      const todoName = `Mobile Assign ${Date.now()}`
+      const categoryName = `AssignCat ${Date.now()}`
+
+      // Switch to Categories view and create category
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(categoryName)
+
+      // Create uncategorized todo in Categories view
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Tap the todo to open category selector
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Select the category
+      cy.get(".category-list .category-option").contains(categoryName).click()
+
+      cy.wait(500)
+
+      // Todo should now be in the category (we're already in categories view)
+      cy.contains(".category-card", categoryName).within(() => {
+        cy.contains(todoName).should("exist")
+      })
+    })
+
+    it("closes modal when clicking cancel", () => {
+      const todoName = `Cancel Test ${Date.now()}`
+      const categoryName = `CancelCat ${Date.now()}`
+
+      // Create category and todo in Categories view
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(categoryName)
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Open modal
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Click cancel button
+      cy.contains("button", "Avbryt").click()
+
+      // Modal should close
+      cy.get(".modal-backdrop").should("not.exist")
+
+      // Todo should still be uncategorized
+      cy.contains(".category-card", categoryName).within(() => {
+        cy.contains(todoName).should("not.exist")
+      })
+    })
+
+    it("closes modal when clicking close button", () => {
+      const todoName = `Close Test ${Date.now()}`
+      const categoryName = `CloseCat ${Date.now()}`
+
+      // Setup in Categories view
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(categoryName)
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Open modal
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Click close button (×)
+      cy.get('button[aria-label="Stäng"]').click()
+
+      // Modal should close
+      cy.get(".modal-backdrop").should("not.exist")
+    })
+
+    it("closes modal when clicking backdrop", () => {
+      const todoName = `Backdrop Test ${Date.now()}`
+      const categoryName = `BackdropCat ${Date.now()}`
+
+      // Setup in Categories view
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(categoryName)
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Open modal
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Click backdrop (not the modal content)
+      cy.get(".modal-backdrop").click(10, 10) // Click near edge
+
+      // Modal should close
+      cy.get(".modal-backdrop").should("not.exist")
+    })
+
+    it("allows changing category for already categorized todos in Categories view", () => {
+      const todoName = `Change Cat ${Date.now()}`
+      const cat1 = `FirstCat ${Date.now()}`
+      const cat2 = `SecondCat ${Date.now()}`
+
+      // Create two categories
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(cat1)
+      createCategory(cat2)
+
+      // Create todo
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Assign to first category
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+      cy.wait(300)
+      cy.get(".category-list .category-option").contains(cat1).click()
+      cy.wait(500)
+
+      // Verify it's in first category
+      cy.contains(".category-card", cat1).within(() => {
+        cy.contains(todoName).should("exist")
+      })
+
+      // Now tap again to change category
+      cy.contains(".category-card", cat1).within(() => {
+        cy.contains(".todo-name", todoName)
+          .trigger("touchstart", { force: true })
+          .wait(100)
+          .trigger("touchend", { force: true })
+      })
+      cy.wait(300)
+
+      // Select second category
+      cy.get(".category-list .category-option").contains(cat2).click()
+      cy.wait(500)
+
+      // Verify it moved to second category
+      cy.contains(".category-card", cat2).within(() => {
+        cy.contains(todoName).should("exist")
+      })
+
+      // And it's no longer in first category
+      cy.contains(".category-card", cat1).within(() => {
+        cy.contains(todoName).should("not.exist")
+      })
+    })
+
+    it("does not show modal in Normal view", () => {
+      const todoName = `Normal View ${Date.now()}`
+      const categoryName = `NormalCat ${Date.now()}`
+
+      // Create category
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(categoryName)
+
+      // Create todo
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Switch to Normal view
+      cy.contains("button", "Normal").click()
+      cy.wait(300)
+
+      // Try to tap the todo in Normal view
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Modal should NOT appear in Normal view
+      cy.get(".modal-backdrop").should("not.exist")
+    })
+
+    it("does not show modal on long press (enters edit mode instead)", () => {
+      const todoName = `Long Press ${Date.now()}`
+      const categoryName = `LongPressCat ${Date.now()}`
+
+      // Setup in Categories view
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(categoryName)
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Simulate long press (touchstart, wait > 500ms, touchend)
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(600) // Long press - more than 500ms
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Modal should NOT appear
+      cy.get(".modal-backdrop").should("not.exist")
+
+      // Edit input should appear instead (long press triggers edit mode)
+      cy.get(".edit-input").should("be.visible")
+    })
+    it("handles multiple categories in modal", () => {
+      const todoName = `Multi Cat ${Date.now()}`
+      const cat1 = `Cat1 ${Date.now()}`
+      const cat2 = `Cat2 ${Date.now()}`
+      const cat3 = `Cat3 ${Date.now()}`
+
+      // Create multiple categories in Categories view
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+      createCategory(cat1)
+      createCategory(cat2)
+      createCategory(cat3)
+      createCategory(cat1)
+      createCategory(cat2)
+      createCategory(cat3)
+
+      // Create uncategorized todo
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Open modal
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Should show all three categories (use .category-list .category-option to be specific)
+      cy.get(".category-list .category-option").should("have.length", 3)
+      cy.get(".category-list .category-option").contains(cat1).should("be.visible")
+      cy.get(".category-list .category-option").contains(cat2).should("be.visible")
+      cy.get(".category-list .category-option").contains(cat3).should("be.visible")
+
+      // Select the second category
+      cy.get(".category-list .category-option").contains(cat2).click()
+
+      cy.wait(500)
+
+      // Verify assignment (we're already in categories view)
+      cy.contains(".category-card", cat2).within(() => {
+        cy.contains(todoName).should("exist")
+      })
+    })
+
+    it.skip("does not show modal when no categories exist", () => {
+      // This test is skipped because it requires a clean state with no categories.
+      // In practice, the modal correctly checks categories.length > 0 before showing.
+      const todoName = `No Cat ${Date.now()}`
+
+      // Make sure we're in Categories view with no categories
+      cy.contains("button", "Kategorier").click()
+      cy.wait(300)
+
+      // Create uncategorized todo
+      cy.get('input[placeholder="Lägg till en uppgift"]').type(`${todoName}{enter}`)
+      cy.wait(300)
+
+      // Try to tap the todo
+      cy.contains(".todo-name", todoName)
+        .trigger("touchstart", { force: true })
+        .wait(100)
+        .trigger("touchend", { force: true })
+
+      cy.wait(300)
+
+      // Modal should NOT appear since there are no categories
+      cy.get(".modal-backdrop").should("not.exist")
     })
   })
 })

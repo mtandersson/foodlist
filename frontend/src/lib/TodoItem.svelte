@@ -7,14 +7,17 @@
     onToggleComplete: (id: string) => void;
     onToggleStar: (id: string) => void;
     onRename: (id: string, name: string) => void;
+    onRequestCategorize?: (todo: Todo) => void;
   }
 
-  let { todo, categoryName = null, onToggleComplete, onToggleStar, onRename }: Props = $props();
+  let { todo, categoryName = null, onToggleComplete, onToggleStar, onRename, onRequestCategorize }: Props = $props();
 
   let isEditing = $state(false);
   let editName = $state('');
   let longPressTimer: number | null = $state(null);
   let isLongPressing = $state(false);
+  let touchStartTime = $state(0);
+  let touchMoved = $state(false);
 
   function handleCheckClick() {
     onToggleComplete(todo.id);
@@ -48,6 +51,9 @@
 
   // Mobile long-press support
   function handleTouchStart(e: TouchEvent) {
+    touchStartTime = Date.now();
+    touchMoved = false;
+    
     // Clear any existing timer
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -63,15 +69,25 @@
   }
 
   function handleTouchEnd(e: TouchEvent) {
+    const touchDuration = Date.now() - touchStartTime;
+    const wasQuickTap = touchDuration < 500 && !touchMoved;
+    
     // Clear timer if touch ends before long-press threshold
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       longPressTimer = null;
     }
     isLongPressing = false;
+    
+    // If it's a quick tap, show category selector (works for both categorized and uncategorized)
+    if (wasQuickTap && onRequestCategorize) {
+      e.preventDefault(); // Prevent any default behavior
+      onRequestCategorize(todo);
+    }
   }
 
   function handleTouchMove(e: TouchEvent) {
+    touchMoved = true;
     // Cancel long-press if user moves finger
     if (longPressTimer) {
       clearTimeout(longPressTimer);

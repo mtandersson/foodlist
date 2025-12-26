@@ -3,6 +3,7 @@
   import { fade } from 'svelte/transition';
   import TodoItem from './TodoItem.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
+  import CategorySelectorModal from './CategorySelectorModal.svelte';
   import type { Category, Todo } from './types';
 
   interface Props {
@@ -22,6 +23,7 @@
     onToggleCompletedSection: () => void;
     expandedCategories: Set<string | null>;
     onToggleCategory: (id: string | null) => void;
+    viewMode: 'normal' | 'categories';
   }
 
   let {
@@ -41,6 +43,7 @@
     onToggleCompletedSection,
     expandedCategories,
     onToggleCategory,
+    viewMode,
   }: Props = $props();
 
   let draggedId: string | null = $state(null);
@@ -49,6 +52,8 @@
   let dropPosition: 'above' | 'below' | null = $state(null);
   let isDragging = $state(false);
   let autoExpandTimer: number | null = null;
+  let showCategoryModal = $state(false);
+  let selectedTodoForCategorization: Todo | null = $state(null);
 
   function todosForCategory(categoryId: string | null): Todo[] {
     return activeTodosByCategory.get(categoryId) ?? [];
@@ -301,6 +306,27 @@
     
     onReorderCategory(categoryId, newSortOrder);
   }
+
+  function handleRequestCategorize(todo: Todo) {
+    // Only show modal if in categories mode and there are categories available
+    if (viewMode === 'categories' && categories.length > 0) {
+      selectedTodoForCategorization = todo;
+      showCategoryModal = true;
+    }
+  }
+
+  function handleCategorySelect(categoryId: string) {
+    if (selectedTodoForCategorization) {
+      onCategorizeTodo(selectedTodoForCategorization.id, categoryId);
+    }
+    showCategoryModal = false;
+    selectedTodoForCategorization = null;
+  }
+
+  function handleCategoryModalCancel() {
+    showCategoryModal = false;
+    selectedTodoForCategorization = null;
+  }
 </script>
 
 <!-- Uncategorized todos (no header, just the items) -->
@@ -340,6 +366,7 @@
           onToggleComplete={onToggleComplete}
           onToggleStar={onToggleStar}
           onRename={onRename}
+          onRequestCategorize={handleRequestCategorize}
         />
       </div>
     </div>
@@ -400,6 +427,7 @@
                   onToggleComplete={onToggleComplete}
                   onToggleStar={onToggleStar}
                   onRename={onRename}
+                  onRequestCategorize={handleRequestCategorize}
                 />
               </div>
             </div>
@@ -437,6 +465,16 @@
       </div>
     {/each}
   </CollapsibleSection>
+{/if}
+
+<!-- Category Selector Modal -->
+{#if showCategoryModal && selectedTodoForCategorization}
+  <CategorySelectorModal
+    categories={categories}
+    todoName={selectedTodoForCategorization.name}
+    onSelect={handleCategorySelect}
+    onCancel={handleCategoryModalCancel}
+  />
 {/if}
 
 <style>
