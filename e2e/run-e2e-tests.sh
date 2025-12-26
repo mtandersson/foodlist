@@ -62,6 +62,7 @@ fi
 # Start backend server with test database
 echo -e "${GREEN}Starting backend server for E2E tests${NC}"
 cd ../backend
+
 DATA_DIR="$TEST_DATA_DIR" \
   PORT=5174 \
   BIND_ADDR=localhost \
@@ -109,13 +110,21 @@ done
 echo -e "${GREEN}Running Cypress E2E tests${NC}"
 export CYPRESS_BASE_URL=http://localhost:5174
 
+# Verify Cypress is installed (important for CI)
+echo "Verifying Cypress installation..."
+if ! npx cypress verify; then
+  echo -e "${RED}Cypress verification failed${NC}"
+  exit 1
+fi
+
 if npm run test:ci; then
   echo -e "${GREEN}E2E tests passed!${NC}"
   exit 0
 else
-  echo -e "${RED}E2E tests failed!${NC}"
+  TEST_EXIT_CODE=$?
+  echo -e "${RED}E2E tests failed with exit code: $TEST_EXIT_CODE${NC}"
   echo -e "${RED}Backend logs:${NC}"
   cat "$BACKEND_LOG_FILE"
-  exit 1
+  exit $TEST_EXIT_CODE
 fi
 

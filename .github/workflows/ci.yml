@@ -113,6 +113,22 @@ jobs:
         working-directory: e2e
         run: npm ci
 
+      - name: Get Cypress cache directory
+        id: cypress-cache-dir
+        run: echo "dir=$(npx cypress cache path)" >> $GITHUB_OUTPUT
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.cypress-cache-dir.outputs.dir }}
+          key: cypress-${{ runner.os }}-${{ hashFiles('e2e/package-lock.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-
+
+      - name: Verify Cypress
+        working-directory: e2e
+        run: npx cypress verify
+
       - name: Run E2E tests with isolated test server
         working-directory: e2e
         run: ./run-e2e-tests.sh
