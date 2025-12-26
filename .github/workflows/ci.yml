@@ -117,9 +117,21 @@ jobs:
       - name: Start backend server
         working-directory: backend
         run: |
-          ./foodlist &
+          ./foodlist > server.log 2>&1 &
           echo $! > backend.pid
-          sleep 3
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8080 > /dev/null 2>&1; then
+              echo "Server is up!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start within 30 seconds"
+              cat server.log
+              exit 1
+            fi
+            sleep 1
+          done
         env:
           PORT: 8080
           STATIC_DIR: ../frontend/dist
@@ -139,12 +151,26 @@ jobs:
             rm backend.pid
           fi
 
+      - name: Upload backend logs
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: backend-logs
+          path: backend/server.log
+
       - name: Upload Cypress screenshots
         if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: cypress-screenshots
           path: e2e/cypress/screenshots
+
+      - name: Upload Cypress videos
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cypress-videos
+          path: e2e/cypress/videos
 
   build-docker:
     name: Build Docker Image
