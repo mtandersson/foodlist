@@ -21,7 +21,7 @@ func main() {
 	eventFile := filepath.Join(dataDir, "events.jsonl")
 	absEventFile, _ := filepath.Abs(eventFile)
 	slog.Info("initializing event store", "file", absEventFile)
-	
+
 	store, err := NewEventStore(eventFile)
 	if err != nil {
 		slog.Error("failed to initialize event store", "error", err)
@@ -55,15 +55,15 @@ func main() {
 	if bindAddr == "" {
 		bindAddr = "localhost"
 	}
-	
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	
+
 	addr := bindAddr + ":" + port
 
-	slog.Info("starting server", 
+	slog.Info("starting server",
 		"bind_addr", bindAddr,
 		"port", port,
 		"address", addr,

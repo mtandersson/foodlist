@@ -30,12 +30,12 @@ type Category struct {
 
 // Event types
 type TodoCreated struct {
-	Type      string    `json:"type"`
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"createdAt"`
-	SortOrder int       `json:"sortOrder"`
-	CategoryID *string  `json:"categoryId"`
+	Type       string    `json:"type"`
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	CreatedAt  time.Time `json:"createdAt"`
+	SortOrder  int       `json:"sortOrder"`
+	CategoryID *string   `json:"categoryId"`
 }
 
 type TodoCompleted struct {
@@ -109,10 +109,10 @@ type ListTitleChanged struct {
 }
 
 type StateRollup struct {
-	Type      string `json:"type"`
-	Todos     []Todo `json:"todos"`
+	Type       string     `json:"type"`
+	Todos      []Todo     `json:"todos"`
 	Categories []Category `json:"categories"`
-	ListTitle string `json:"listTitle"`
+	ListTitle  string     `json:"listTitle"`
 }
 
 // Event is an interface for all event types
@@ -121,19 +121,19 @@ type Event interface {
 	GetID() string
 }
 
-func (e TodoCreated) EventType() string      { return "TodoCreated" }
-func (e TodoCompleted) EventType() string    { return "TodoCompleted" }
-func (e TodoUncompleted) EventType() string  { return "TodoUncompleted" }
-func (e TodoStarred) EventType() string      { return "TodoStarred" }
-func (e TodoUnstarred) EventType() string    { return "TodoUnstarred" }
-func (e TodoReordered) EventType() string    { return "TodoReordered" }
-func (e TodoRenamed) EventType() string      { return "TodoRenamed" }
-func (e TodoCategorized) EventType() string  { return "TodoCategorized" }
-func (e CategoryCreated) EventType() string  { return "CategoryCreated" }
-func (e CategoryRenamed) EventType() string  { return "CategoryRenamed" }
-func (e CategoryDeleted) EventType() string  { return "CategoryDeleted" }
+func (e TodoCreated) EventType() string       { return "TodoCreated" }
+func (e TodoCompleted) EventType() string     { return "TodoCompleted" }
+func (e TodoUncompleted) EventType() string   { return "TodoUncompleted" }
+func (e TodoStarred) EventType() string       { return "TodoStarred" }
+func (e TodoUnstarred) EventType() string     { return "TodoUnstarred" }
+func (e TodoReordered) EventType() string     { return "TodoReordered" }
+func (e TodoRenamed) EventType() string       { return "TodoRenamed" }
+func (e TodoCategorized) EventType() string   { return "TodoCategorized" }
+func (e CategoryCreated) EventType() string   { return "CategoryCreated" }
+func (e CategoryRenamed) EventType() string   { return "CategoryRenamed" }
+func (e CategoryDeleted) EventType() string   { return "CategoryDeleted" }
 func (e CategoryReordered) EventType() string { return "CategoryReordered" }
-func (e ListTitleChanged) EventType() string { return "ListTitleChanged" }
+func (e ListTitleChanged) EventType() string  { return "ListTitleChanged" }
 
 func (e TodoCreated) GetID() string       { return e.ID }
 func (e TodoCompleted) GetID() string     { return e.ID }
