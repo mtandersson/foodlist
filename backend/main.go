@@ -5,20 +5,41 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
 
-func main() {
-	// Configure structured logging
-	setupLogger()
+// Config holds all configuration for the application
+type Config struct {
+	// Server configuration
+	BindAddr  string `env:"BIND_ADDR" envDefault:"localhost"`
+	Port      string `env:"PORT" envDefault:"8080"`
+	StaticDir string `env:"STATIC_DIR" envDefault:"../frontend/dist"`
 
-	// Determine data directory
-	dataDir := os.Getenv("DATA_DIR")
-	if dataDir == "" {
-		dataDir = "."
+	// Data configuration
+	DataDir string `env:"DATA_DIR" envDefault:"."`
+
+	// Logging configuration
+	LogFormat string `env:"LOG_FORMAT" envDefault:"logfmt"`
+}
+
+func main() {
+	// Load .env file if it exists (ignore error if file doesn't exist)
+	_ = godotenv.Load()
+
+	// Parse configuration from environment variables
+	cfg := Config{}
+	if err := env.Parse(&cfg); err != nil {
+		slog.Error("failed to parse configuration", "error", err)
+		os.Exit(1)
 	}
 
+	// Configure structured logging
+	setupLogger(cfg.LogFormat)
+
 	// Initialize event store
-	eventFile := filepath.Join(dataDir, "events.jsonl")
+	eventFile := filepath.Join(cfg.DataDir, "events.jsonl")
 	absEventFile, _ := filepath.Abs(eventFile)
 	slog.Info("initializing event store", "file", absEventFile)
 
@@ -43,32 +64,19 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", server.HandleWebSocket)
 
-	// Serve static files from frontend/dist
-	staticDir := os.Getenv("STATIC_DIR")
-	if staticDir == "" {
-		staticDir = "../frontend/dist"
-	}
-	mux.Handle("/", http.FileServer(http.Dir(staticDir)))
+	// Serve static files
+	mux.Handle("/", http.FileServer(http.Dir(cfg.StaticDir)))
 
 	// Start HTTP server
-	bindAddr := os.Getenv("BIND_ADDR")
-	if bindAddr == "" {
-		bindAddr = "localhost"
-	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	addr := bindAddr + ":" + port
+	addr := cfg.BindAddr + ":" + cfg.Port
 
 	slog.Info("starting server",
-		"bind_addr", bindAddr,
-		"port", port,
+		"bind_addr", cfg.BindAddr,
+		"port", cfg.Port,
 		"address", addr,
-		"websocket_endpoint", "ws://"+bindAddr+":"+port+"/ws",
-		"static_dir", staticDir,
+		"websocket_endpoint", "ws://"+cfg.BindAddr+":"+cfg.Port+"/ws",
+		"static_dir", cfg.StaticDir,
+		"data_dir", cfg.DataDir,
 	)
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
@@ -77,14 +85,9 @@ func main() {
 	}
 }
 
-// setupLogger configures the global logger based on LOG_FORMAT environment variable
+// setupLogger configures the global logger based on the provided format
 // Supported formats: "logfmt" (default) or "json"
-func setupLogger() {
-	logFormat := os.Getenv("LOG_FORMAT")
-	if logFormat == "" {
-		logFormat = "logfmt"
-	}
-
+func setupLogger(logFormat string) {
 	var handler slog.Handler
 	opts := &slog.HandlerOptions{
 		Level: slog.LevelInfo,
