@@ -1,5 +1,5 @@
 # Stage 1: Build Frontend (Svelte/TypeScript)
-FROM node:20-alpine AS frontend-builder
+FROM node:24.12.0-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
