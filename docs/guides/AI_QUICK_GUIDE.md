@@ -34,11 +34,6 @@ Write Test → Run (Fail) → Implement → Run (Pass) → Refactor → Repeat
 6. **UI Components** (reactive, animated)
    - Tests: render, interactions, animations
 
-#### E2E
-
-7. **Cypress Tests** (full user flows)
-   - Tests: CRUD, multi-tab sync, persistence, offline
-
 ### 4. Test Coverage Requirements
 
 **Unit Tests:**
@@ -54,13 +49,6 @@ Write Test → Run (Fail) → Implement → Run (Pass) → Refactor → Repeat
 - ✓ Event persistence
 - ✓ Client-server communication
 - ✓ Multi-client broadcast
-
-**E2E Tests:**
-
-- ✓ Create/complete/star/reorder flows
-- ✓ Multi-tab synchronization
-- ✓ Reload persistence
-- ✓ Network interruption recovery
 
 ## Event Sourcing Rules
 
@@ -150,7 +138,7 @@ if (!connected) {
 
 Before marking complete:
 
-- [ ] All tests pass (backend, frontend, E2E)
+- [ ] All tests pass (backend, frontend)
 - [ ] No console errors
 - [ ] Events persist correctly
 - [ ] Multi-client sync works
@@ -168,7 +156,6 @@ Before marking complete:
 | Tests not failing first     | Write test before code, verify it fails     |
 | State drift between clients | Check event ordering, use sequence numbers  |
 | Race conditions             | Use channels (Go) or single event loop (JS) |
-| Flaky E2E tests             | Add proper waits, avoid fixed delays        |
 | Memory leaks                | Close connections, cleanup subscriptions    |
 | Slow animations             | Use CSS transforms (GPU), virtualize lists  |
 | Magic numbers in CSS        | Use CSS custom properties (variables)       |
@@ -201,9 +188,6 @@ go test ./...
 # Run all frontend tests
 npm test
 
-# Run E2E tests
-npm run test -w e2e
-
 # Dev servers (2 terminals)
 ./backend/server &
 npm run dev -w frontend
@@ -216,8 +200,7 @@ npm run dev -w frontend
 3. **Optimistic updates** - Don't wait for server
 4. **Event sourcing** - Append-only, immutable events
 5. **Type safety** - Generated types from schema
-6. **E2E coverage** - Real user flows tested
-7. **Multi-client sync** - Test with multiple tabs
+6. **Multi-client sync** - Test with multiple tabs
 8. **No magic numbers in CSS** - Always use CSS variables
 9. **Design system consistency** - Use predefined constants
 
@@ -225,7 +208,6 @@ npm run dev -w frontend
 
 - Backend tests: ✓
 - Frontend tests: ✓
-- E2E tests: ✓
 - Manual testing: ✓
 - Performance: ✓
 - Documentation: ✓

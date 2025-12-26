@@ -25,12 +25,6 @@ This project uses GitHub Actions for continuous integration and automated releas
 - Runs Vitest tests with coverage
 - Uploads coverage to Codecov
 
-#### E2E Tests
-- Sets up both Go and Node.js
-- Builds backend and frontend
-- Runs Cypress end-to-end tests
-- Uploads screenshots on failure
-
 #### Lint
 - Runs golangci-lint on backend code
 

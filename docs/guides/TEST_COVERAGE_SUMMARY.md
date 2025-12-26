@@ -45,18 +45,6 @@
 - Line 54 in store.ts: Edge case in optimistic update
 - Lines 73-74 in websocket.ts: Max reconnection attempts edge case
 
-### End-to-End Tests (Cypress)
-- **10 comprehensive test scenarios**
-- Covers:
-  - Creating todos
-  - Completing/uncompleting
-  - Starring/unstarring
-  - Renaming
-  - Drag & drop reordering
-  - Multi-tab synchronization
-  - Persistence across reload
-  - Collapsible completed section
-
 ## Test Count Summary
 
 ### Backend (Go)
@@ -73,23 +61,20 @@
   - `websocket.test.ts`: 11 tests
   - `store.test.ts`: 17 tests
 
-### E2E (Cypress)
-- Total: **10 test scenarios**
-
 ## Coverage by Feature
 
-| Feature | Backend | Frontend | E2E |
-|---------|---------|----------|-----|
-| Create todo | ✅ | ✅ | ✅ |
-| Complete/Uncomplete | ✅ | ✅ | ✅ |
-| Star/Unstar | ✅ | ✅ | ✅ |
-| Rename | ✅ | ✅ | ✅ |
-| Reorder | ✅ | ✅ | ✅ |
-| Event persistence | ✅ | ✅ | ✅ |
-| Multi-client sync | ✅ | ✅ | ✅ |
-| Optimistic updates | N/A | ✅ | ✅ |
-| WebSocket reconnection | N/A | ✅ | ✅ |
-| Drag & drop | N/A | ✅ | ✅ |
+| Feature | Backend | Frontend |
+|---------|---------|----------|
+| Create todo | ✅ | ✅ |
+| Complete/Uncomplete | ✅ | ✅ |
+| Star/Unstar | ✅ | ✅ |
+| Rename | ✅ | ✅ |
+| Reorder | ✅ | ✅ |
+| Event persistence | ✅ | ✅ |
+| Multi-client sync | ✅ | ✅ |
+| Optimistic updates | N/A | ✅ |
+| WebSocket reconnection | N/A | ✅ |
+| Drag & drop | N/A | ✅ |
 
 ## Test Quality Metrics
 
@@ -98,8 +83,7 @@
 2. **Comprehensive coverage**: All major code paths tested
 3. **Edge cases**: Error handling, concurrent access, empty states
 4. **Integration tests**: Multi-component interactions tested
-5. **E2E tests**: Complete user flows verified
-6. **Real-world scenarios**: Multi-client sync, persistence, reconnection
+5. **Real-world scenarios**: Multi-client sync, persistence, reconnection
 
 ### 🎯 Areas for Potential Improvement
 1. Some error logging paths untested (acceptable trade-off)

@@ -33,7 +33,7 @@ func main() {
 	server := NewServer(store)
 	if err := server.LoadEvents(); err != nil {
 		slog.Error("failed to load events", "error", err)
-		os.Exit(1)
+		return // defer will close store
 	}
 
 	// Start server event loop
@@ -73,7 +73,7 @@ func main() {
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		slog.Error("server failed", "error", err)
-		os.Exit(1)
+		// defer will close store
 	}
 }
 

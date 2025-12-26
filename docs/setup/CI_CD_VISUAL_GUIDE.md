@@ -48,14 +48,14 @@ foodlist/
 │  GitHub Actions: CI Workflow (.github/workflows/ci.yml)     │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │   Backend    │  │   Frontend   │  │     E2E      │     │
-│  │    Tests     │  │    Tests     │  │    Tests     │     │
-│  │              │  │              │  │              │     │
-│  │  • Go 1.25   │  │  • Node 20   │  │  • Cypress   │     │
-│  │  • go test   │  │  • Vitest    │  │  • Full app  │     │
-│  │  • Coverage  │  │  • Coverage  │  │  • Browser   │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
+│  ┌──────────────┐  ┌──────────────┐                        │
+│  │   Backend    │  │   Frontend   │                        │
+│  │    Tests     │  │    Tests     │                        │
+│  │              │  │              │                        │
+│  │  • Go 1.25   │  │  • Node 20   │                        │
+│  │  • go test   │  │  • Vitest    │                        │
+│  │  • Coverage  │  │  • Coverage  │                        │
+│  └──────────────┘  └──────────────┘                        │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐                        │
 │  │     Lint     │  │    Docker    │                        │

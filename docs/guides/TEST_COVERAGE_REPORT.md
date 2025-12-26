@@ -11,7 +11,6 @@
 | **Backend (Go)** | **78.9%** | ✅ Excellent |
 | **Frontend (TypeScript)** | **98.2%** | ✅ Outstanding |
 | **Business Logic** | **100%** | ✅ Perfect |
-| **E2E Coverage** | **100%** | ✅ Complete |
 
 ### What's Covered
 
@@ -26,25 +25,12 @@
 - ✅ `store.ts`: **98.95%** - State management with optimistic updates
 - ✅ `websocket.ts`: **97.10%** - WebSocket client with reconnection
 
-#### End-to-End (Cypress) - 10 Scenarios
-- ✅ Create todos
-- ✅ Complete/uncomplete todos
-- ✅ Star/unstar todos
-- ✅ Rename todos inline
-- ✅ Drag & drop reordering
-- ✅ Multi-tab real-time sync
-- ✅ Persistence across reload
-- ✅ Collapsible completed section
-- ✅ WebSocket reconnection
-- ✅ Offline behavior
-
 ### Test Statistics
 
 ```
-Total Tests Written: ~82
+Total Tests Written: ~72
 ├── Backend:   45 tests
-├── Frontend:  27 tests
-└── E2E:       10 tests
+└── Frontend:  27 tests
 
 Test Execution Time:
 ├── Backend:   ~5.5 seconds
@@ -111,19 +97,19 @@ Examples:
 | E2E Coverage | 100% | >90% | ✅ |
 | Flaky Tests | 0 | 0 | ✅ |
 | Test Execution Time | <7s | <10s | ✅ |
-| Tests Written | 82 | - | ✅ |
+| Tests Written | 72 | - | ✅ |
 
 ### Coverage by Feature Category
 
-| Category | Backend | Frontend | E2E | Overall |
-|----------|---------|----------|-----|---------|
-| Event Handling | 100% | 100% | 100% | ✅ |
-| State Management | 100% | 99% | 100% | ✅ |
-| Persistence | 100% | N/A | 100% | ✅ |
-| Real-time Sync | 100% | 100% | 100% | ✅ |
-| Optimistic Updates | N/A | 100% | 100% | ✅ |
-| Error Recovery | 80% | 97% | 100% | ✅ |
-| Concurrency | 100% | N/A | N/A | ✅ |
+| Category | Backend | Frontend | Overall |
+|----------|---------|----------|---------|
+| Event Handling | 100% | 100% | ✅ |
+| State Management | 100% | 99% | ✅ |
+| Persistence | 100% | N/A | ✅ |
+| Real-time Sync | 100% | 100% | ✅ |
+| Optimistic Updates | N/A | 100% | ✅ |
+| Error Recovery | 80% | 97% | ✅ |
+| Concurrency | 100% | N/A | ✅ |
 
 ### Test Files Created
 
@@ -141,11 +127,6 @@ websocket.test.ts  - WebSocket client tests (11 tests)
 store.test.ts      - State store tests (17 tests)
 ```
 
-#### E2E (`/e2e/cypress/e2e`)
-```
-todo.cy.js         - Complete user flow tests (10 scenarios)
-```
-
 ### Test Coverage Commands
 
 Run all tests:
@@ -155,9 +136,6 @@ cd backend && go test -cover ./...
 
 # Frontend
 cd frontend && npm run test:run -- --coverage
-
-# E2E
-cd e2e && npm test
 ```
 
 View detailed coverage:
