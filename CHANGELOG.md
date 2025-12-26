@@ -1,3 +1,15 @@
+## [1.3.0](https://github.com/mtandersson/foodlist/compare/v1.2.0...v1.3.0) (2025-12-26)
+
+### Features
+
+* **frontend:** implement secret path routing and IP whitelisting ([b858c1f](https://github.com/mtandersson/foodlist/commit/b858c1f7ffa8ac7572628a1de7d15ae7ae3c7d2f))
+
+### Chores
+
+* **frontend:** remove peer property from package-lock.json ([2ebebb0](https://github.com/mtandersson/foodlist/commit/2ebebb0615ef089565332c72d2a89f17004da3dc))
+* **release:** update release workflow to create full package for di… ([#47](https://github.com/mtandersson/foodlist/issues/47)) ([e26020d](https://github.com/mtandersson/foodlist/commit/e26020d97cb83787a00ae25c94dd4dd996b3d513))
+* **release:** update release workflow to create full package for distribution ([a91f0df](https://github.com/mtandersson/foodlist/commit/a91f0df180500dcdb967383710ac92d28838b601))
+
 ## [1.2.0](https://github.com/mtandersson/foodlist/compare/v1.1.1...v1.2.0) (2025-12-26)
 
 ### Features
