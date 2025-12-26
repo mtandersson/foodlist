@@ -8,47 +8,36 @@
   ],
   "packageRules": [
     {
-      "matchCategories": [
-        "golang"
-      ],
+      "matchCategories": ["golang"],
       "enabled": true,
-      "postUpdateOptions": [
-        "gomodTidy"
-      ]
+      "postUpdateOptions": ["gomodTidy"]
     },
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
+      "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash"
     },
     {
-      "matchManagers": [
-        "gomod"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["patch"],
       "automerge": true
     },
     {
-      "matchManagers": [
-        "npm"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["patch"],
       "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "requiredStatusChecks": null
     }
   ],
-  "labels": [
-    "dependencies",
-    "renovate"
-  ],
+  "labels": ["dependencies", "renovate"],
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "semanticCommits": "enabled",
@@ -56,9 +45,7 @@
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}}",
-  "schedule": [
-    "at any time"
-  ],
+  "schedule": ["at any time"],
   "timezone": "UTC",
   "rangeStrategy": "bump",
   "npm": {
@@ -69,14 +56,10 @@
   },
   "github-actions": {
     "enabled": true,
-    "managerFilePatterns": [
-      "/^\\.github/workflows/[^/]+\\.ya?ml$/"
-    ]
+    "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"]
   },
   "vulnerabilityAlerts": {
-    "labels": [
-      "security"
-    ],
+    "labels": ["security"],
     "automerge": true
   },
   "ignoreDeps": [],
