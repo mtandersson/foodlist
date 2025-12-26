@@ -323,6 +323,18 @@ docker pull ghcr.io/OWNER/foodlist:1.2.3
 
 Replace `OWNER` with your GitHub username or organization.
 
+### Dependency Updates (Renovate)
+
+Renovate is configured to automatically update dependencies:
+- Go modules (backend)
+- npm packages (frontend, e2e)
+- GitHub Actions
+- Docker images
+
+**Setup:** See `RENOVATE_SETUP.md` for configuration options.
+
+**Recommended:** Install the [Renovate GitHub App](https://github.com/apps/renovate) for zero-configuration automated updates.
+
 ### Local Commit Validation (Optional)
 
 Install commitlint and husky for local validation:

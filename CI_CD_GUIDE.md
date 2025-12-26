@@ -68,6 +68,25 @@ This project uses GitHub Actions for continuous integration and automated releas
   - Windows (amd64)
 - Uploads binaries to GitHub release
 
+### 3. Renovate Workflow (`.github/workflows/renovate.yml`)
+
+**Triggers:**
+- Schedule: Every Monday at 3:00 AM UTC
+- Manual: Via workflow_dispatch
+
+**Purpose:** Automated dependency updates
+
+**What it does:**
+- Scans for outdated dependencies (Go, npm, GitHub Actions, Docker)
+- Creates PRs with updates using semantic commits
+- Format: `chore(deps): update <package> to <version>`
+- Auto-merges patch updates after CI passes
+- Labels: `dependencies`, `renovate`
+
+**Note:** You can also use the [Renovate GitHub App](https://github.com/apps/renovate) instead of the self-hosted workflow for zero maintenance.
+
+See `RENOVATE_SETUP.md` for detailed configuration.
+
 ## Semantic Versioning
 
 Version numbers follow [Semantic Versioning 2.0.0](https://semver.org/):
