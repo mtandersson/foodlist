@@ -358,4 +358,3 @@ For Developers:
 **Current Status:** Ready for first release at version 0.0.1
 
 **Next Step:** Push to GitHub to trigger first automated release
-

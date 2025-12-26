@@ -1,0 +1,22 @@
+{
+  "name": "foodlist",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Event-sourced todo list with real-time sync",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mh-martin/foodlist.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.1",
+    "@semantic-release/release-notes-generator": "^14.0.1",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "semantic-release": "^24.2.0"
+  }
+}
+

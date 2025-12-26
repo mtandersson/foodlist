@@ -38,6 +38,7 @@ validate-commit.sh
 ### 2. Verify Initial Version
 
 Check that VERSION file contains:
+
 ```
 0.0.1
 ```
@@ -86,12 +87,14 @@ git branch -M main
 #### Go to: Settings → Actions → General
 
 **Workflow permissions:**
+
 - ✅ Select "Read and write permissions"
 - ✅ Enable "Allow GitHub Actions to create and approve pull requests"
 
 **Click "Save"**
 
 This allows workflows to:
+
 - Create GitHub releases
 - Push to GitHub Container Registry
 - Commit changelog updates
@@ -102,6 +105,7 @@ This allows workflows to:
 Go to: Settings → Branches → Add branch protection rule
 
 For branch `main`:
+
 - ✅ Require a pull request before merging
 - ✅ Require status checks to pass before merging
   - Add: `Backend Tests`, `Frontend Tests`, `Lint`
@@ -112,6 +116,7 @@ For branch `main`:
 If you want to host documentation:
 
 Go to: Settings → Pages
+
 - Source: Deploy from a branch
 - Branch: `main` / `docs` (if you create one)
 
@@ -120,6 +125,7 @@ Go to: Settings → Pages
 ### Public Repository (Default)
 
 Docker images will automatically publish to:
+
 ```
 ghcr.io/YOUR_USERNAME/foodlist
 ```
@@ -131,11 +137,13 @@ No additional setup needed!
 If your repo is private, you may need to:
 
 1. Create a Personal Access Token (PAT):
+
    - Settings → Developer settings → Personal access tokens
    - Generate new token (classic)
    - Scopes: `write:packages`, `repo`
 
 2. Add as repository secret:
+
    - Repository → Settings → Secrets and variables → Actions
    - New repository secret: `GHCR_TOKEN`
    - Value: Your PAT
@@ -147,7 +155,7 @@ If your repo is private, you may need to:
      with:
        registry: ghcr.io
        username: ${{ github.actor }}
-       password: ${{ secrets.GHCR_TOKEN }}  # Changed from GITHUB_TOKEN
+       password: ${{ secrets.GHCR_TOKEN }} # Changed from GITHUB_TOKEN
    ```
 
 ## 🚀 First Push
@@ -171,11 +179,13 @@ git push -u origin main
 After workflows complete:
 
 1. **Check Releases:**
+
    - Go to Releases in GitHub
    - Should see `v0.0.1` (or `v0.1.0` if you used `feat:`)
    - Release notes auto-generated from commit
 
 2. **Check Docker Image:**
+
    ```bash
    docker pull ghcr.io/YOUR_USERNAME/foodlist:latest
    docker pull ghcr.io/YOUR_USERNAME/foodlist:0.0.1
@@ -204,6 +214,7 @@ Now Git will validate commits before accepting them.
 ### Test Commit Format
 
 Try making an invalid commit:
+
 ```bash
 git commit -m "added feature"  # ❌ Should fail
 git commit -m "feat: add new feature"  # ✅ Should succeed
@@ -214,6 +225,7 @@ git commit -m "feat: add new feature"  # ✅ Should succeed
 ### Test CI Workflow
 
 Create a test branch:
+
 ```bash
 git checkout -b test/ci-pipeline
 echo "# Test" >> TEST.md
@@ -223,6 +235,7 @@ git push origin test/ci-pipeline
 ```
 
 Create a Pull Request on GitHub:
+
 - CI should run automatically
 - All jobs should pass
 - PR template should appear
@@ -230,6 +243,7 @@ Create a Pull Request on GitHub:
 ### Test Release Workflow
 
 Merge PR to main:
+
 ```bash
 git checkout main
 git merge test/ci-pipeline
@@ -237,6 +251,7 @@ git push origin main
 ```
 
 Watch the release workflow:
+
 - Should create a new patch version
 - Should update CHANGELOG
 - Should publish Docker images
@@ -246,6 +261,7 @@ Watch the release workflow:
 ### Issue: Workflow doesn't run
 
 **Solution:**
+
 - Check: Settings → Actions → General
 - Ensure Actions are enabled
 - Check workflow permissions
@@ -253,6 +269,7 @@ Watch the release workflow:
 ### Issue: Release not created
 
 **Solution:**
+
 - Ensure commit messages follow conventional format
 - Check if commits since last release contain releasable types
 - View workflow logs for errors
@@ -260,6 +277,7 @@ Watch the release workflow:
 ### Issue: Docker push fails
 
 **Solution:**
+
 - Check workflow permissions (read and write)
 - For private repos, set up PAT
 - Check package visibility settings
@@ -267,6 +285,7 @@ Watch the release workflow:
 ### Issue: Permission denied errors
 
 **Solution:**
+
 - Settings → Actions → General
 - Select "Read and write permissions"
 - Save and re-run workflow
@@ -276,11 +295,13 @@ Watch the release workflow:
 After successful setup:
 
 1. **Read Documentation:**
+
    - `CONTRIBUTING.md` - Contribution guidelines
    - `CI_CD_GUIDE.md` - Detailed pipeline docs
    - `COMMIT_QUICK_REFERENCE.md` - Quick commit guide
 
 2. **Start Developing:**
+
    ```bash
    git checkout -b feat/my-feature
    # Make changes
@@ -289,6 +310,7 @@ After successful setup:
    ```
 
 3. **Create Pull Request:**
+
    - CI runs automatically
    - Use PR template
    - Wait for review
@@ -307,7 +329,7 @@ After completing this checklist:
 ✅ Automated releases working  
 ✅ Docker images publishing  
 ✅ Conventional commits enforced  
-✅ CI/CD pipeline operational  
+✅ CI/CD pipeline operational
 
 **Your repository is now ready for automated releases!**
 
@@ -338,4 +360,3 @@ docker pull ghcr.io/YOUR_USERNAME/foodlist:latest
 - [Semantic Release](https://semantic-release.gitbook.io/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [GHCR Documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
-
