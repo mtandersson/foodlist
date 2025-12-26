@@ -2,8 +2,6 @@ version: 2
 
 run:
   timeout: 5m
-  tests: true
-  modules-download-mode: readonly
 
 linters:
   enable:
@@ -15,17 +13,8 @@ linters:
     - errcheck
     - godox
 
-formatters:
-  enable:
-    - gofmt
-    - goimports
-    - gofumpt
-
 linters-settings:
-  gofumpt:
-    module-path: gotodo
   revive:
-    severity: warning
     rules:
       - name: indent-error-flow
       - name: error-return
@@ -34,5 +23,3 @@ linters-settings:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude:
-    - "should have comment"

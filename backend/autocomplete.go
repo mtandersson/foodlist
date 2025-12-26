@@ -1,3 +1,4 @@
+// Package main implements the FoodList backend server with WebSocket support and event sourcing.
 package main
 
 import (
@@ -129,14 +130,15 @@ func (s *Server) getAutocompleteSuggestions(query string) []AutocompleteSuggesti
 			matchScore = float64(freq) * 1000
 		} else {
 			// Check for prefix match first (higher priority)
-			if strings.HasPrefix(nameLower, queryLower) {
+			switch {
+			case strings.HasPrefix(nameLower, queryLower):
 				distance = 0
 				matchScore = float64(freq)*1000 + 500 // Bonus for prefix match
-			} else if strings.Contains(nameLower, queryLower) {
+			case strings.Contains(nameLower, queryLower):
 				// Substring match
 				distance = 0
 				matchScore = float64(freq)*1000 + 250 // Bonus for substring match
-			} else {
+			default:
 				// Calculate Levenshtein distance
 				distance = levenshteinDistance(query, name)
 

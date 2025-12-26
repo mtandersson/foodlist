@@ -366,8 +366,8 @@ func TestServer_ServeStaticFiles(t *testing.T) {
 
 	// Create a test static file
 	staticDir := filepath.Join(tmpDir, "static")
-	os.MkdirAll(staticDir, 0755)
-	os.WriteFile(filepath.Join(staticDir, "index.html"), []byte("<html>test</html>"), 0644)
+	os.MkdirAll(staticDir, 0o755)
+	os.WriteFile(filepath.Join(staticDir, "index.html"), []byte("<html>test</html>"), 0o644)
 
 	store, _ := NewEventStore(filePath)
 	server := NewServer(store)
@@ -427,7 +427,7 @@ func TestServer_LoadEvents_InvalidStore(t *testing.T) {
 	filePath := filepath.Join(tmpDir, "events.jsonl")
 
 	// Create store with invalid event
-	os.WriteFile(filePath, []byte(`{"type":"UnknownEvent","id":"1"}`), 0644)
+	os.WriteFile(filePath, []byte(`{"type":"UnknownEvent","id":"1"}`), 0o644)
 
 	store, _ := NewEventStore(filePath)
 	defer store.Close()

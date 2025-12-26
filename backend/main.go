@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,6 +12,13 @@ func main() {
 	// Configure structured logging
 	setupLogger()
 
+	if err := run(); err != nil {
+		slog.Error("application error", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// Determine data directory
 	dataDir := os.Getenv("DATA_DIR")
 	if dataDir == "" {
@@ -24,16 +32,18 @@ func main() {
 
 	store, err := NewEventStore(eventFile)
 	if err != nil {
-		slog.Error("failed to initialize event store", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to initialize event store: %w", err)
 	}
-	defer store.Close()
+	defer func() {
+		if closeErr := store.Close(); closeErr != nil {
+			slog.Error("failed to close event store", "error", closeErr)
+		}
+	}()
 
 	// Create server and load existing events
 	server := NewServer(store)
 	if err := server.LoadEvents(); err != nil {
-		slog.Error("failed to load events", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to load events: %w", err)
 	}
 
 	// Start server event loop
@@ -72,9 +82,10 @@ func main() {
 	)
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
-		slog.Error("server failed", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("server failed: %w", err)
 	}
+
+	return nil
 }
 
 // setupLogger configures the global logger based on LOG_FORMAT environment variable
