@@ -5,7 +5,7 @@
   "description": "Event-sourced todo list with real-time sync",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mh-martin/foodlist.git"
+    "url": "https://github.com/mtandersson/foodlist.git"
   },
   "license": "MIT",
   "devDependencies": {
