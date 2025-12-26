@@ -1,4 +1,4 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
@@ -12,13 +12,12 @@ linters:
   disable:
     - errcheck
     - godox
-
-linters-settings:
-  revive:
-    rules:
-      - name: indent-error-flow
-      - name: error-return
-      - name: var-naming
+  settings:
+    revive:
+      rules:
+        - name: indent-error-flow
+        - name: error-return
+        - name: var-naming
 
 issues:
   max-issues-per-linter: 0
