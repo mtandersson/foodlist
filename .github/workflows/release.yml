@@ -1,0 +1,178 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+          cache-dependency-path: backend/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Run backend tests
+        working-directory: backend
+        run: |
+          go mod download
+          go test -v -race ./...
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:run
+
+  release:
+    name: Create Release
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install semantic-release and plugins
+        run: |
+          npm install --save-dev \
+            semantic-release@^23.0.0 \
+            @semantic-release/git@^10.0.1 \
+            @semantic-release/changelog@^6.0.3 \
+            @semantic-release/exec@^6.0.3 \
+            conventional-changelog-conventionalcommits@^7.0.2
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+        run: npx semantic-release
+
+  build-and-push:
+    name: Build and Push Docker Image
+    needs: release
+    runs-on: ubuntu-latest
+    if: needs.release.outputs.new_release_published == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.1")
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Create GitHub Release Assets
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+
+          # Build for multiple platforms
+          mkdir -p dist
+
+          # Linux AMD64
+          cd backend
+          GOOS=linux GOARCH=amd64 go build -o ../dist/foodlist-linux-amd64 .
+
+          # Linux ARM64
+          GOOS=linux GOARCH=arm64 go build -o ../dist/foodlist-linux-arm64 .
+
+          # macOS AMD64
+          GOOS=darwin GOARCH=amd64 go build -o ../dist/foodlist-darwin-amd64 .
+
+          # macOS ARM64 (Apple Silicon)
+          GOOS=darwin GOARCH=arm64 go build -o ../dist/foodlist-darwin-arm64 .
+
+          # Windows AMD64
+          GOOS=windows GOARCH=amd64 go build -o ../dist/foodlist-windows-amd64.exe .
+
+          cd ..
+
+          # Build frontend
+          cd frontend
+          npm ci
+          npm run build
+          cd ..
+
+          # Create archives
+          cd dist
+          for binary in foodlist-*; do
+            if [[ $binary == *.exe ]]; then
+              zip "${binary%.exe}.zip" "$binary"
+            else
+              tar -czf "${binary}.tar.gz" "$binary"
+            fi
+          done
+
+          # Create full package with frontend
+          mkdir -p foodlist-${VERSION}
+          cp -r ../frontend/dist foodlist-${VERSION}/frontend
+          cp foodlist-linux-amd64 foodlist-${VERSION}/foodlist
+          tar -czf foodlist-${VERSION}-full.tar.gz foodlist-${VERSION}
+          rm -rf foodlist-${VERSION}
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

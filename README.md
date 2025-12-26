@@ -158,6 +158,7 @@ make dev
 ```
 
 This starts the development servers on `localhost` only, accessible at:
+
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8080
 
@@ -169,7 +170,7 @@ make dev-network
 
 This starts the development servers accessible from your local network. The command will display your network IP address. Example output:
 
-```text
+````text
 🌐 Network Access Enabled:
    Frontend: http://192.168.1.100:5173
    Backend:  http://192.168.1.100:8080
@@ -187,7 +188,7 @@ To test on your phone:
 
 ```bash
 make dev-json
-```
+````
 
 Same as `make dev` but with JSON-formatted logs (useful for log analysis tools).
 
@@ -231,8 +232,116 @@ cd e2e && npx cypress run
 make test
 ```
 
+## CI/CD and Releases
+
+This project uses **Conventional Commits** for automated versioning and releases.
+
+### Commit Message Format
+
+All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Common types:**
+
+- `feat`: New feature (minor version bump)
+- `fix`: Bug fix (patch version bump)
+- `docs`: Documentation changes
+- `refactor`: Code refactoring
+- `perf`: Performance improvements
+- `test`: Test updates
+- `ci`: CI/CD changes
+- `chore`: Other changes
+
+**Examples:**
+
+```bash
+feat(backend): add user authentication
+fix(websocket): resolve connection leak
+docs(readme): update installation instructions
+feat(api)!: change event format (breaking change)
+```
+
+See `CONTRIBUTING.md` for detailed guidelines.
+
+### Using Cursor IDE
+
+**Cursor AI is configured to suggest semantic commits!**
+
+When committing in Cursor:
+
+1. Stage your changes
+2. Click in the commit message field
+3. Press **Cmd+K** (Mac) or **Ctrl+K** (Windows/Linux)
+4. Cursor will suggest a properly formatted conventional commit
+
+See `CURSOR_COMMIT_SETUP.md` for configuration details.
+
+### Automated Releases
+
+When you push to `main` branch:
+
+1. **CI Pipeline** runs automatically:
+
+   - Backend tests (Go)
+   - Frontend tests (Vitest)
+   - E2E tests (Cypress)
+   - Linting (golangci-lint)
+   - Docker build
+
+2. **Release Pipeline** (after tests pass):
+   - Analyzes commit messages since last release
+   - Determines next version based on commit types
+   - Generates changelog automatically
+   - Creates GitHub release with release notes
+   - Builds and pushes Docker images to GitHub Container Registry
+   - Creates binary artifacts for multiple platforms
+
+### Version Bumping
+
+- **MAJOR** (1.0.0 → 2.0.0): Breaking changes (`feat!:` or `BREAKING CHANGE:`)
+- **MINOR** (1.0.0 → 1.1.0): New features (`feat:`)
+- **PATCH** (1.0.0 → 1.0.1): Bug fixes and other changes (`fix:`, `docs:`, etc.)
+
+### Docker Images
+
+Docker images are automatically published to GitHub Container Registry:
+
+```bash
+# Pull latest version
+docker pull ghcr.io/OWNER/foodlist:latest
+
+# Pull specific version
+docker pull ghcr.io/OWNER/foodlist:1.2.3
+```
+
+Replace `OWNER` with your GitHub username or organization.
+
+### Local Commit Validation (Optional)
+
+Install commitlint and husky for local validation:
+
+```bash
+npm install --save-dev @commitlint/{config-conventional,cli} husky
+npx husky install
+npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'
+```
+
+This will validate your commit messages before they're committed.
+
+## Contributing
+
+Please read `CONTRIBUTING.md` for details on our conventional commit guidelines and development workflow.
+
 ## Documentation
 
+- `CONTRIBUTING.md` - Conventional commits guide and development workflow
 - `AI_QUICK_GUIDE.md` - TDD workflow and architecture guide
 - `AI_DEVELOPMENT_GUIDE.md` - Detailed development instructions
 - `DOCKER.md` - Container deployment guide (Podman/Docker)

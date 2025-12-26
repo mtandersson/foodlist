@@ -12,10 +12,12 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,ts}'],
   },
   server: {
+    host: '0.0.0.0', // Allow external connections
     proxy: {
       '/ws': {
-        target: 'ws://localhost:8080',
+        target: process.env.VITE_BACKEND_URL || 'ws://localhost:8080',
         ws: true,
+        changeOrigin: true,
       },
     },
   },

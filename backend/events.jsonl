@@ -276,3 +276,321 @@
 {"type":"CategoryRenamed","id":"3944733a-692c-48cc-89a9-700de3b530af","name":"Mej"}
 {"type":"CategoryRenamed","id":"3944733a-692c-48cc-89a9-700de3b530af","name":"Mejeri"}
 {"type":"CategoryRenamed","id":"3944733a-692c-48cc-89a9-700de3b530af","name":"Mejeri"}
+{"type":"TodoCategorized","id":"ab1b2c3d-1111-1111-1111-111111111111","categoryId":"9cb07e60-f614-460b-a83e-80665c3ebc6d"}
+{"type":"TodoCreated","id":"8a0b97cf-42ef-42af-a534-dc4b40feb85e","name":"Oliver 🫒","createdAt":"2025-12-25T21:18:06.379253Z","sortOrder":8000,"categoryId":null}
+{"type":"TodoCategorized","id":"ab1b2c3d-1111-1111-1111-111111111111","categoryId":null}
+{"type":"TodoReordered","id":"ab1b2c3d-1111-1111-1111-111111111111","sortOrder":7000}
+{"type":"TodoCreated","id":"fd3ef329-98bc-44db-9523-ad0fad5fae52","name":"Test todo 1766697863338","createdAt":"2025-12-25T21:24:23.929583Z","sortOrder":9000,"categoryId":null}
+{"type":"TodoCreated","id":"ad5a9ddd-a659-4d4a-8d5d-47d3dd5b6197","name":"Star test 1766697866117","createdAt":"2025-12-25T21:24:26.541517Z","sortOrder":10000,"categoryId":null}
+{"type":"TodoStarred","id":"ad5a9ddd-a659-4d4a-8d5d-47d3dd5b6197","sortOrder":11000}
+{"type":"TodoCreated","id":"29aff8ce-c181-4dff-b4d6-a4a4d509a51e","name":"Uncomplete test 1766697867406","createdAt":"2025-12-25T21:24:27.849226Z","sortOrder":12000,"categoryId":null}
+{"type":"TodoCompleted","id":"29aff8ce-c181-4dff-b4d6-a4a4d509a51e","completedAt":"2025-12-25T21:24:27.97282Z"}
+{"type":"TodoUncompleted","id":"29aff8ce-c181-4dff-b4d6-a4a4d509a51e"}
+{"type":"TodoCreated","id":"d2391e5e-8dff-421a-9187-484bb516f910","name":"Toggle test 1766697869156","createdAt":"2025-12-25T21:24:29.544323Z","sortOrder":13000,"categoryId":null}
+{"type":"TodoCompleted","id":"d2391e5e-8dff-421a-9187-484bb516f910","completedAt":"2025-12-25T21:24:29.66932Z"}
+{"type":"TodoCreated","id":"c0becd91-1fee-40c6-b761-ce6a1194d5f2","name":"Persist test 1766697874564","createdAt":"2025-12-25T21:24:34.966348Z","sortOrder":14000,"categoryId":null}
+{"type":"TodoCreated","id":"3229a2bb-d2c4-4c26-a9f1-7fe7d1741000","name":"Sync test 1766697876823","createdAt":"2025-12-25T21:24:37.192711Z","sortOrder":15000,"categoryId":null}
+{"type":"TodoCreated","id":"f766cf2c-a546-4ad5-a600-6977708bccdb","name":"Optimistic test 1766697879030","createdAt":"2025-12-25T21:24:39.472668Z","sortOrder":16000,"categoryId":null}
+{"type":"ListTitleChanged","title":"Test List 1766697894791"}
+{"type":"ListTitleChanged","title":"New Title"}
+{"type":"TodoCreated","id":"12968a52-3519-4018-9d16-c7d9a620730c","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:02.202686Z","sortOrder":17000,"categoryId":null}
+{"type":"TodoCreated","id":"f72b7965-5e60-4ff8-85d2-678a5a822777","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:02.690383Z","sortOrder":18000,"categoryId":null}
+{"type":"TodoCreated","id":"4b38dd82-fcab-4d56-a6b8-0b8d6ebd50a2","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:03.172063Z","sortOrder":19000,"categoryId":null}
+{"type":"TodoCompleted","id":"12968a52-3519-4018-9d16-c7d9a620730c","completedAt":"2025-12-25T21:25:03.508027Z"}
+{"type":"TodoCompleted","id":"f72b7965-5e60-4ff8-85d2-678a5a822777","completedAt":"2025-12-25T21:25:03.829919Z"}
+{"type":"TodoCompleted","id":"4b38dd82-fcab-4d56-a6b8-0b8d6ebd50a2","completedAt":"2025-12-25T21:25:04.144633Z"}
+{"type":"TodoCreated","id":"1a44badb-2315-4430-a650-4b63a9d42036","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:05.768612Z","sortOrder":20000,"categoryId":null}
+{"type":"TodoCreated","id":"15466761-1f00-4bdc-9b17-ccadfe66afa4","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:06.261589Z","sortOrder":21000,"categoryId":null}
+{"type":"TodoCreated","id":"679932c5-99a9-434e-b5f2-e2971794f8ce","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:06.740425Z","sortOrder":22000,"categoryId":null}
+{"type":"TodoCompleted","id":"1a44badb-2315-4430-a650-4b63a9d42036","completedAt":"2025-12-25T21:25:07.075949Z"}
+{"type":"TodoCompleted","id":"15466761-1f00-4bdc-9b17-ccadfe66afa4","completedAt":"2025-12-25T21:25:07.644025Z"}
+{"type":"TodoCompleted","id":"679932c5-99a9-434e-b5f2-e2971794f8ce","completedAt":"2025-12-25T21:25:07.957292Z"}
+{"type":"TodoCreated","id":"318bc35b-eefc-448d-a86b-7ab35d909045","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:09.6904Z","sortOrder":23000,"categoryId":null}
+{"type":"TodoCreated","id":"614c1e4a-f639-478b-80ec-99a290a63a79","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:10.186993Z","sortOrder":24000,"categoryId":null}
+{"type":"TodoCreated","id":"3d5bb484-8175-4561-8361-976e90183089","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:10.668882Z","sortOrder":25000,"categoryId":null}
+{"type":"TodoCompleted","id":"318bc35b-eefc-448d-a86b-7ab35d909045","completedAt":"2025-12-25T21:25:11.004812Z"}
+{"type":"TodoCompleted","id":"614c1e4a-f639-478b-80ec-99a290a63a79","completedAt":"2025-12-25T21:25:11.324011Z"}
+{"type":"TodoCompleted","id":"3d5bb484-8175-4561-8361-976e90183089","completedAt":"2025-12-25T21:25:11.644963Z"}
+{"type":"TodoCreated","id":"4fd66139-ab09-4030-9aea-2db9878b4623","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:12.475674Z","sortOrder":26000,"categoryId":null}
+{"type":"TodoCreated","id":"dc4c9f49-8473-40ec-bd8a-bf85dfebcd65","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:13.493906Z","sortOrder":27000,"categoryId":null}
+{"type":"TodoCreated","id":"8f523f7a-d80a-46b7-8fa9-293a1f0f7ed0","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:13.986321Z","sortOrder":28000,"categoryId":null}
+{"type":"TodoCreated","id":"10a21364-4bcc-486d-a4b2-5ae31e80d90c","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:14.468429Z","sortOrder":29000,"categoryId":null}
+{"type":"TodoCompleted","id":"dc4c9f49-8473-40ec-bd8a-bf85dfebcd65","completedAt":"2025-12-25T21:25:14.806034Z"}
+{"type":"TodoCompleted","id":"8f523f7a-d80a-46b7-8fa9-293a1f0f7ed0","completedAt":"2025-12-25T21:25:15.127264Z"}
+{"type":"TodoCompleted","id":"10a21364-4bcc-486d-a4b2-5ae31e80d90c","completedAt":"2025-12-25T21:25:15.44464Z"}
+{"type":"TodoCreated","id":"5cfd2e9e-8e3e-44c5-80f1-00b29a6938a8","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:17.240944Z","sortOrder":30000,"categoryId":null}
+{"type":"TodoCreated","id":"eec69a86-cb5c-4045-acad-534139c92269","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:17.740163Z","sortOrder":31000,"categoryId":null}
+{"type":"TodoCreated","id":"fd0dec95-8998-4695-af10-73d27adfc7a6","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:18.22413Z","sortOrder":32000,"categoryId":null}
+{"type":"TodoCompleted","id":"5cfd2e9e-8e3e-44c5-80f1-00b29a6938a8","completedAt":"2025-12-25T21:25:18.571602Z"}
+{"type":"TodoCompleted","id":"eec69a86-cb5c-4045-acad-534139c92269","completedAt":"2025-12-25T21:25:18.898023Z"}
+{"type":"TodoCompleted","id":"fd0dec95-8998-4695-af10-73d27adfc7a6","completedAt":"2025-12-25T21:25:19.225162Z"}
+{"type":"TodoCreated","id":"f3e18f7a-bc7a-4e22-83aa-a64fb23cf822","name":"Active Item 1766697919478","createdAt":"2025-12-25T21:25:19.868835Z","sortOrder":33000,"categoryId":null}
+{"type":"TodoCreated","id":"5756e89a-1775-4777-829a-d00bc40c4b8b","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:25.982021Z","sortOrder":34000,"categoryId":null}
+{"type":"TodoCreated","id":"4bc4e971-6ed2-4052-be59-ea931aee9b11","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:26.47781Z","sortOrder":35000,"categoryId":null}
+{"type":"TodoCreated","id":"b241ed75-d5ee-46e9-8230-0eb3c90f6276","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:26.957318Z","sortOrder":36000,"categoryId":null}
+{"type":"TodoCompleted","id":"5756e89a-1775-4777-829a-d00bc40c4b8b","completedAt":"2025-12-25T21:25:27.307773Z"}
+{"type":"TodoCompleted","id":"4bc4e971-6ed2-4052-be59-ea931aee9b11","completedAt":"2025-12-25T21:25:27.633221Z"}
+{"type":"TodoCompleted","id":"b241ed75-d5ee-46e9-8230-0eb3c90f6276","completedAt":"2025-12-25T21:25:27.960274Z"}
+{"type":"TodoCreated","id":"0780ecb0-6421-421b-a440-a409ce12f287","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:29.927926Z","sortOrder":37000,"categoryId":null}
+{"type":"TodoCreated","id":"58e59be7-e5de-4f04-b813-f693aaece971","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:30.552227Z","sortOrder":38000,"categoryId":null}
+{"type":"TodoCreated","id":"79084674-791e-4d43-9bcd-711b954f3b56","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:31.027765Z","sortOrder":39000,"categoryId":null}
+{"type":"TodoCompleted","id":"0780ecb0-6421-421b-a440-a409ce12f287","completedAt":"2025-12-25T21:25:31.370682Z"}
+{"type":"TodoCompleted","id":"58e59be7-e5de-4f04-b813-f693aaece971","completedAt":"2025-12-25T21:25:31.69718Z"}
+{"type":"TodoCompleted","id":"79084674-791e-4d43-9bcd-711b954f3b56","completedAt":"2025-12-25T21:25:32.027392Z"}
+{"type":"TodoCreated","id":"6ca98cc1-6828-44de-887e-fcec1c781ab9","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:32.919669Z","sortOrder":40000,"categoryId":null}
+{"type":"TodoCreated","id":"08cce175-d9ef-45d4-b8de-bc081dc0d771","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:33.933821Z","sortOrder":41000,"categoryId":null}
+{"type":"TodoCreated","id":"4ef79b9f-1d85-4585-9b1d-79bc6172440f","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:34.430376Z","sortOrder":42000,"categoryId":null}
+{"type":"TodoCreated","id":"56901a60-aea3-4537-a12f-64c757bf6125","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:34.921016Z","sortOrder":43000,"categoryId":null}
+{"type":"TodoCompleted","id":"08cce175-d9ef-45d4-b8de-bc081dc0d771","completedAt":"2025-12-25T21:25:35.275772Z"}
+{"type":"TodoCompleted","id":"4ef79b9f-1d85-4585-9b1d-79bc6172440f","completedAt":"2025-12-25T21:25:35.616254Z"}
+{"type":"TodoCompleted","id":"56901a60-aea3-4537-a12f-64c757bf6125","completedAt":"2025-12-25T21:25:35.949309Z"}
+{"type":"TodoCreated","id":"b4d9fd97-c789-4722-ae34-e3b7ed38e148","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:37.851539Z","sortOrder":44000,"categoryId":null}
+{"type":"TodoCreated","id":"daf63177-5127-4b47-9887-c60187c272f9","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:38.347038Z","sortOrder":45000,"categoryId":null}
+{"type":"TodoCreated","id":"67c9e28e-6777-47f7-8468-dcea46f6d718","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:38.836503Z","sortOrder":46000,"categoryId":null}
+{"type":"TodoCompleted","id":"b4d9fd97-c789-4722-ae34-e3b7ed38e148","completedAt":"2025-12-25T21:25:39.191638Z"}
+{"type":"TodoCompleted","id":"daf63177-5127-4b47-9887-c60187c272f9","completedAt":"2025-12-25T21:25:39.523969Z"}
+{"type":"TodoCompleted","id":"67c9e28e-6777-47f7-8468-dcea46f6d718","completedAt":"2025-12-25T21:25:39.857782Z"}
+{"type":"TodoCreated","id":"b2f30eb0-da17-4ffa-976e-6c6d6e24323f","name":"Autocomplete Milk","createdAt":"2025-12-25T21:25:41.919611Z","sortOrder":47000,"categoryId":null}
+{"type":"TodoCreated","id":"edc3bece-def4-448f-ad91-6a0740b56247","name":"Autocomplete Bread","createdAt":"2025-12-25T21:25:42.411742Z","sortOrder":48000,"categoryId":null}
+{"type":"TodoCreated","id":"e538fa90-a38c-4d4d-9082-713806d6704c","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:25:42.893034Z","sortOrder":49000,"categoryId":null}
+{"type":"TodoCompleted","id":"b2f30eb0-da17-4ffa-976e-6c6d6e24323f","completedAt":"2025-12-25T21:25:43.247333Z"}
+{"type":"TodoCompleted","id":"edc3bece-def4-448f-ad91-6a0740b56247","completedAt":"2025-12-25T21:25:43.582977Z"}
+{"type":"TodoCompleted","id":"e538fa90-a38c-4d4d-9082-713806d6704c","completedAt":"2025-12-25T21:25:43.926405Z"}
+{"type":"TodoCreated","id":"939c577c-1cad-4acf-aa0d-2bef9b112785","name":"LimitTest0","createdAt":"2025-12-25T21:25:44.397986Z","sortOrder":50000,"categoryId":null}
+{"type":"TodoCompleted","id":"939c577c-1cad-4acf-aa0d-2bef9b112785","completedAt":"2025-12-25T21:25:44.643241Z"}
+{"type":"TodoCreated","id":"c5ae4d47-0be5-4d1c-a552-f2e4fbb0bf3c","name":"LimitTest1","createdAt":"2025-12-25T21:25:45.015579Z","sortOrder":51000,"categoryId":null}
+{"type":"TodoCompleted","id":"c5ae4d47-0be5-4d1c-a552-f2e4fbb0bf3c","completedAt":"2025-12-25T21:25:45.257493Z"}
+{"type":"TodoCreated","id":"a7781821-1294-4f05-9b7f-b50013ed34ed","name":"LimitTest2","createdAt":"2025-12-25T21:25:45.637825Z","sortOrder":52000,"categoryId":null}
+{"type":"TodoCompleted","id":"a7781821-1294-4f05-9b7f-b50013ed34ed","completedAt":"2025-12-25T21:25:45.879952Z"}
+{"type":"TodoCreated","id":"af103b2c-5e90-41ea-96cb-4bdbbb6e5806","name":"LimitTest3","createdAt":"2025-12-25T21:25:46.249747Z","sortOrder":53000,"categoryId":null}
+{"type":"TodoCompleted","id":"af103b2c-5e90-41ea-96cb-4bdbbb6e5806","completedAt":"2025-12-25T21:25:46.488938Z"}
+{"type":"TodoCreated","id":"9bb3ec66-52d9-4f16-9240-6e53f4350ea2","name":"LimitTest4","createdAt":"2025-12-25T21:25:46.859941Z","sortOrder":54000,"categoryId":null}
+{"type":"TodoCompleted","id":"9bb3ec66-52d9-4f16-9240-6e53f4350ea2","completedAt":"2025-12-25T21:25:47.102796Z"}
+{"type":"TodoCreated","id":"db8cec80-4f45-4ae7-8cd2-64c94b25a2ca","name":"LimitTest5","createdAt":"2025-12-25T21:25:47.473331Z","sortOrder":55000,"categoryId":null}
+{"type":"TodoCompleted","id":"db8cec80-4f45-4ae7-8cd2-64c94b25a2ca","completedAt":"2025-12-25T21:25:47.712712Z"}
+{"type":"TodoCreated","id":"5c8657f8-9827-486b-9422-389b23667967","name":"Cat move 1766697954011","createdAt":"2025-12-25T21:25:54.390234Z","sortOrder":56000,"categoryId":null}
+{"type":"TodoCreated","id":"bd4b109f-0c51-44e8-a682-661736a0e0f4","name":"No Cat 1766698009500","createdAt":"2025-12-25T21:26:50.269661Z","sortOrder":57000,"categoryId":null}
+{"type":"TodoCreated","id":"bcc74cb6-76a3-4a7f-a39f-140de5c529ce","name":"Test todo 1766698139616","createdAt":"2025-12-25T21:29:00.055502Z","sortOrder":58000,"categoryId":null}
+{"type":"TodoCreated","id":"d81288c9-69f9-4e37-a9bf-088f838b9885","name":"Star test 1766698141627","createdAt":"2025-12-25T21:29:01.987496Z","sortOrder":59000,"categoryId":null}
+{"type":"TodoStarred","id":"d81288c9-69f9-4e37-a9bf-088f838b9885","sortOrder":60000}
+{"type":"TodoCreated","id":"3aa36389-2395-429a-a184-73652e91c291","name":"Uncomplete test 1766698143027","createdAt":"2025-12-25T21:29:03.456141Z","sortOrder":61000,"categoryId":null}
+{"type":"TodoCompleted","id":"3aa36389-2395-429a-a184-73652e91c291","completedAt":"2025-12-25T21:29:03.602744Z"}
+{"type":"TodoUncompleted","id":"3aa36389-2395-429a-a184-73652e91c291"}
+{"type":"TodoCreated","id":"f8ec7733-748a-464e-b768-f37f7e0c1ea1","name":"Toggle test 1766698144723","createdAt":"2025-12-25T21:29:05.108689Z","sortOrder":62000,"categoryId":null}
+{"type":"TodoCompleted","id":"f8ec7733-748a-464e-b768-f37f7e0c1ea1","completedAt":"2025-12-25T21:29:05.346049Z"}
+{"type":"TodoCreated","id":"884237a0-9944-4671-9787-14f72f70e7bb","name":"Persist test 1766698150248","createdAt":"2025-12-25T21:29:10.643403Z","sortOrder":63000,"categoryId":null}
+{"type":"TodoCreated","id":"52c3607d-f27d-4359-a4da-2e83721641fe","name":"Sync test 1766698152451","createdAt":"2025-12-25T21:29:12.813325Z","sortOrder":64000,"categoryId":null}
+{"type":"TodoCreated","id":"72d13f54-a01f-4137-b9db-94ada4a214e1","name":"Optimistic test 1766698154631","createdAt":"2025-12-25T21:29:15.061363Z","sortOrder":65000,"categoryId":null}
+{"type":"ListTitleChanged","title":"Test List 1766698170589"}
+{"type":"ListTitleChanged","title":"New Title"}
+{"type":"TodoCreated","id":"3bbbb0cb-9bdf-446a-b284-3b6992bf85e1","name":"Autocomplete Milk","createdAt":"2025-12-25T21:29:37.979197Z","sortOrder":66000,"categoryId":null}
+{"type":"TodoCreated","id":"b9b3648a-0259-4b83-830e-f54521057cf1","name":"Autocomplete Bread","createdAt":"2025-12-25T21:29:38.468152Z","sortOrder":67000,"categoryId":null}
+{"type":"TodoCreated","id":"08997568-99f8-47e0-95b6-abcbe9c30dca","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:29:38.968006Z","sortOrder":68000,"categoryId":null}
+{"type":"TodoCompleted","id":"3bbbb0cb-9bdf-446a-b284-3b6992bf85e1","completedAt":"2025-12-25T21:29:39.328031Z"}
+{"type":"TodoCompleted","id":"b9b3648a-0259-4b83-830e-f54521057cf1","completedAt":"2025-12-25T21:29:39.667256Z"}
+{"type":"TodoCompleted","id":"08997568-99f8-47e0-95b6-abcbe9c30dca","completedAt":"2025-12-25T21:29:40.005266Z"}
+{"type":"TodoCreated","id":"d5aee7f7-3a16-4db9-aaff-a983b1d0bd67","name":"Autocomplete Milk","createdAt":"2025-12-25T21:29:41.686775Z","sortOrder":69000,"categoryId":null}
+{"type":"TodoCreated","id":"d676cbc3-b06b-4e3d-afcb-fccb05ec8b3a","name":"Autocomplete Bread","createdAt":"2025-12-25T21:29:42.186401Z","sortOrder":70000,"categoryId":null}
+{"type":"TodoCreated","id":"d57a8909-69bd-4bc0-9004-f2a503fd4ac7","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:29:42.673247Z","sortOrder":71000,"categoryId":null}
+{"type":"TodoCompleted","id":"d5aee7f7-3a16-4db9-aaff-a983b1d0bd67","completedAt":"2025-12-25T21:29:43.045686Z"}
+{"type":"TodoCompleted","id":"d676cbc3-b06b-4e3d-afcb-fccb05ec8b3a","completedAt":"2025-12-25T21:29:43.38412Z"}
+{"type":"TodoCompleted","id":"d57a8909-69bd-4bc0-9004-f2a503fd4ac7","completedAt":"2025-12-25T21:29:43.734681Z"}
+{"type":"TodoCreated","id":"76291fd0-d271-464e-94ef-941520b73256","name":"Autocomplete Milk","createdAt":"2025-12-25T21:29:49.653877Z","sortOrder":72000,"categoryId":null}
+{"type":"TodoCreated","id":"e47012d3-c892-40fc-a6b1-2fc7cfc89cb1","name":"Autocomplete Bread","createdAt":"2025-12-25T21:29:50.151475Z","sortOrder":73000,"categoryId":null}
+{"type":"TodoCreated","id":"ecbdaa88-339c-42a6-a237-210f80d0e2f0","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:29:50.629773Z","sortOrder":74000,"categoryId":null}
+{"type":"TodoCompleted","id":"76291fd0-d271-464e-94ef-941520b73256","completedAt":"2025-12-25T21:29:50.992109Z"}
+{"type":"TodoCompleted","id":"e47012d3-c892-40fc-a6b1-2fc7cfc89cb1","completedAt":"2025-12-25T21:29:51.345061Z"}
+{"type":"TodoCompleted","id":"ecbdaa88-339c-42a6-a237-210f80d0e2f0","completedAt":"2025-12-25T21:29:51.684244Z"}
+{"type":"TodoCreated","id":"aea9e7dd-600b-4de0-a05d-70b7b7c5bb96","name":"Autocomplete Milk","createdAt":"2025-12-25T21:29:57.614321Z","sortOrder":75000,"categoryId":null}
+{"type":"TodoCreated","id":"d76472a1-f6c8-420a-98c8-855ac9a2798f","name":"Autocomplete Bread","createdAt":"2025-12-25T21:29:58.112815Z","sortOrder":76000,"categoryId":null}
+{"type":"TodoCreated","id":"52024f8c-08f3-4dfb-a58d-ae2d1a0b9b66","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:29:58.594287Z","sortOrder":77000,"categoryId":null}
+{"type":"TodoCompleted","id":"aea9e7dd-600b-4de0-a05d-70b7b7c5bb96","completedAt":"2025-12-25T21:29:58.956536Z"}
+{"type":"TodoCompleted","id":"d76472a1-f6c8-420a-98c8-855ac9a2798f","completedAt":"2025-12-25T21:29:59.308887Z"}
+{"type":"TodoCompleted","id":"52024f8c-08f3-4dfb-a58d-ae2d1a0b9b66","completedAt":"2025-12-25T21:29:59.662662Z"}
+{"type":"TodoCreated","id":"dc02986d-7c16-4c94-9d01-d3ae7d4c9ea0","name":"Autocomplete Milk","createdAt":"2025-12-25T21:30:01.470446Z","sortOrder":78000,"categoryId":null}
+{"type":"TodoCreated","id":"cae84ef5-6857-4256-a21d-570c3635539f","name":"Autocomplete Bread","createdAt":"2025-12-25T21:30:01.974618Z","sortOrder":79000,"categoryId":null}
+{"type":"TodoCreated","id":"772becb0-c76d-40af-913e-a689879a6539","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:30:02.461439Z","sortOrder":80000,"categoryId":null}
+{"type":"TodoCompleted","id":"dc02986d-7c16-4c94-9d01-d3ae7d4c9ea0","completedAt":"2025-12-25T21:30:02.81938Z"}
+{"type":"TodoCompleted","id":"cae84ef5-6857-4256-a21d-570c3635539f","completedAt":"2025-12-25T21:30:03.186744Z"}
+{"type":"TodoCompleted","id":"772becb0-c76d-40af-913e-a689879a6539","completedAt":"2025-12-25T21:30:03.539995Z"}
+{"type":"TodoCreated","id":"0e9b4b36-8f45-411b-898d-01b11f49752e","name":"Active Item 1766698203801","createdAt":"2025-12-25T21:30:04.19591Z","sortOrder":81000,"categoryId":null}
+{"type":"TodoCreated","id":"923270f9-6b27-4f92-b4b7-46c2b02716d4","name":"Autocomplete Milk","createdAt":"2025-12-25T21:30:10.295307Z","sortOrder":82000,"categoryId":null}
+{"type":"TodoCreated","id":"6421dcec-d856-4b46-94d5-a3fc6c2bbc68","name":"Autocomplete Bread","createdAt":"2025-12-25T21:30:10.789309Z","sortOrder":83000,"categoryId":null}
+{"type":"TodoCreated","id":"9d81d2c8-41f8-4967-a968-0e99c5f4e0a4","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:30:11.259516Z","sortOrder":84000,"categoryId":null}
+{"type":"TodoCompleted","id":"923270f9-6b27-4f92-b4b7-46c2b02716d4","completedAt":"2025-12-25T21:30:11.624083Z"}
+{"type":"TodoCompleted","id":"6421dcec-d856-4b46-94d5-a3fc6c2bbc68","completedAt":"2025-12-25T21:30:12.004809Z"}
+{"type":"TodoCompleted","id":"9d81d2c8-41f8-4967-a968-0e99c5f4e0a4","completedAt":"2025-12-25T21:30:12.368614Z"}
+{"type":"TodoCreated","id":"110cda57-e832-4557-8b32-81cdfefde26d","name":"Autocomplete Milk","createdAt":"2025-12-25T21:30:18.538316Z","sortOrder":85000,"categoryId":null}
+{"type":"TodoCreated","id":"40a8dfcf-bc53-4dec-a39b-7607587c54ae","name":"Autocomplete Bread","createdAt":"2025-12-25T21:30:19.037074Z","sortOrder":86000,"categoryId":null}
+{"type":"TodoCreated","id":"ea4b22fa-31a1-42cf-9d8a-d87dcec36893","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:30:19.528013Z","sortOrder":87000,"categoryId":null}
+{"type":"TodoCompleted","id":"110cda57-e832-4557-8b32-81cdfefde26d","completedAt":"2025-12-25T21:30:19.899237Z"}
+{"type":"TodoCompleted","id":"40a8dfcf-bc53-4dec-a39b-7607587c54ae","completedAt":"2025-12-25T21:30:20.266788Z"}
+{"type":"TodoCompleted","id":"ea4b22fa-31a1-42cf-9d8a-d87dcec36893","completedAt":"2025-12-25T21:30:20.622725Z"}
+{"type":"TodoCreated","id":"ab29b612-79cb-4983-8465-875d08cf4e0f","name":"Autocomplete B","createdAt":"2025-12-25T21:30:21.532844Z","sortOrder":88000,"categoryId":null}
+{"type":"TodoCreated","id":"358afece-5080-4b9c-9f42-5c7ca08c26c9","name":"Autocomplete Milk","createdAt":"2025-12-25T21:30:26.920243Z","sortOrder":89000,"categoryId":null}
+{"type":"TodoCreated","id":"d539e30b-82d6-4d9c-afb7-73bb4184920f","name":"Autocomplete Bread","createdAt":"2025-12-25T21:30:27.421858Z","sortOrder":90000,"categoryId":null}
+{"type":"TodoCreated","id":"ad68bc87-a675-4588-a8e5-cbf0b7333247","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:30:27.902696Z","sortOrder":91000,"categoryId":null}
+{"type":"TodoCompleted","id":"358afece-5080-4b9c-9f42-5c7ca08c26c9","completedAt":"2025-12-25T21:30:28.288685Z"}
+{"type":"TodoCompleted","id":"d539e30b-82d6-4d9c-afb7-73bb4184920f","completedAt":"2025-12-25T21:30:28.644747Z"}
+{"type":"TodoCompleted","id":"ad68bc87-a675-4588-a8e5-cbf0b7333247","completedAt":"2025-12-25T21:30:29.000234Z"}
+{"type":"TodoCreated","id":"e6d6d157-f329-4d94-8473-15e60984b05e","name":"Autocomplete Milk","createdAt":"2025-12-25T21:30:30.916223Z","sortOrder":92000,"categoryId":null}
+{"type":"TodoCreated","id":"afbe947f-0db9-42b3-83fe-bf6ca4b67d9b","name":"Autocomplete Bread","createdAt":"2025-12-25T21:30:31.414189Z","sortOrder":93000,"categoryId":null}
+{"type":"TodoCreated","id":"39dd596f-c58c-4bd5-99bd-7d17c9749e04","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:30:31.899747Z","sortOrder":94000,"categoryId":null}
+{"type":"TodoCompleted","id":"e6d6d157-f329-4d94-8473-15e60984b05e","completedAt":"2025-12-25T21:30:32.276074Z"}
+{"type":"TodoCompleted","id":"afbe947f-0db9-42b3-83fe-bf6ca4b67d9b","completedAt":"2025-12-25T21:30:32.63795Z"}
+{"type":"TodoCompleted","id":"39dd596f-c58c-4bd5-99bd-7d17c9749e04","completedAt":"2025-12-25T21:30:33.005768Z"}
+{"type":"TodoCreated","id":"b0da103f-8a5a-42e2-89d1-f19e3aa6a3b2","name":"Autocomplete Milk","createdAt":"2025-12-25T21:30:35.021007Z","sortOrder":95000,"categoryId":null}
+{"type":"TodoCreated","id":"51d122a8-a5f4-4c07-83e1-e779053aab67","name":"Autocomplete Bread","createdAt":"2025-12-25T21:30:35.519336Z","sortOrder":96000,"categoryId":null}
+{"type":"TodoCreated","id":"54140113-4e75-4318-bb27-78d171ca7d83","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:30:36.007905Z","sortOrder":97000,"categoryId":null}
+{"type":"TodoCompleted","id":"b0da103f-8a5a-42e2-89d1-f19e3aa6a3b2","completedAt":"2025-12-25T21:30:36.37694Z"}
+{"type":"TodoCompleted","id":"51d122a8-a5f4-4c07-83e1-e779053aab67","completedAt":"2025-12-25T21:30:36.741902Z"}
+{"type":"TodoCompleted","id":"54140113-4e75-4318-bb27-78d171ca7d83","completedAt":"2025-12-25T21:30:37.105767Z"}
+{"type":"TodoCreated","id":"37d70567-b7d4-434e-bb5e-e5e4fc447b63","name":"LimitTest0","createdAt":"2025-12-25T21:30:37.603142Z","sortOrder":98000,"categoryId":null}
+{"type":"TodoCompleted","id":"37d70567-b7d4-434e-bb5e-e5e4fc447b63","completedAt":"2025-12-25T21:30:37.85934Z"}
+{"type":"TodoCreated","id":"fdc079ab-a4a0-4156-8920-2b468b003b01","name":"LimitTest1","createdAt":"2025-12-25T21:30:38.248266Z","sortOrder":99000,"categoryId":null}
+{"type":"TodoCompleted","id":"fdc079ab-a4a0-4156-8920-2b468b003b01","completedAt":"2025-12-25T21:30:38.50782Z"}
+{"type":"TodoCreated","id":"d8738e47-45b2-4f6c-83fb-9bc597d6c109","name":"LimitTest2","createdAt":"2025-12-25T21:30:38.907581Z","sortOrder":100000,"categoryId":null}
+{"type":"TodoCompleted","id":"d8738e47-45b2-4f6c-83fb-9bc597d6c109","completedAt":"2025-12-25T21:30:39.166122Z"}
+{"type":"TodoCreated","id":"5e5249cc-c9e2-4125-9799-e279302bf544","name":"LimitTest3","createdAt":"2025-12-25T21:30:39.5638Z","sortOrder":101000,"categoryId":null}
+{"type":"TodoCompleted","id":"5e5249cc-c9e2-4125-9799-e279302bf544","completedAt":"2025-12-25T21:30:39.820429Z"}
+{"type":"TodoCreated","id":"f1c4bed1-a2de-421c-ba8c-9aa1c74eb607","name":"LimitTest4","createdAt":"2025-12-25T21:30:40.215379Z","sortOrder":102000,"categoryId":null}
+{"type":"TodoCompleted","id":"f1c4bed1-a2de-421c-ba8c-9aa1c74eb607","completedAt":"2025-12-25T21:30:40.476254Z"}
+{"type":"TodoCreated","id":"2afde757-3a77-4c41-ba65-20a8b1a8fa38","name":"LimitTest5","createdAt":"2025-12-25T21:30:40.875821Z","sortOrder":103000,"categoryId":null}
+{"type":"TodoCompleted","id":"2afde757-3a77-4c41-ba65-20a8b1a8fa38","completedAt":"2025-12-25T21:30:41.145007Z"}
+{"type":"TodoCreated","id":"6f908922-9399-4b5d-8a89-41eb840b97cd","name":"Cat move 1766698247446","createdAt":"2025-12-25T21:30:47.804935Z","sortOrder":104000,"categoryId":null}
+{"type":"CategoryCreated","id":"74f27db9-48c9-4e38-a2b9-4c3a9bb2b436","name":"MobileCat 1766698257866","createdAt":"2025-12-25T21:30:59.23624Z","sortOrder":2750}
+{"type":"TodoCreated","id":"09f5f3a5-497f-4afd-ba82-00c293d519e8","name":"Mobile Cat Test 1766698257866","createdAt":"2025-12-25T21:31:00.03372Z","sortOrder":105000,"categoryId":null}
+{"type":"CategoryCreated","id":"74f24933-4c44-42c3-b3e6-a304596ebd60","name":"AssignCat 1766698265312","createdAt":"2025-12-25T21:31:06.711139Z","sortOrder":3750}
+{"type":"TodoCreated","id":"db77439a-c1f2-49e3-8c62-7bbf10c90c2d","name":"Mobile Assign 1766698265312","createdAt":"2025-12-25T21:31:07.480139Z","sortOrder":106000,"categoryId":null}
+{"type":"TodoCategorized","id":"db77439a-c1f2-49e3-8c62-7bbf10c90c2d","categoryId":"74f24933-4c44-42c3-b3e6-a304596ebd60"}
+{"type":"CategoryCreated","id":"e6246379-9a27-4271-8f26-649dc7bb1bb8","name":"CancelCat 1766698273781","createdAt":"2025-12-25T21:31:15.15983Z","sortOrder":4750}
+{"type":"TodoCreated","id":"01faab05-6085-4f44-8208-018cd01ccc6d","name":"Cancel Test 1766698273781","createdAt":"2025-12-25T21:31:15.908003Z","sortOrder":107000,"categoryId":null}
+{"type":"CategoryCreated","id":"5834c847-6303-40cc-a3d1-a69b62c09727","name":"CloseCat 1766698281669","createdAt":"2025-12-25T21:31:23.039515Z","sortOrder":5750}
+{"type":"TodoCreated","id":"3d3a63b7-b997-429b-a221-92db658e4404","name":"Close Test 1766698281669","createdAt":"2025-12-25T21:31:23.781907Z","sortOrder":108000,"categoryId":null}
+{"type":"CategoryCreated","id":"0b397cf0-7030-46ab-af83-1d8395c3824f","name":"BackdropCat 1766698285320","createdAt":"2025-12-25T21:31:26.696342Z","sortOrder":6750}
+{"type":"TodoCreated","id":"aa41eda3-b616-49d8-a76d-dbd8ab2c9509","name":"Backdrop Test 1766698285320","createdAt":"2025-12-25T21:31:27.471361Z","sortOrder":109000,"categoryId":null}
+{"type":"CategoryCreated","id":"36c4e5b7-24c4-4d2c-9070-d689d03c823f","name":"FirstCat 1766698293284","createdAt":"2025-12-25T21:31:34.648193Z","sortOrder":7750}
+{"type":"CategoryCreated","id":"f7299f38-b493-4dac-995e-fbc7de0e7ccc","name":"SecondCat 1766698293284","createdAt":"2025-12-25T21:31:35.918285Z","sortOrder":8750}
+{"type":"TodoCreated","id":"a5fae472-ede6-4944-bfc1-0a88ac4b08ff","name":"Change Cat 1766698293284","createdAt":"2025-12-25T21:31:36.659392Z","sortOrder":110000,"categoryId":null}
+{"type":"TodoCategorized","id":"a5fae472-ede6-4944-bfc1-0a88ac4b08ff","categoryId":"36c4e5b7-24c4-4d2c-9070-d689d03c823f"}
+{"type":"CategoryCreated","id":"1a323139-653d-40ab-9c11-5a086fe434a2","name":"NormalCat 1766698302938","createdAt":"2025-12-25T21:31:44.326903Z","sortOrder":9750}
+{"type":"TodoCreated","id":"cbc87381-4af6-4d5a-af16-a999bd25957f","name":"Normal View 1766698302938","createdAt":"2025-12-25T21:31:45.079488Z","sortOrder":111000,"categoryId":null}
+{"type":"CategoryCreated","id":"f176407c-ab32-4948-b3b9-7ade3e6218c8","name":"LongPressCat 1766698306967","createdAt":"2025-12-25T21:31:48.375845Z","sortOrder":10750}
+{"type":"TodoCreated","id":"be392ec0-5013-49f9-be00-e892e49ccae3","name":"Long Press 1766698306967","createdAt":"2025-12-25T21:31:49.121948Z","sortOrder":112000,"categoryId":null}
+{"type":"CategoryCreated","id":"9c52a426-700d-49c6-8162-05d8f5887330","name":"Cat1 1766698310970","createdAt":"2025-12-25T21:31:52.296981Z","sortOrder":11750}
+{"type":"CategoryCreated","id":"efe34637-fd59-4cbe-9de7-5214f89e1568","name":"Cat2 1766698310970","createdAt":"2025-12-25T21:31:53.537253Z","sortOrder":12750}
+{"type":"CategoryCreated","id":"486760d8-77fd-4ad2-9258-1663d6ad7ec7","name":"Cat3 1766698310970","createdAt":"2025-12-25T21:31:54.764576Z","sortOrder":13750}
+{"type":"TodoCreated","id":"07d18b54-ebce-47f0-8254-8a79d7b72df2","name":"Multi Cat 1766698310970","createdAt":"2025-12-25T21:31:59.330265Z","sortOrder":113000,"categoryId":null}
+{"type":"TodoCreated","id":"da3b2ba6-05c4-4cf1-a89b-f650628be737","name":"No Cat 1766698325003","createdAt":"2025-12-25T21:32:05.806152Z","sortOrder":114000,"categoryId":null}
+{"type":"TodoCreated","id":"b21c18ed-1d8e-46e4-b931-4c79bc11d8ec","name":"Test todo 1766698483859","createdAt":"2025-12-25T21:34:44.342337Z","sortOrder":115000,"categoryId":null}
+{"type":"TodoCreated","id":"349b42ff-92d3-4e83-930f-1fd88b0cc2b3","name":"Star test 1766698485951","createdAt":"2025-12-25T21:34:46.336514Z","sortOrder":116000,"categoryId":null}
+{"type":"TodoStarred","id":"349b42ff-92d3-4e83-930f-1fd88b0cc2b3","sortOrder":117000}
+{"type":"TodoCreated","id":"1628ac90-198d-4484-bf81-6de719dc907b","name":"Uncomplete test 1766698487220","createdAt":"2025-12-25T21:34:47.66496Z","sortOrder":118000,"categoryId":null}
+{"type":"TodoCompleted","id":"1628ac90-198d-4484-bf81-6de719dc907b","completedAt":"2025-12-25T21:34:47.826252Z"}
+{"type":"TodoUncompleted","id":"1628ac90-198d-4484-bf81-6de719dc907b"}
+{"type":"TodoCreated","id":"3bd4a8ed-8849-4158-9408-a31988f947f7","name":"Toggle test 1766698489002","createdAt":"2025-12-25T21:34:49.409424Z","sortOrder":119000,"categoryId":null}
+{"type":"TodoCompleted","id":"3bd4a8ed-8849-4158-9408-a31988f947f7","completedAt":"2025-12-25T21:34:49.576178Z"}
+{"type":"TodoCreated","id":"b7e3deb4-7083-4814-89ca-cd093d54b905","name":"Persist test 1766698494516","createdAt":"2025-12-25T21:34:54.929115Z","sortOrder":120000,"categoryId":null}
+{"type":"TodoCreated","id":"00e95bdd-80cc-428a-be9c-b603ad4ad91e","name":"Sync test 1766698496759","createdAt":"2025-12-25T21:34:57.140196Z","sortOrder":121000,"categoryId":null}
+{"type":"TodoCreated","id":"0c0fb828-e9f9-456b-97be-b054b9bc71f8","name":"Optimistic test 1766698498956","createdAt":"2025-12-25T21:34:59.416128Z","sortOrder":122000,"categoryId":null}
+{"type":"ListTitleChanged","title":"Test List 1766698514626"}
+{"type":"ListTitleChanged","title":"New Title"}
+{"type":"TodoCreated","id":"041ac48e-a029-4bae-95b7-86f25479d178","name":"Autocomplete Milk","createdAt":"2025-12-25T21:35:22.104293Z","sortOrder":123000,"categoryId":null}
+{"type":"TodoCreated","id":"10578325-a783-4e58-8280-a75314a4e07f","name":"Autocomplete Bread","createdAt":"2025-12-25T21:35:22.606446Z","sortOrder":124000,"categoryId":null}
+{"type":"TodoCreated","id":"28675e6f-063e-417f-be25-25a3c050bca5","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:35:23.107275Z","sortOrder":125000,"categoryId":null}
+{"type":"TodoCompleted","id":"041ac48e-a029-4bae-95b7-86f25479d178","completedAt":"2025-12-25T21:35:23.488392Z"}
+{"type":"TodoCompleted","id":"10578325-a783-4e58-8280-a75314a4e07f","completedAt":"2025-12-25T21:35:23.86861Z"}
+{"type":"TodoCompleted","id":"28675e6f-063e-417f-be25-25a3c050bca5","completedAt":"2025-12-25T21:35:24.253822Z"}
+{"type":"TodoCreated","id":"8dc389e1-a41d-49db-89e6-5905312ca8f0","name":"Autocomplete Milk","createdAt":"2025-12-25T21:35:25.923314Z","sortOrder":126000,"categoryId":null}
+{"type":"TodoCreated","id":"21ce41db-13dd-44b5-acd2-2e158f0bdde8","name":"Autocomplete Bread","createdAt":"2025-12-25T21:35:26.425353Z","sortOrder":127000,"categoryId":null}
+{"type":"TodoCreated","id":"cd924ca2-5afa-4770-96b1-d13aee8703d1","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:35:26.913185Z","sortOrder":128000,"categoryId":null}
+{"type":"TodoCompleted","id":"8dc389e1-a41d-49db-89e6-5905312ca8f0","completedAt":"2025-12-25T21:35:27.30492Z"}
+{"type":"TodoCompleted","id":"21ce41db-13dd-44b5-acd2-2e158f0bdde8","completedAt":"2025-12-25T21:35:27.690033Z"}
+{"type":"TodoCompleted","id":"cd924ca2-5afa-4770-96b1-d13aee8703d1","completedAt":"2025-12-25T21:35:28.080897Z"}
+{"type":"TodoCreated","id":"d1a85f42-e208-4df1-a0a4-c3e5736abf00","name":"Autocomplete Milk","createdAt":"2025-12-25T21:35:34.058468Z","sortOrder":129000,"categoryId":null}
+{"type":"TodoCreated","id":"c0676c69-6421-46cd-bf2a-be66cac32027","name":"Autocomplete Bread","createdAt":"2025-12-25T21:35:34.566529Z","sortOrder":130000,"categoryId":null}
+{"type":"TodoCreated","id":"5114d97e-e477-4e16-bfb9-56e83647b495","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:35:35.065094Z","sortOrder":131000,"categoryId":null}
+{"type":"TodoCompleted","id":"d1a85f42-e208-4df1-a0a4-c3e5736abf00","completedAt":"2025-12-25T21:35:35.452614Z"}
+{"type":"TodoCompleted","id":"c0676c69-6421-46cd-bf2a-be66cac32027","completedAt":"2025-12-25T21:35:35.848349Z"}
+{"type":"TodoCompleted","id":"5114d97e-e477-4e16-bfb9-56e83647b495","completedAt":"2025-12-25T21:35:36.251894Z"}
+{"type":"TodoCreated","id":"87e89d39-ddcd-4372-b79d-4ad4cc1747c9","name":"Autocomplete Milk","createdAt":"2025-12-25T21:35:42.236274Z","sortOrder":132000,"categoryId":null}
+{"type":"TodoCreated","id":"5f81036a-f06d-4db8-a8ae-710a8797ac8b","name":"Autocomplete Bread","createdAt":"2025-12-25T21:35:42.738766Z","sortOrder":133000,"categoryId":null}
+{"type":"TodoCreated","id":"8771e9f8-21e1-49b3-81c3-996d67cf2f74","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:35:43.2322Z","sortOrder":134000,"categoryId":null}
+{"type":"TodoCompleted","id":"87e89d39-ddcd-4372-b79d-4ad4cc1747c9","completedAt":"2025-12-25T21:35:43.627271Z"}
+{"type":"TodoCompleted","id":"5f81036a-f06d-4db8-a8ae-710a8797ac8b","completedAt":"2025-12-25T21:35:44.034892Z"}
+{"type":"TodoCompleted","id":"8771e9f8-21e1-49b3-81c3-996d67cf2f74","completedAt":"2025-12-25T21:35:44.435913Z"}
+{"type":"TodoCreated","id":"977243ab-ba72-4325-93d4-505d1980034f","name":"Autocomplete Milk","createdAt":"2025-12-25T21:35:46.279859Z","sortOrder":135000,"categoryId":null}
+{"type":"TodoCreated","id":"8152faf2-dfaa-40bf-b4be-0860ca14f47c","name":"Autocomplete Bread","createdAt":"2025-12-25T21:35:46.781689Z","sortOrder":136000,"categoryId":null}
+{"type":"TodoCreated","id":"05be617f-343a-4d7e-8a59-8b5a8b6571e9","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:35:47.275607Z","sortOrder":137000,"categoryId":null}
+{"type":"TodoCompleted","id":"977243ab-ba72-4325-93d4-505d1980034f","completedAt":"2025-12-25T21:35:47.67064Z"}
+{"type":"TodoCompleted","id":"8152faf2-dfaa-40bf-b4be-0860ca14f47c","completedAt":"2025-12-25T21:35:48.068013Z"}
+{"type":"TodoCompleted","id":"05be617f-343a-4d7e-8a59-8b5a8b6571e9","completedAt":"2025-12-25T21:35:48.475773Z"}
+{"type":"TodoCreated","id":"c3fd3806-572a-4505-9407-2265efd9eaf6","name":"Active Item 1766698548733","createdAt":"2025-12-25T21:35:49.138849Z","sortOrder":138000,"categoryId":null}
+{"type":"TodoCreated","id":"e296ac56-e2e2-4ba4-ab9f-601803c8b685","name":"Autocomplete Milk","createdAt":"2025-12-25T21:35:55.288693Z","sortOrder":139000,"categoryId":null}
+{"type":"TodoCreated","id":"5ff89301-0ff0-4436-a7cb-2e8c75fff0e6","name":"Autocomplete Bread","createdAt":"2025-12-25T21:35:55.808374Z","sortOrder":140000,"categoryId":null}
+{"type":"TodoCreated","id":"0f41b654-29c3-43c8-b421-5d48505b882a","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:35:56.306775Z","sortOrder":141000,"categoryId":null}
+{"type":"TodoCompleted","id":"e296ac56-e2e2-4ba4-ab9f-601803c8b685","completedAt":"2025-12-25T21:35:56.701924Z"}
+{"type":"TodoCompleted","id":"5ff89301-0ff0-4436-a7cb-2e8c75fff0e6","completedAt":"2025-12-25T21:35:57.095026Z"}
+{"type":"TodoCompleted","id":"0f41b654-29c3-43c8-b421-5d48505b882a","completedAt":"2025-12-25T21:35:57.496511Z"}
+{"type":"TodoCreated","id":"4aecdda5-ba39-4dd3-88d9-78095acf3f42","name":"Autocomplete Milk","createdAt":"2025-12-25T21:36:03.746622Z","sortOrder":142000,"categoryId":null}
+{"type":"TodoCreated","id":"e4c8db76-0001-43ba-be56-e8daa17af3ec","name":"Autocomplete Bread","createdAt":"2025-12-25T21:36:04.251117Z","sortOrder":143000,"categoryId":null}
+{"type":"TodoCreated","id":"6a5fa2a1-5796-4483-9c2d-8e3322ca4466","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:36:04.752578Z","sortOrder":144000,"categoryId":null}
+{"type":"TodoCompleted","id":"4aecdda5-ba39-4dd3-88d9-78095acf3f42","completedAt":"2025-12-25T21:36:05.146938Z"}
+{"type":"TodoCompleted","id":"e4c8db76-0001-43ba-be56-e8daa17af3ec","completedAt":"2025-12-25T21:36:05.536959Z"}
+{"type":"TodoCompleted","id":"6a5fa2a1-5796-4483-9c2d-8e3322ca4466","completedAt":"2025-12-25T21:36:05.942197Z"}
+{"type":"TodoCreated","id":"fe827cf4-a3af-48a0-9fcb-e5c5073e6cb1","name":"Autocomplete B","createdAt":"2025-12-25T21:36:06.89653Z","sortOrder":145000,"categoryId":null}
+{"type":"TodoCreated","id":"2288c892-9a4a-4429-8aba-5676fbabf936","name":"Autocomplete Milk","createdAt":"2025-12-25T21:36:12.127664Z","sortOrder":146000,"categoryId":null}
+{"type":"TodoCreated","id":"49ead096-fd6f-41f8-98d8-c550cb2efc03","name":"Autocomplete Bread","createdAt":"2025-12-25T21:36:12.635949Z","sortOrder":147000,"categoryId":null}
+{"type":"TodoCreated","id":"e672459b-6ad9-4588-b22e-8940cab5150a","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:36:13.13333Z","sortOrder":148000,"categoryId":null}
+{"type":"TodoCompleted","id":"2288c892-9a4a-4429-8aba-5676fbabf936","completedAt":"2025-12-25T21:36:13.537236Z"}
+{"type":"TodoCompleted","id":"49ead096-fd6f-41f8-98d8-c550cb2efc03","completedAt":"2025-12-25T21:36:13.949075Z"}
+{"type":"TodoCompleted","id":"e672459b-6ad9-4588-b22e-8940cab5150a","completedAt":"2025-12-25T21:36:14.361874Z"}
+{"type":"TodoCreated","id":"4117150d-9e43-405f-a070-39d432bb2084","name":"Autocomplete Milk","createdAt":"2025-12-25T21:36:16.900468Z","sortOrder":149000,"categoryId":null}
+{"type":"TodoCreated","id":"da7f8d21-d6de-4398-8a98-10220ba8a647","name":"Autocomplete Bread","createdAt":"2025-12-25T21:36:17.408291Z","sortOrder":150000,"categoryId":null}
+{"type":"TodoCreated","id":"89256959-64cf-4682-a6f0-725bfaf354ca","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:36:17.906786Z","sortOrder":151000,"categoryId":null}
+{"type":"TodoCompleted","id":"4117150d-9e43-405f-a070-39d432bb2084","completedAt":"2025-12-25T21:36:18.302999Z"}
+{"type":"TodoCompleted","id":"da7f8d21-d6de-4398-8a98-10220ba8a647","completedAt":"2025-12-25T21:36:18.718368Z"}
+{"type":"TodoCompleted","id":"89256959-64cf-4682-a6f0-725bfaf354ca","completedAt":"2025-12-25T21:36:19.128511Z"}
+{"type":"TodoCreated","id":"6edd665e-8396-4681-b4ed-cd5a3dc6da1f","name":"Autocomplete Milk","createdAt":"2025-12-25T21:36:21.240604Z","sortOrder":152000,"categoryId":null}
+{"type":"TodoCreated","id":"fa039a10-2e51-4b95-9e72-bf6fdd9f31f2","name":"Autocomplete Bread","createdAt":"2025-12-25T21:36:21.740612Z","sortOrder":153000,"categoryId":null}
+{"type":"TodoCreated","id":"32687c27-0af9-4684-b1e7-97611d0cbcc1","name":"Autocomplete Eggs","createdAt":"2025-12-25T21:36:22.237468Z","sortOrder":154000,"categoryId":null}
+{"type":"TodoCompleted","id":"6edd665e-8396-4681-b4ed-cd5a3dc6da1f","completedAt":"2025-12-25T21:36:22.640703Z"}
+{"type":"TodoCompleted","id":"fa039a10-2e51-4b95-9e72-bf6fdd9f31f2","completedAt":"2025-12-25T21:36:23.055753Z"}
+{"type":"TodoCompleted","id":"32687c27-0af9-4684-b1e7-97611d0cbcc1","completedAt":"2025-12-25T21:36:23.45818Z"}
+{"type":"TodoCreated","id":"3ae75957-de6e-4a43-8fd7-cace96fc34b0","name":"LimitTest0","createdAt":"2025-12-25T21:36:23.970249Z","sortOrder":155000,"categoryId":null}
+{"type":"TodoCompleted","id":"3ae75957-de6e-4a43-8fd7-cace96fc34b0","completedAt":"2025-12-25T21:36:24.248835Z"}
+{"type":"TodoCreated","id":"65a9d564-7845-4594-9ba4-f49721b2c061","name":"LimitTest1","createdAt":"2025-12-25T21:36:24.688312Z","sortOrder":156000,"categoryId":null}
+{"type":"TodoCompleted","id":"65a9d564-7845-4594-9ba4-f49721b2c061","completedAt":"2025-12-25T21:36:24.96679Z"}
+{"type":"TodoCreated","id":"d855c07c-a779-4049-9d88-f97622b92137","name":"LimitTest2","createdAt":"2025-12-25T21:36:25.400989Z","sortOrder":157000,"categoryId":null}
+{"type":"TodoCompleted","id":"d855c07c-a779-4049-9d88-f97622b92137","completedAt":"2025-12-25T21:36:25.678965Z"}
+{"type":"TodoCreated","id":"1f898b10-a05e-4367-9a78-c0a1e7a0e3c6","name":"LimitTest3","createdAt":"2025-12-25T21:36:26.11582Z","sortOrder":158000,"categoryId":null}
+{"type":"TodoCompleted","id":"1f898b10-a05e-4367-9a78-c0a1e7a0e3c6","completedAt":"2025-12-25T21:36:26.395545Z"}
+{"type":"TodoCreated","id":"1a6a3908-acfb-4e50-98e4-3509d5f98d30","name":"LimitTest4","createdAt":"2025-12-25T21:36:26.842947Z","sortOrder":159000,"categoryId":null}
+{"type":"TodoCompleted","id":"1a6a3908-acfb-4e50-98e4-3509d5f98d30","completedAt":"2025-12-25T21:36:27.124779Z"}
+{"type":"TodoCreated","id":"cce92b7c-46c7-48ab-a3a4-8f893c784c70","name":"LimitTest5","createdAt":"2025-12-25T21:36:27.58151Z","sortOrder":160000,"categoryId":null}
+{"type":"TodoCompleted","id":"cce92b7c-46c7-48ab-a3a4-8f893c784c70","completedAt":"2025-12-25T21:36:27.857949Z"}
+{"type":"TodoCreated","id":"4d4ed052-8fd7-42eb-a23d-e86faa5fce87","name":"Cat move 1766698594289","createdAt":"2025-12-25T21:36:34.67182Z","sortOrder":161000,"categoryId":null}
+{"type":"CategoryCreated","id":"f1a252d4-066f-4b7a-83c1-dd5fb0d03e2a","name":"MobileCat 1766698604841","createdAt":"2025-12-25T21:36:46.269738Z","sortOrder":14750}
+{"type":"TodoCreated","id":"f10e9e5c-bdc5-4f14-9663-6bbc86128660","name":"Mobile Cat Test 1766698604841","createdAt":"2025-12-25T21:36:47.091844Z","sortOrder":162000,"categoryId":null}
+{"type":"CategoryCreated","id":"14ce7e46-7788-4b56-a0f0-dbd4a42580bb","name":"AssignCat 1766698612331","createdAt":"2025-12-25T21:36:53.772439Z","sortOrder":15750}
+{"type":"TodoCreated","id":"1cac7b6a-11ff-40de-aa85-c8ef42d3b7d9","name":"Mobile Assign 1766698612331","createdAt":"2025-12-25T21:36:54.573484Z","sortOrder":163000,"categoryId":null}
+{"type":"TodoCategorized","id":"1cac7b6a-11ff-40de-aa85-c8ef42d3b7d9","categoryId":"14ce7e46-7788-4b56-a0f0-dbd4a42580bb"}
+{"type":"CategoryCreated","id":"8505c6ab-51f7-4b64-9eaf-ba78d33e0391","name":"CancelCat 1766698620857","createdAt":"2025-12-25T21:37:02.30749Z","sortOrder":16750}
+{"type":"TodoCreated","id":"4615f0d0-a3d0-4994-b8f3-ecab7fa14c59","name":"Cancel Test 1766698620857","createdAt":"2025-12-25T21:37:03.101072Z","sortOrder":164000,"categoryId":null}
+{"type":"CategoryCreated","id":"b4a04630-f84a-4966-ac0a-e750738d007c","name":"CloseCat 1766698628901","createdAt":"2025-12-25T21:37:10.340488Z","sortOrder":17750}
+{"type":"TodoCreated","id":"faca16da-fc40-4ce9-bd64-687fa31a2cc1","name":"Close Test 1766698628901","createdAt":"2025-12-25T21:37:11.104018Z","sortOrder":165000,"categoryId":null}
+{"type":"CategoryCreated","id":"055fc23f-252b-4166-875e-f086ae80a25c","name":"BackdropCat 1766698632669","createdAt":"2025-12-25T21:37:14.141015Z","sortOrder":18750}
+{"type":"TodoCreated","id":"ea4337bb-2e65-4995-bcbc-a68ab8e383c2","name":"Backdrop Test 1766698632669","createdAt":"2025-12-25T21:37:14.939948Z","sortOrder":166000,"categoryId":null}
+{"type":"CategoryCreated","id":"7cd4a867-d612-4bba-ad83-aba6763191bb","name":"FirstCat 1766698640711","createdAt":"2025-12-25T21:37:22.150859Z","sortOrder":19750}
+{"type":"CategoryCreated","id":"de2c767c-0695-4aa6-8404-d021a29bf986","name":"SecondCat 1766698640711","createdAt":"2025-12-25T21:37:23.470769Z","sortOrder":20750}
+{"type":"TodoCreated","id":"f35ae303-26c3-41e2-a243-0ac12fd55614","name":"Change Cat 1766698640711","createdAt":"2025-12-25T21:37:24.237087Z","sortOrder":167000,"categoryId":null}
+{"type":"TodoCategorized","id":"f35ae303-26c3-41e2-a243-0ac12fd55614","categoryId":"7cd4a867-d612-4bba-ad83-aba6763191bb"}
+{"type":"CategoryCreated","id":"d369bd55-cd8c-4c29-b7ac-5033a0771145","name":"NormalCat 1766698650528","createdAt":"2025-12-25T21:37:31.980922Z","sortOrder":21750}
+{"type":"TodoCreated","id":"a4fa9e35-2ada-4222-8f1c-cff3d86d8202","name":"Normal View 1766698650528","createdAt":"2025-12-25T21:37:32.765084Z","sortOrder":168000,"categoryId":null}
+{"type":"CategoryCreated","id":"a6e522b7-6aea-4996-b4ec-65d8581beab8","name":"LongPressCat 1766698654714","createdAt":"2025-12-25T21:37:36.196745Z","sortOrder":22750}
+{"type":"TodoCreated","id":"913594bb-becb-4810-b0d8-d634182a1c9f","name":"Long Press 1766698654714","createdAt":"2025-12-25T21:37:36.962353Z","sortOrder":169000,"categoryId":null}
+{"type":"CategoryCreated","id":"f36e3574-1306-47d0-bc19-8015439695ec","name":"Cat1 1766698658806","createdAt":"2025-12-25T21:37:40.19165Z","sortOrder":23750}
+{"type":"CategoryCreated","id":"204b3f3f-4762-4c77-ba9e-75e4d5a75f9e","name":"Cat2 1766698658806","createdAt":"2025-12-25T21:37:41.462473Z","sortOrder":24750}
+{"type":"CategoryCreated","id":"a1200cbc-decf-4c6d-b618-b20cde7adc7b","name":"Cat3 1766698658806","createdAt":"2025-12-25T21:37:42.74142Z","sortOrder":25750}
+{"type":"TodoCreated","id":"0b35e68d-5c6a-4632-afd6-96b6e2568602","name":"Multi Cat 1766698658806","createdAt":"2025-12-25T21:37:47.315995Z","sortOrder":170000,"categoryId":null}
+{"type":"TodoReordered","id":"1628ac90-198d-4484-bf81-6de719dc907b","sortOrder":167000}

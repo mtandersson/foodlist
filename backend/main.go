@@ -51,18 +51,27 @@ func main() {
 	mux.Handle("/", http.FileServer(http.Dir(staticDir)))
 
 	// Start HTTP server
+	bindAddr := os.Getenv("BIND_ADDR")
+	if bindAddr == "" {
+		bindAddr = "localhost"
+	}
+	
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+	
+	addr := bindAddr + ":" + port
 
 	slog.Info("starting server", 
+		"bind_addr", bindAddr,
 		"port", port,
-		"websocket_endpoint", "ws://localhost:"+port+"/ws",
+		"address", addr,
+		"websocket_endpoint", "ws://"+bindAddr+":"+port+"/ws",
 		"static_dir", staticDir,
 	)
 
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	if err := http.ListenAndServe(addr, mux); err != nil {
 		slog.Error("server failed", "error", err)
 		os.Exit(1)
 	}

@@ -1,0 +1,35 @@
+# Commit Message Template
+
+# Use conventional commits format:
+# <type>(<scope>): <subject>
+#
+# Type must be one of:
+#   feat:     New feature
+#   fix:      Bug fix
+#   docs:     Documentation changes
+#   style:    Code style changes (formatting, etc.)
+#   refactor: Code refactoring
+#   perf:     Performance improvements
+#   test:     Adding or updating tests
+#   build:    Build system changes
+#   ci:       CI/CD changes
+#   chore:    Other changes
+#
+# Scope (optional): backend, frontend, ui, api, websocket, store, docker, ci, docs
+#
+# Examples:
+#   feat(backend): add user preferences API
+#   fix(ui): resolve button alignment issue
+#   docs(readme): update installation instructions
+#   feat(api)!: change endpoint structure (BREAKING CHANGE)
+#
+# Use '!' after type/scope for breaking changes
+# Keep subject line under 72 characters
+# Use imperative mood: "add" not "added" or "adds"
+#
+# [Optional body - explain WHY, not what]
+#
+# [Optional footer - reference issues, breaking changes]
+# Closes #123
+# BREAKING CHANGE: description of breaking change
+
