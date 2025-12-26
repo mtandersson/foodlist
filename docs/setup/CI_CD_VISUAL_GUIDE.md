@@ -17,7 +17,7 @@ foodlist/
 │   └── pull_request_template.md       ← PR template
 │
 ├── Configuration Files
-│   ├── .releaserc.json                ← Semantic-release config
+│   ├── .releaserc.cjs                 ← Semantic-release config
 │   ├── VERSION                        ← Current version (0.0.1)
 │   ├── CHANGELOG.md                   ← Auto-generated changelog
 │   ├── commitlint.config.js           ← Commit validation rules
@@ -349,7 +349,7 @@ For Contributors:
 
 For Developers:
 ├── commitlint.config.js         → Commit rules
-├── .releaserc.json              → Release config
+├── .releaserc.cjs               → Release config
 └── validate-commit.sh           → Local validator
 ```
 

@@ -17,7 +17,7 @@
 ### Configuration Files
 ```
 Root directory:
-├── .releaserc.json               # Semantic-release config
+├── .releaserc.cjs                # Semantic-release config
 ├── .cursorrules                  # Cursor AI configuration ⭐
 ├── .gitmessage                   # Git commit template ⭐
 ├── .huskyrc.json                 # Git hooks config (optional)

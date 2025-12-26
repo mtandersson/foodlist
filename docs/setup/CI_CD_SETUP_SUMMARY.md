@@ -31,7 +31,7 @@
 
 ### 2. Configuration Files
 
-#### `.releaserc.json`
+#### `.releaserc.cjs`
 
 - Semantic-release configuration
 - Defines version bump rules based on commit types
@@ -398,7 +398,7 @@ foodlist/
 │   │   ├── bug_report.yml           # Bug report template
 │   │   └── feature_request.yml      # Feature request template
 │   └── pull_request_template.md     # PR template
-├── .releaserc.json                   # Semantic-release config
+├── .releaserc.cjs                    # Semantic-release config
 ├── VERSION                           # Current version (0.0.1)
 ├── CHANGELOG.md                      # Auto-generated changelog
 ├── CONTRIBUTING.md                   # Contribution guide

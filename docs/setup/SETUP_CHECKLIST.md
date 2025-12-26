@@ -19,7 +19,7 @@ All these files should now exist:
 .github/pull_request_template.md
 
 # Configuration
-.releaserc.json
+.releaserc.cjs
 VERSION
 CHANGELOG.md
 commitlint.config.js
