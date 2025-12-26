@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Todo } from './types';
+  import CheckboxRing from './CheckboxRing.svelte';
 
   interface Props {
     todo: Todo;
@@ -100,15 +101,10 @@
 <div class="todo-item" class:completed={todo.completedAt !== null}>
   <button 
     class="checkbox" 
-    class:checked={todo.completedAt !== null}
     onclick={handleCheckClick}
     aria-label={todo.completedAt ? 'Mark as incomplete' : 'Mark as complete'}
   >
-    {#if todo.completedAt !== null}
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-    {/if}
+    <CheckboxRing checked={todo.completedAt !== null} />
   </button>
 
   {#if isEditing}
@@ -172,33 +168,13 @@
   }
 
   .checkbox {
-    width: var(--checkbox-size);
-    height: var(--checkbox-size);
-    border-radius: var(--position-half);
-    border: var(--stroke-thin) solid var(--checkbox-border);
     background: transparent;
+    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    transition: all var(--transition-normal);
     padding: 0;
-  }
-
-  .checkbox:hover {
-    border-color: var(--primary-color);
-  }
-
-  .checkbox.checked {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--text-on-primary);
-  }
-
-  .checkbox svg {
-    width: var(--icon-xs);
-    height: var(--icon-xs);
   }
 
   .todo-name {

@@ -8,6 +8,7 @@
   import ModeSwitch from './ModeSwitch.svelte';
   import CategoriesView from './CategoriesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
+  import CheckboxRing from './CheckboxRing.svelte';
   import { getStoredTheme, setTheme, type ThemeMode } from './theme';
   import type { Todo, AutocompleteSuggestion } from './types';
 
@@ -735,10 +736,13 @@
     {/if}
     <form class="add-todo-bottom" onsubmit={(e) => { e.preventDefault(); handleAddTodo(); }}>
       <div class="add-todo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
+        <div class="icon-ring">
+          <CheckboxRing size="small" />
+        </div>
       </div>
       <input
         type="text"
@@ -1105,11 +1109,34 @@
     flex-shrink: 0;
     color: var(--text-on-primary);
     opacity: 0.7;
+    transition: color var(--transition-normal), opacity var(--transition-normal);
+    position: relative;
   }
 
-  .add-todo-icon svg {
+  .add-todo-icon .icon-plus {
     width: var(--icon-lg);
     height: var(--icon-lg);
+    transition: opacity var(--transition-normal);
+    opacity: 1;
+    position: absolute;
+  }
+
+  .add-todo-icon .icon-ring {
+    transition: opacity var(--transition-normal);
+    opacity: 0;
+  }
+
+  .add-todo-bottom:focus-within .add-todo-icon {
+    color: var(--text-primary);
+    opacity: 1;
+  }
+
+  .add-todo-bottom:focus-within .add-todo-icon .icon-plus {
+    opacity: 0;
+  }
+
+  .add-todo-bottom:focus-within .add-todo-icon .icon-ring {
+    opacity: 1;
   }
 
   .add-todo-bottom input {
@@ -1120,7 +1147,7 @@
     color: var(--text-on-primary);
     background: transparent;
     font-family: inherit;
-    transition: opacity var(--transition-normal);
+    transition: color var(--transition-normal), opacity var(--transition-normal);
     opacity: 0.8;
   }
 
@@ -1131,6 +1158,14 @@
   .add-todo-bottom input::placeholder {
     color: var(--text-on-primary);
     opacity: 0.6;
+  }
+
+  .add-todo-bottom:focus-within input {
+    color: var(--text-primary);
+  }
+
+  .add-todo-bottom:focus-within input::placeholder {
+    color: var(--text-secondary);
   }
 
   .todos-section {
