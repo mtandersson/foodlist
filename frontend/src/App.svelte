@@ -13,6 +13,7 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     background: var(--primary-gradient);
     min-height: 100vh;
+    min-height: 100dvh;
     transition: background 0.3s ease;
   }
 
@@ -22,6 +23,7 @@
 
   main {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     padding: 24px 0;

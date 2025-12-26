@@ -766,7 +766,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - var(--viewport-height-offset));
+    height: calc(100dvh - var(--viewport-height-offset));
     padding: 0 var(--spacing-2xl);
   }
 
@@ -774,7 +774,8 @@
     .todo-list-container {
       width: 100%;
       padding: 0 var(--spacing-md);
-      height: 100vh;
+      padding-top: env(safe-area-inset-top);
+      height: 100dvh;
     }
   }
 
@@ -1254,7 +1255,7 @@
 
   @media (max-width: 768px) {
     .add-todo-wrapper {
-      margin-bottom: var(--spacing-lg);
+      margin-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
       padding-right: 0;
     }
   }
