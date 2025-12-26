@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Square background (iOS will round the app icon itself) -->
+  <rect width="512" height="512" rx="0" fill="url(#bg)" />
+
+  <!-- Shopping cart (emoji-inspired) -->
+  <g>
+    <!-- Handle -->
+    <path
+      d="M150 170 L185 210"
+      fill="none"
+      stroke="#e5e7eb"
+      stroke-width="18"
+      stroke-linecap="round"
+    />
+    <circle cx="150" cy="170" r="14" fill="#93c5fd" />
+
+    <!-- Basket -->
+    <path
+      d="M170 210 L390 210 L360 340 L205 340 Z"
+      fill="#f8fafc"
+      stroke="#cbd5e1"
+      stroke-width="10"
+      stroke-linejoin="round"
+    />
+
+    <!-- Basket slats -->
+    <path d="M205 250 L372 250" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" />
+    <path d="M212 290 L365 290" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" />
+    <path d="M245 210 L230 340" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity="0.9" />
+    <path d="M305 210 L295 340" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity="0.9" />
+    <path d="M365 210 L355 340" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity="0.9" />
+
+    <!-- Groceries (simple, emoji-like blobs) -->
+    <circle cx="245" cy="235" r="18" fill="#22c55e" opacity="0.95" />
+    <circle cx="285" cy="230" r="16" fill="#ef4444" opacity="0.95" />
+    <circle cx="325" cy="238" r="17" fill="#fbbf24" opacity="0.95" />
+
+    <!-- Wheels -->
+    <g>
+      <circle cx="235" cy="380" r="28" fill="#111827" opacity="0.95" />
+      <circle cx="235" cy="380" r="12" fill="#9ca3af" />
+      <circle cx="330" cy="380" r="28" fill="#111827" opacity="0.95" />
+      <circle cx="330" cy="380" r="12" fill="#9ca3af" />
+    </g>
+
+    <!-- Wheel axle hint -->
+    <path d="M255 365 L310 365" stroke="#374151" stroke-width="10" stroke-linecap="round" opacity="0.7" />
+  </g>
+</svg>

@@ -8,6 +8,8 @@
   import ModeSwitch from './ModeSwitch.svelte';
   import CategoriesView from './CategoriesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
+  import CheckboxRing from './CheckboxRing.svelte';
+  import { getStoredTheme, setTheme, type ThemeMode } from './theme';
   import type { Todo, AutocompleteSuggestion } from './types';
 
   // Determine WebSocket URL
@@ -106,6 +108,9 @@
 
   let pendingCategoryId: string | null = $state(null);
   let menuOpen = $state(false);
+  
+  // Theme state
+  let currentTheme: ThemeMode = $state(getStoredTheme());
   
   // List title state
   let editingTitle = $state(false);
@@ -317,6 +322,28 @@
     }
   }
 
+  function handleThemeChange(theme: ThemeMode) {
+    currentTheme = theme;
+    setTheme(theme);
+    closeMenu();
+  }
+
+  function getThemeLabel(theme: ThemeMode): string {
+    switch (theme) {
+      case 'light': return '☀️ Ljust';
+      case 'dark': return '🌙 Mörkt';
+      case 'auto': return '⚙️ Auto';
+    }
+  }
+
+  function getThemeIcon(theme: ThemeMode): string {
+    switch (theme) {
+      case 'light': return '☀️';
+      case 'dark': return '🌙';
+      case 'auto': return '⚙️';
+    }
+  }
+
   // Drag and drop state
   let draggedId: string | null = $state(null);
   let dropTargetId: string | null = $state(null);
@@ -499,6 +526,41 @@
               <span class="menu-icon">➕</span>
               Ny kategori
             </button>
+            <div class="menu-divider"></div>
+            <div class="menu-section-title">Tema</div>
+            <button 
+              class="menu-item" 
+              class:selected={currentTheme === 'light'}
+              onclick={() => handleThemeChange('light')}
+            >
+              <span class="menu-icon">{getThemeIcon('light')}</span>
+              Ljust
+              {#if currentTheme === 'light'}
+                <span class="menu-checkmark">✓</span>
+              {/if}
+            </button>
+            <button 
+              class="menu-item" 
+              class:selected={currentTheme === 'dark'}
+              onclick={() => handleThemeChange('dark')}
+            >
+              <span class="menu-icon">{getThemeIcon('dark')}</span>
+              Mörkt
+              {#if currentTheme === 'dark'}
+                <span class="menu-checkmark">✓</span>
+              {/if}
+            </button>
+            <button 
+              class="menu-item" 
+              class:selected={currentTheme === 'auto'}
+              onclick={() => handleThemeChange('auto')}
+            >
+              <span class="menu-icon">{getThemeIcon('auto')}</span>
+              Auto
+              {#if currentTheme === 'auto'}
+                <span class="menu-checkmark">✓</span>
+              {/if}
+            </button>
           </div>
           <button class="menu-backdrop" onclick={closeMenu} aria-label="Close menu"></button>
         {/if}
@@ -674,10 +736,13 @@
     {/if}
     <form class="add-todo-bottom" onsubmit={(e) => { e.preventDefault(); handleAddTodo(); }}>
       <div class="add-todo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
+        <div class="icon-ring">
+          <CheckboxRing size="small" />
+        </div>
       </div>
       <input
         type="text"
@@ -701,7 +766,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - var(--viewport-height-offset));
+    height: 100dvh;
     padding: 0 var(--spacing-2xl);
   }
 
@@ -709,7 +774,8 @@
     .todo-list-container {
       width: 100%;
       padding: 0 var(--spacing-md);
-      height: 100vh;
+      padding-top: env(safe-area-inset-top);
+      height: 100dvh;
     }
   }
 
@@ -827,14 +893,41 @@
     text-align: left;
     cursor: pointer;
     transition: background var(--transition-normal);
+    position: relative;
   }
 
   .menu-item:hover {
     background: var(--surface-muted);
   }
 
+  .menu-item.selected {
+    background: var(--surface-light);
+  }
+
   .menu-icon {
     font-size: var(--font-size-xl);
+  }
+
+  .menu-checkmark {
+    margin-left: auto;
+    font-size: var(--font-size-base);
+    color: var(--primary-color);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: var(--spacing-sm) 0;
+  }
+
+  .menu-section-title {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .menu-backdrop {
@@ -847,7 +940,7 @@
   }
 
   .title {
-    color: var(--primary-color);
+    color: var(--text-on-primary);
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     margin: 0;
@@ -868,12 +961,12 @@
   }
 
   .title-input {
-    color: var(--primary-color);
+    color: var(--text-on-primary);
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     margin: 0;
     padding: var(--spacing-sm);
-    border: var(--stroke-thin) solid var(--primary-color);
+    border: var(--stroke-thin) solid var(--text-on-primary);
     border-radius: var(--radius-sm);
     background: var(--surface-muted);
     width: 100%;
@@ -991,7 +1084,10 @@
     align-items: center;
     gap: var(--spacing-lg);
     padding: var(--font-size-xl) var(--spacing-xl);
+    background: rgba(255, 255, 255, 0.1); /* Fallback */
     background: var(--surface-muted);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     cursor: text;
@@ -999,12 +1095,13 @@
   }
 
   .add-todo-bottom:hover {
+    background: rgba(255, 255, 255, 0.15);
     background: var(--surface-muted-strong);
     box-shadow: var(--shadow-lg);
   }
 
   .add-todo-bottom:focus-within {
-    background: var(--card-bg);
+    background: var(--card-bg); /* Opaque when focused for readability */
     box-shadow: var(--shadow-focus);
   }
 
@@ -1015,12 +1112,36 @@
     width: var(--icon-xl);
     height: var(--icon-xl);
     flex-shrink: 0;
-    color: var(--text-muted);
+    color: var(--text-on-primary);
+    opacity: 0.7;
+    transition: color var(--transition-normal), opacity var(--transition-normal);
+    position: relative;
   }
 
-  .add-todo-icon svg {
+  .add-todo-icon .icon-plus {
     width: var(--icon-lg);
     height: var(--icon-lg);
+    transition: opacity var(--transition-normal);
+    opacity: 1;
+    position: absolute;
+  }
+
+  .add-todo-icon .icon-ring {
+    transition: opacity var(--transition-normal);
+    opacity: 0;
+  }
+
+  .add-todo-bottom:focus-within .add-todo-icon {
+    color: var(--text-primary);
+    opacity: 1;
+  }
+
+  .add-todo-bottom:focus-within .add-todo-icon .icon-plus {
+    opacity: 0;
+  }
+
+  .add-todo-bottom:focus-within .add-todo-icon .icon-ring {
+    opacity: 1;
   }
 
   .add-todo-bottom input {
@@ -1028,18 +1149,28 @@
     border: none;
     outline: none;
     font-size: var(--font-size-lg);
-    color: var(--text-muted);
+    color: var(--text-on-primary);
     background: transparent;
     font-family: inherit;
-    transition: color var(--transition-normal);
+    transition: color var(--transition-normal), opacity var(--transition-normal);
+    opacity: 0.8;
   }
 
   .add-todo-bottom input:focus {
-    color: var(--text-primary);
+    opacity: 1;
   }
 
   .add-todo-bottom input::placeholder {
-    color: var(--text-muted);
+    color: var(--text-on-primary);
+    opacity: 0.6;
+  }
+
+  .add-todo-bottom:focus-within input {
+    color: var(--text-primary);
+  }
+
+  .add-todo-bottom:focus-within input::placeholder {
+    color: var(--text-secondary);
   }
 
   .todos-section {
@@ -1062,6 +1193,12 @@
     position: relative;
     margin-bottom: var(--spacing-sm);
     transition: transform var(--duration-instant);
+  }
+
+  @media (max-width: 768px) {
+    .todo-wrapper {
+      margin-bottom: var(--spacing-xs);
+    }
   }
 
   .todo-wrapper.dragging {
@@ -1115,14 +1252,14 @@
   .add-todo-wrapper {
     position: relative;
     flex-shrink: 0;
-    margin-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-lg);
     /* Match scrollable-content's scrollbar gutter + padding-right */
     padding-right: calc(var(--scrollbar-width) + var(--spacing-xs));
   }
 
   @media (max-width: 768px) {
     .add-todo-wrapper {
-      margin-bottom: var(--spacing-lg);
+      margin-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
       padding-right: 0;
     }
   }

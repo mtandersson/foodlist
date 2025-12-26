@@ -56,23 +56,36 @@ export class TodoWebSocket {
     this.visibilityHandler = () => {
       if (document.visibilityState === 'visible') {
         console.log('Page became visible, checking connection...');
-        // Check if connection is stale when app returns to foreground
-        if (this.connectionState === ConnectionState.CONNECTED) {
-          // Check if we've received a message recently
+        
+        // On mobile, WebSocket connections often die when app is backgrounded
+        // Check the actual WebSocket state, not just our internal state
+        const wsActuallyConnected = this.ws && this.ws.readyState === WebSocket.OPEN;
+        
+        if (!wsActuallyConnected) {
+          // WebSocket is not actually open, force reconnect
+          console.log('WebSocket not actually open (readyState:', this.ws?.readyState, '), forcing reconnect...');
+          this.reconnect();
+        } else if (this.connectionState === ConnectionState.CONNECTED) {
+          // We think we're connected, but check if connection is stale
           const timeSinceLastHeartbeat = Date.now() - this.lastHeartbeat;
           if (timeSinceLastHeartbeat > 5000) {
-            console.log('Connection may be stale, reconnecting...');
+            console.log('Connection may be stale (no messages for', timeSinceLastHeartbeat, 'ms), reconnecting...');
             this.reconnect();
+          } else {
+            console.log('Connection appears healthy (last message', timeSinceLastHeartbeat, 'ms ago)');
           }
-        } else if (this.connectionState === ConnectionState.RECONNECTING) {
-          // If we're reconnecting, try immediately when app comes back
-          console.log('App returned while reconnecting, trying immediately...');
+        } else if (this.connectionState === ConnectionState.RECONNECTING || this.connectionState === ConnectionState.CONNECTING) {
+          // If we're reconnecting or connecting, try immediately when app comes back
+          console.log('App returned while', this.connectionState, ', trying immediately...');
           if (this.reconnectTimeout !== null) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
           }
           this.connect();
         }
+      } else {
+        // Page became hidden (backgrounded)
+        console.log('Page became hidden');
       }
     };
     document.addEventListener('visibilitychange', this.visibilityHandler);
@@ -133,21 +146,44 @@ export class TodoWebSocket {
     // We don't send anything, just track when we receive messages
     this.heartbeatInterval = window.setInterval(() => {
       const timeSinceLastHeartbeat = Date.now() - this.lastHeartbeat;
-      // If we haven't received anything in 60 seconds and we think we're connected, reconnect
-      if (timeSinceLastHeartbeat > 60000 && this.connectionState === ConnectionState.CONNECTED) {
-        console.log('Connection appears stale (no messages for 60s), reconnecting...');
+      // On mobile, be more aggressive - if no messages in 30 seconds, reconnect
+      // (Backend sends updates frequently, so this should be safe)
+      if (timeSinceLastHeartbeat > 30000 && this.connectionState === ConnectionState.CONNECTED) {
+        console.log('Connection appears stale (no messages for', timeSinceLastHeartbeat, 'ms), reconnecting...');
         this.reconnect();
       }
-    }, 10000); // Check every 10 seconds
+    }, 5000); // Check every 5 seconds (more frequent for mobile)
   }
 
   private reconnect() {
     console.log('Forcing reconnection...');
+    
+    // Clean up old connection completely
+    if (this.ws) {
+      this.ws.onopen = null;
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      this.ws.onmessage = null;
+      
+      try {
+        if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+          this.ws.close();
+        }
+      } catch (e) {
+        console.error('Error closing old WebSocket:', e);
+      }
+      this.ws = null;
+    }
+    
+    // Reset reconnection state
     this.reconnectAttempts = 0; // Reset attempts for immediate reconnection
     if (this.reconnectTimeout !== null) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+    
+    // Set state to connecting and attempt connection
+    this.setConnectionState(ConnectionState.CONNECTING);
     this.connect();
   }
 
@@ -189,12 +225,21 @@ export class TodoWebSocket {
       };
 
       this.ws.onclose = (event) => {
-        console.log('WebSocket closed:', event.code, event.reason);
+        console.log('WebSocket closed:', 
+          'code:', event.code, 
+          'reason:', event.reason || '(none)',
+          'wasClean:', event.wasClean,
+          'readyState:', this.ws?.readyState
+        );
+        
         if (this.manualClose) {
+          console.log('Manual close detected, not reconnecting');
           this.setConnectionState(ConnectionState.DISCONNECTED);
           return;
         }
 
+        // Connection was lost unexpectedly
+        console.log('Unexpected disconnect, will attempt to reconnect');
         this.setConnectionState(ConnectionState.RECONNECTING);
         this.scheduleReconnect();
       };

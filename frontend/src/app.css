@@ -6,14 +6,19 @@
   --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
   --primary-color: #6366f1;
   --primary-color-rgb: 99, 102, 241;
+  /* Background helpers (iOS uses background-color for the status-bar/safe-area) */
+  --app-bg-color: var(--primary-color);
+  --app-bg-image: var(--primary-gradient);
+  /* Used in a few components as a "background" token */
+  --primary-bg: var(--primary-color);
   --star-color: #fbbf24;
 
   /* Surfaces */
   --card-bg: white;
   --card-bg-rgb: 255, 255, 255;
   --surface-light: rgba(var(--card-bg-rgb), 0.1);
-  --surface-muted: rgba(var(--card-bg-rgb), 0.2);
-  --surface-muted-strong: rgba(var(--card-bg-rgb), 0.3);
+  --surface-muted: rgba(var(--card-bg-rgb), 0.15); /* More transparent for glass effect */
+  --surface-muted-strong: rgba(var(--card-bg-rgb), 0.25);
 
   /* Text */
   --text-on-primary: #ffffff;
@@ -142,11 +147,14 @@
 
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     /* Dark mode theme palette */
     --primary-gradient: #000000;
     --primary-color: #818cf8;
     --primary-color-rgb: 129, 140, 248;
+    --app-bg-color: #000000;
+    --app-bg-image: none;
+    --primary-bg: #000000;
     --star-color: #fbbf24;
 
     /* Surfaces */
@@ -168,16 +176,52 @@
   }
 }
 
+/* Manual dark mode override */
+:root[data-theme='dark'] {
+  /* Dark mode theme palette */
+  --primary-gradient: #000000;
+  --primary-color: #818cf8;
+  --primary-color-rgb: 129, 140, 248;
+  --app-bg-color: #000000;
+  --app-bg-image: none;
+  --primary-bg: #000000;
+  --star-color: #fbbf24;
+
+  /* Surfaces */
+  --card-bg: #1c1c1e;
+  --card-bg-rgb: 28, 28, 30;
+  --surface-light: rgba(255, 255, 255, 0.05);
+  --surface-muted: rgba(255, 255, 255, 0.1);
+  --surface-muted-strong: rgba(255, 255, 255, 0.15);
+
+  /* Text */
+  --text-on-primary: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5ea;
+  --text-muted: #8e8e93;
+
+  /* Borders */
+  --border-color: #38383a;
+  --checkbox-border: #48484a;
+}
+
 * {
   box-sizing: border-box;
 }
 
-body {
+body, html {
   margin: 0;
   padding: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: var(--primary-gradient);
+  background-color: var(--app-bg-color);
+  background-image: var(--app-bg-image);
+  background-attachment: fixed;
   min-height: 100vh;
+  min-height: 100dvh;
+  /* Ensure content respects safe areas generally */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  transition: background-color 0.3s ease, background-image 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
