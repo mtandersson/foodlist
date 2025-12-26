@@ -8,6 +8,7 @@
   import ModeSwitch from './ModeSwitch.svelte';
   import CategoriesView from './CategoriesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
+  import { getStoredTheme, setTheme, type ThemeMode } from './theme';
   import type { Todo, AutocompleteSuggestion } from './types';
 
   // Determine WebSocket URL
@@ -106,6 +107,9 @@
 
   let pendingCategoryId: string | null = $state(null);
   let menuOpen = $state(false);
+  
+  // Theme state
+  let currentTheme: ThemeMode = $state(getStoredTheme());
   
   // List title state
   let editingTitle = $state(false);
@@ -317,6 +321,28 @@
     }
   }
 
+  function handleThemeChange(theme: ThemeMode) {
+    currentTheme = theme;
+    setTheme(theme);
+    closeMenu();
+  }
+
+  function getThemeLabel(theme: ThemeMode): string {
+    switch (theme) {
+      case 'light': return '☀️ Ljust';
+      case 'dark': return '🌙 Mörkt';
+      case 'auto': return '⚙️ Auto';
+    }
+  }
+
+  function getThemeIcon(theme: ThemeMode): string {
+    switch (theme) {
+      case 'light': return '☀️';
+      case 'dark': return '🌙';
+      case 'auto': return '⚙️';
+    }
+  }
+
   // Drag and drop state
   let draggedId: string | null = $state(null);
   let dropTargetId: string | null = $state(null);
@@ -498,6 +524,41 @@
             <button class="menu-item" onclick={handleNewCategory}>
               <span class="menu-icon">➕</span>
               Ny kategori
+            </button>
+            <div class="menu-divider"></div>
+            <div class="menu-section-title">Tema</div>
+            <button 
+              class="menu-item" 
+              class:selected={currentTheme === 'light'}
+              onclick={() => handleThemeChange('light')}
+            >
+              <span class="menu-icon">{getThemeIcon('light')}</span>
+              Ljust
+              {#if currentTheme === 'light'}
+                <span class="menu-checkmark">✓</span>
+              {/if}
+            </button>
+            <button 
+              class="menu-item" 
+              class:selected={currentTheme === 'dark'}
+              onclick={() => handleThemeChange('dark')}
+            >
+              <span class="menu-icon">{getThemeIcon('dark')}</span>
+              Mörkt
+              {#if currentTheme === 'dark'}
+                <span class="menu-checkmark">✓</span>
+              {/if}
+            </button>
+            <button 
+              class="menu-item" 
+              class:selected={currentTheme === 'auto'}
+              onclick={() => handleThemeChange('auto')}
+            >
+              <span class="menu-icon">{getThemeIcon('auto')}</span>
+              Auto
+              {#if currentTheme === 'auto'}
+                <span class="menu-checkmark">✓</span>
+              {/if}
             </button>
           </div>
           <button class="menu-backdrop" onclick={closeMenu} aria-label="Close menu"></button>
@@ -827,14 +888,41 @@
     text-align: left;
     cursor: pointer;
     transition: background var(--transition-normal);
+    position: relative;
   }
 
   .menu-item:hover {
     background: var(--surface-muted);
   }
 
+  .menu-item.selected {
+    background: var(--surface-light);
+  }
+
   .menu-icon {
     font-size: var(--font-size-xl);
+  }
+
+  .menu-checkmark {
+    margin-left: auto;
+    font-size: var(--font-size-base);
+    color: var(--primary-color);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: var(--spacing-sm) 0;
+  }
+
+  .menu-section-title {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .menu-backdrop {

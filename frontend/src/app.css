@@ -142,7 +142,7 @@
 
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     /* Dark mode theme palette */
     --primary-gradient: #000000;
     --primary-color: #818cf8;
@@ -166,6 +166,32 @@
     --border-color: #38383a;
     --checkbox-border: #48484a;
   }
+}
+
+/* Manual dark mode override */
+:root[data-theme='dark'] {
+  /* Dark mode theme palette */
+  --primary-gradient: #000000;
+  --primary-color: #818cf8;
+  --primary-color-rgb: 129, 140, 248;
+  --star-color: #fbbf24;
+
+  /* Surfaces */
+  --card-bg: #1c1c1e;
+  --card-bg-rgb: 28, 28, 30;
+  --surface-light: rgba(255, 255, 255, 0.05);
+  --surface-muted: rgba(255, 255, 255, 0.1);
+  --surface-muted-strong: rgba(255, 255, 255, 0.15);
+
+  /* Text */
+  --text-on-primary: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5ea;
+  --text-muted: #8e8e93;
+
+  /* Borders */
+  --border-color: #38383a;
+  --checkbox-border: #48484a;
 }
 
 * {
