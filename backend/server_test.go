@@ -80,7 +80,7 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Should receive state rollup
+	// Should receive state rollup first, then client count
 	_, msg, err := conn.ReadMessage()
 	require.NoError(t, err)
 
@@ -93,6 +93,14 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 	assert.Equal(t, "todo-1", rollup.Todos[0].ID)
 	require.Len(t, rollup.Categories, 1)
 	assert.Equal(t, "Work", rollup.Categories[0].Name)
+
+	// Also read the client count message
+	_, msg2, err := conn.ReadMessage()
+	require.NoError(t, err)
+	var clientCount ClientCountMessage
+	json.Unmarshal(msg2, &clientCount)
+	assert.Equal(t, "ClientCount", clientCount.Type)
+	assert.Equal(t, 1, clientCount.Count)
 }
 
 func TestServer_BroadcastEventToAllClients(t *testing.T) {
@@ -105,21 +113,31 @@ func TestServer_BroadcastEventToAllClients(t *testing.T) {
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
-	// Read initial rollups
-	conn1.ReadMessage()
-	conn2.ReadMessage()
+	// Read initial rollups and client counts
+	conn1.ReadMessage() // rollup
+	conn1.ReadMessage() // client count (1)
+	conn2.ReadMessage() // rollup
+	conn2.ReadMessage() // client count (2)
+	conn1.ReadMessage() // client count (2) to first client
 
-	// Send event from client1
-	event := TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "todo-new",
-		Name:      "New task",
-		CreatedAt: time.Now().UTC(),
-		SortOrder: 1000,
+	// Send CreateTodo command from client1
+	cmd := CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-1"},
+		ID:          "todo-new",
+		Name:        "New task",
+		SortOrder:   1000,
 	}
-	eventData, _ := json.Marshal(event)
-	err := conn1.WriteMessage(websocket.TextMessage, eventData)
+	cmdData, _ := json.Marshal(cmd)
+	err := conn1.WriteMessage(websocket.TextMessage, cmdData)
 	require.NoError(t, err)
+
+	// Client1 should receive CommandResponse first, then both receive the event
+	_, resp1, err := conn1.ReadMessage()
+	require.NoError(t, err)
+	var cmdResp CommandResponse
+	json.Unmarshal(resp1, &cmdResp)
+	assert.Equal(t, "CommandResponse", cmdResp.Type)
+	assert.True(t, cmdResp.Success)
 
 	// Both clients should receive the event
 	_, msg1, err := conn1.ReadMessage()
@@ -142,22 +160,23 @@ func TestServer_PersistEventToStore(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup
+	// Read initial rollup and client count
+	conn.ReadMessage()
 	conn.ReadMessage()
 
-	// Send event
-	event := TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "persist-test",
-		Name:      "Persisted task",
-		CreatedAt: time.Now().UTC(),
-		SortOrder: 1000,
+	// Send command
+	cmd := CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-2"},
+		ID:          "persist-test",
+		Name:        "Persisted task",
+		SortOrder:   1000,
 	}
-	eventData, _ := json.Marshal(event)
-	conn.WriteMessage(websocket.TextMessage, eventData)
+	cmdData, _ := json.Marshal(cmd)
+	conn.WriteMessage(websocket.TextMessage, cmdData)
 
-	// Wait for broadcast
-	conn.ReadMessage()
+	// Wait for CommandResponse and broadcast
+	conn.ReadMessage() // CommandResponse
+	conn.ReadMessage() // Event broadcast
 
 	// Give a moment for persistence
 	time.Sleep(50 * time.Millisecond)
@@ -178,22 +197,23 @@ func TestServer_UpdateStateOnEvent(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup
+	// Read initial rollup and client count
+	conn.ReadMessage()
 	conn.ReadMessage()
 
-	// Send event
-	event := TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "state-test",
-		Name:      "State task",
-		CreatedAt: time.Now().UTC(),
-		SortOrder: 1000,
+	// Send command
+	cmd := CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-3"},
+		ID:          "state-test",
+		Name:        "State task",
+		SortOrder:   1000,
 	}
-	eventData, _ := json.Marshal(event)
-	conn.WriteMessage(websocket.TextMessage, eventData)
+	cmdData, _ := json.Marshal(cmd)
+	conn.WriteMessage(websocket.TextMessage, cmdData)
 
 	// Wait for processing
-	conn.ReadMessage()
+	conn.ReadMessage() // CommandResponse
+	conn.ReadMessage() // Event broadcast
 	time.Sleep(50 * time.Millisecond)
 
 	// Connect new client and verify state includes new todo
@@ -216,27 +236,38 @@ func TestServer_HandleClientDisconnect(t *testing.T) {
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
-	// Read rollups
-	conn1.ReadMessage()
-	conn2.ReadMessage()
+	// Read rollups and client counts
+	conn1.ReadMessage() // rollup
+	conn1.ReadMessage() // client count (1)
+	conn2.ReadMessage() // rollup
+	conn2.ReadMessage() // client count (2)
+	conn1.ReadMessage() // client count (2) to first client
 
 	// Disconnect client 1
 	conn1.Close()
 
-	// Give time for disconnect handling
+	// Give time for disconnect handling and read the client count update
 	time.Sleep(50 * time.Millisecond)
+	conn2.ReadMessage() // client count (1) after disconnect
 
 	// Client 2 should still be able to receive events
-	event := TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "after-disconnect",
-		Name:      "Task after disconnect",
-		CreatedAt: time.Now().UTC(),
-		SortOrder: 1000,
+	cmd := CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-4"},
+		ID:          "after-disconnect",
+		Name:        "Task after disconnect",
+		SortOrder:   1000,
 	}
-	eventData, _ := json.Marshal(event)
-	conn2.WriteMessage(websocket.TextMessage, eventData)
+	cmdData, _ := json.Marshal(cmd)
+	conn2.WriteMessage(websocket.TextMessage, cmdData)
 
+	// Read CommandResponse first
+	_, respMsg, err := conn2.ReadMessage()
+	require.NoError(t, err)
+	var cmdResp CommandResponse
+	json.Unmarshal(respMsg, &cmdResp)
+	assert.True(t, cmdResp.Success)
+
+	// Then read the event broadcast
 	_, msg, err := conn2.ReadMessage()
 	require.NoError(t, err)
 
@@ -252,7 +283,8 @@ func TestServer_RejectInvalidEvent(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup
+	// Read initial rollup and client count
+	conn.ReadMessage()
 	conn.ReadMessage()
 
 	// Send invalid JSON
@@ -260,19 +292,24 @@ func TestServer_RejectInvalidEvent(t *testing.T) {
 	require.NoError(t, err) // Write should succeed
 
 	// Server should not crash, connection should remain usable
-	// Send a valid event
-	event := TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "after-invalid",
-		Name:      "Valid task",
-		CreatedAt: time.Now().UTC(),
-		SortOrder: 1000,
+	// Send a valid command
+	cmd := CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-5"},
+		ID:          "after-invalid",
+		Name:        "Valid task",
+		SortOrder:   1000,
 	}
-	eventData, _ := json.Marshal(event)
-	conn.WriteMessage(websocket.TextMessage, eventData)
+	cmdData, _ := json.Marshal(cmd)
+	conn.WriteMessage(websocket.TextMessage, cmdData)
 
-	// Should receive the broadcast
+	// Should receive CommandResponse and then the broadcast
 	conn.SetReadDeadline(time.Now().Add(time.Second))
+	_, respMsg, err := conn.ReadMessage()
+	require.NoError(t, err)
+	var cmdResp CommandResponse
+	json.Unmarshal(respMsg, &cmdResp)
+	assert.True(t, cmdResp.Success)
+
 	_, msg, err := conn.ReadMessage()
 	require.NoError(t, err)
 
@@ -414,23 +451,35 @@ func TestServer_Run_BroadcastToMultipleClients(t *testing.T) {
 	conn3 := connectWS(t, wsURL)
 	defer conn3.Close()
 
-	// Read initial rollups
-	conn1.ReadMessage()
-	conn2.ReadMessage()
-	conn3.ReadMessage()
+	// Read initial rollups and client counts
+	conn1.ReadMessage() // rollup
+	conn1.ReadMessage() // client count (1)
+	conn2.ReadMessage() // rollup
+	conn2.ReadMessage() // client count (2)
+	conn1.ReadMessage() // client count (2) to first client
+	conn3.ReadMessage() // rollup
+	conn3.ReadMessage() // client count (3)
+	conn1.ReadMessage() // client count (3) to first client
+	conn2.ReadMessage() // client count (3) to second client
 
-	// Send event from client1
-	event := TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "broadcast-test",
-		Name:      "Broadcast task",
-		CreatedAt: time.Now().UTC(),
-		SortOrder: 1000,
+	// Send command from client1
+	cmd := CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-6"},
+		ID:          "broadcast-test",
+		Name:        "Broadcast task",
+		SortOrder:   1000,
 	}
-	eventData, _ := json.Marshal(event)
-	conn1.WriteMessage(websocket.TextMessage, eventData)
+	cmdData, _ := json.Marshal(cmd)
+	conn1.WriteMessage(websocket.TextMessage, cmdData)
 
-	// All three clients should receive
+	// Client 1 gets CommandResponse
+	_, respMsg, err1 := conn1.ReadMessage()
+	require.NoError(t, err1)
+	var cmdResp CommandResponse
+	json.Unmarshal(respMsg, &cmdResp)
+	assert.True(t, cmdResp.Success)
+
+	// All three clients should receive the event
 	_, msg1, err1 := conn1.ReadMessage()
 	_, msg2, err2 := conn2.ReadMessage()
 	_, msg3, err3 := conn3.ReadMessage()
@@ -485,7 +534,8 @@ func TestServer_ReadPump_IgnoreMalformedMessages(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup
+	// Read initial rollup and client count
+	conn.ReadMessage()
 	conn.ReadMessage()
 
 	// Send malformed messages
@@ -493,19 +543,24 @@ func TestServer_ReadPump_IgnoreMalformedMessages(t *testing.T) {
 	conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"InvalidType"}`))
 
 	// Connection should still be alive
-	// Send a valid event
-	event := TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "after-malformed",
-		Name:      "Valid",
-		CreatedAt: time.Now().UTC(),
-		SortOrder: 1000,
+	// Send a valid command
+	cmd := CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-7"},
+		ID:          "after-malformed",
+		Name:        "Valid",
+		SortOrder:   1000,
 	}
-	eventData, _ := json.Marshal(event)
-	conn.WriteMessage(websocket.TextMessage, eventData)
+	cmdData, _ := json.Marshal(cmd)
+	conn.WriteMessage(websocket.TextMessage, cmdData)
 
-	// Should receive broadcast
+	// Should receive CommandResponse and then broadcast
 	conn.SetReadDeadline(time.Now().Add(time.Second))
+	_, respMsg, err := conn.ReadMessage()
+	require.NoError(t, err)
+	var cmdResp CommandResponse
+	json.Unmarshal(respMsg, &cmdResp)
+	assert.True(t, cmdResp.Success)
+
 	_, msg, err := conn.ReadMessage()
 	require.NoError(t, err)
 
@@ -531,8 +586,16 @@ func TestServer_SetListTitle(t *testing.T) {
 	assert.Equal(t, "My Todo List", rollup.ListTitle)
 
 	// Send SetListTitle command
-	cmdJSON := `{"type":"SetListTitle","title":"Shopping List 2025"}`
+	cmdJSON := `{"type":"SetListTitle","commandId":"set-title-1","title":"Shopping List 2025"}`
 	conn.WriteMessage(websocket.TextMessage, []byte(cmdJSON))
+
+	// Read CommandResponse first
+	_, respMsg, err := conn.ReadMessage()
+	require.NoError(t, err)
+	var cmdResp CommandResponse
+	json.Unmarshal(respMsg, &cmdResp)
+	assert.Equal(t, "CommandResponse", cmdResp.Type)
+	assert.True(t, cmdResp.Success)
 
 	// Read ListTitleChanged event
 	_, msg2, err := conn.ReadMessage()
@@ -562,8 +625,15 @@ func TestServer_SetListTitle_BroadcastsToAllClients(t *testing.T) {
 	conn1.ReadMessage() // client count (2) to first client
 
 	// Client 1 changes the title
-	cmdJSON := `{"type":"SetListTitle","title":"Shared List"}`
+	cmdJSON := `{"type":"SetListTitle","commandId":"set-title-2","title":"Shared List"}`
 	conn1.WriteMessage(websocket.TextMessage, []byte(cmdJSON))
+
+	// Client 1 receives CommandResponse first
+	_, respMsg, err1 := conn1.ReadMessage()
+	require.NoError(t, err1)
+	var cmdResp CommandResponse
+	json.Unmarshal(respMsg, &cmdResp)
+	assert.True(t, cmdResp.Success)
 
 	// Both clients should receive the ListTitleChanged event
 	_, msg1, err1 := conn1.ReadMessage()
