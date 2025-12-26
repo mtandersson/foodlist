@@ -1,3 +1,24 @@
+## [1.1.1](https://github.com/mtandersson/foodlist/compare/v1.1.0...v1.1.1) (2025-12-26)
+
+### Bug Fixes
+
+* **backend:** add mutex to State to prevent data races ([d365b58](https://github.com/mtandersson/foodlist/commit/d365b58330bc783bc64758485d51ab7baccf77fd))
+
+### Tests
+
+* **backend:** remove time.Sleep calls from tests ([06b7836](https://github.com/mtandersson/foodlist/commit/06b7836e08ae6b756e438516885e3732a5bc48ad))
+
+### Chores
+
+* **ci:** update release workflow to create full package and push Do… ([#43](https://github.com/mtandersson/foodlist/issues/43)) ([facf0a3](https://github.com/mtandersson/foodlist/commit/facf0a386045dbde7b5c50a99c7c5711071ba362))
+* **ci:** update release workflow to create full package and push Docker image ([7e572dc](https://github.com/mtandersson/foodlist/commit/7e572dc36004c4cf645281fe54fb87451a152ace))
+* **deps:** update actions/github-script action to v8 ([#32](https://github.com/mtandersson/foodlist/issues/32)) ([cb35900](https://github.com/mtandersson/foodlist/commit/cb3590019a5f67f17142518aa48deb24578848de))
+* **deps:** update actions/setup-go action to v6 ([#33](https://github.com/mtandersson/foodlist/issues/33)) ([f414652](https://github.com/mtandersson/foodlist/commit/f4146527cdf818b50030ee256a92d744052da4ed))
+* **deps:** update conventional-changelog-conventionalcommits to v9 ([#37](https://github.com/mtandersson/foodlist/issues/37)) ([a999a63](https://github.com/mtandersson/foodlist/commit/a999a63dd191f91370b1f99ebf3da09b8ce97e84))
+* **deps:** update semantic-release monorepo (major) ([#38](https://github.com/mtandersson/foodlist/issues/38)) ([f6f13ce](https://github.com/mtandersson/foodlist/commit/f6f13ce2929753912329b0f76d09e7e2d020ea76))
+* **renovate:** simplify package rules formatting ([2a7cef0](https://github.com/mtandersson/foodlist/commit/2a7cef0d04f76b2c61460ad19496ecd8a829b37f))
+* **renovate:** simplify package rules formatting ([#42](https://github.com/mtandersson/foodlist/issues/42)) ([98c4a82](https://github.com/mtandersson/foodlist/commit/98c4a82573c808f591c8a10b7031de7f2148c4c5))
+
 ## [1.1.0](https://github.com/mtandersson/foodlist/compare/v1.0.2...v1.1.0) (2025-12-26)
 
 ### Features
