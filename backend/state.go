@@ -3,10 +3,12 @@ package main
 import (
 	"sort"
 	"strings"
+	"sync"
 )
 
 // State holds the current state of all todos, projected from events
 type State struct {
+	mu                sync.RWMutex
 	todos             map[string]*Todo
 	categories        map[string]*Category
 	deletedCategories map[string]string // Maps deleted category IDs to their names (case-sensitive)
@@ -31,6 +33,14 @@ func NewState() *State {
 
 // Apply applies a single event to the state
 func (s *State) Apply(event Event) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.applyEvent(event)
+}
+
+// applyEvent applies a single event without locking (internal use only)
+func (s *State) applyEvent(event Event) {
 	switch e := event.(type) {
 	case TodoCreated:
 		s.todos[e.ID] = &Todo{
@@ -139,13 +149,19 @@ func (s *State) trackLastCategory(name string, categoryID *string) {
 
 // ApplyEvents applies multiple events to the state
 func (s *State) ApplyEvents(events []Event) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	for _, event := range events {
-		s.Apply(event)
+		s.applyEvent(event)
 	}
 }
 
 // GetTodos returns all todos sorted by sortOrder (descending - highest first)
 func (s *State) GetTodos() []Todo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	todos := make([]Todo, 0, len(s.todos))
 	for _, todo := range s.todos {
 		todos = append(todos, *todo)
@@ -161,6 +177,9 @@ func (s *State) GetTodos() []Todo {
 
 // GetTodo returns a single todo by ID
 func (s *State) GetTodo(id string) (*Todo, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	todo, ok := s.todos[id]
 	if !ok {
 		return nil, false
@@ -172,6 +191,9 @@ func (s *State) GetTodo(id string) (*Todo, bool) {
 
 // GetHighestSortOrder returns the highest sortOrder among all todos
 func (s *State) GetHighestSortOrder() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	highest := 0
 	for _, todo := range s.todos {
 		if todo.SortOrder > highest {
@@ -183,6 +205,9 @@ func (s *State) GetHighestSortOrder() int {
 
 // GetHighestCategorySortOrder returns the highest sortOrder among categories
 func (s *State) GetHighestCategorySortOrder() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	highest := 0
 	for _, cat := range s.categories {
 		if cat.SortOrder > highest {
@@ -194,16 +219,25 @@ func (s *State) GetHighestCategorySortOrder() int {
 
 // TodoCount returns the number of todos
 func (s *State) TodoCount() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	return len(s.todos)
 }
 
 // GetListTitle returns the current list title
 func (s *State) GetListTitle() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	return s.listTitle
 }
 
 // GetCategories returns all categories sorted by sortOrder (descending)
 func (s *State) GetCategories() []Category {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	cats := make([]Category, 0, len(s.categories))
 	for _, cat := range s.categories {
 		cats = append(cats, *cat)
@@ -216,6 +250,9 @@ func (s *State) GetCategories() []Category {
 
 // GetCategory returns a single category by ID (returns pointer to internal state, not a copy)
 func (s *State) GetCategory(id string) (*Category, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	cat, ok := s.categories[id]
 	if !ok {
 		return nil, false
@@ -225,6 +262,9 @@ func (s *State) GetCategory(id string) (*Category, bool) {
 
 // GetNameFrequency returns a map of todo names (canonical casing) to their frequency count
 func (s *State) GetNameFrequency() map[string]int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	result := make(map[string]int)
 	for nameLower, count := range s.nameFrequency {
 		canonicalName := s.nameCanonical[nameLower]
@@ -235,6 +275,9 @@ func (s *State) GetNameFrequency() map[string]int {
 
 // GetActiveTodoNames returns the names of all active (not completed) todos
 func (s *State) GetActiveTodoNames() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	names := make([]string, 0)
 	for _, todo := range s.todos {
 		if todo.CompletedAt == nil {
@@ -246,6 +289,9 @@ func (s *State) GetActiveTodoNames() []string {
 
 // CategoryHasTodos returns true if any todo is assigned to the given categoryId
 func (s *State) CategoryHasTodos(categoryID string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	for _, todo := range s.todos {
 		if todo.CategoryID != nil && *todo.CategoryID == categoryID {
 			return true
@@ -256,12 +302,18 @@ func (s *State) CategoryHasTodos(categoryID string) bool {
 
 // GetLastCategoryForName returns the last category used for a given name (if any)
 func (s *State) GetLastCategoryForName(name string) *string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	return s.nameLastCategory[strings.ToLower(name)]
 }
 
 // FindDeletedCategoryByName returns the ID of a deleted category with the given name (case-sensitive)
 // Returns empty string if no such deleted category exists
 func (s *State) FindDeletedCategoryByName(name string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	for id, deletedName := range s.deletedCategories {
 		if deletedName == name {
 			return id
@@ -272,6 +324,9 @@ func (s *State) FindDeletedCategoryByName(name string) string {
 
 // CategoryNameExists checks if an active category with the given name exists (case-sensitive)
 func (s *State) CategoryNameExists(name string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	for _, cat := range s.categories {
 		if cat.Name == name {
 			return true
