@@ -194,3 +194,4 @@ Potential improvements:
 - Store offline actions and replay on reconnect
 - Add service worker for background reconnection
 
+
