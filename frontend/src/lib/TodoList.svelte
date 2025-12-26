@@ -11,11 +11,11 @@
   import type { Todo, AutocompleteSuggestion } from './types';
 
   // Determine WebSocket URL
-  // In dev mode, use the backend port (8080) with current hostname (supports both localhost and network access)
+  // In dev mode, use Vite proxy on port 5173 (works for both localhost and network access)
   // In production, use the same host that served the page
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = import.meta.env.DEV 
-    ? `${wsProtocol}//${window.location.hostname}:8080/ws`
+    ? `${wsProtocol}//${window.location.host}/ws`
     : `${wsProtocol}//${window.location.host}/ws`;
 
   const store = createTodoStore(wsUrl);
