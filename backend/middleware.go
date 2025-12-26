@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // IPWhitelistMiddleware checks if the client IP is in the CIDR whitelist
@@ -284,6 +286,168 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 // Implement http.Flusher
 func (rw *responseWriter) Flush() {
 	if flusher, ok := rw.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+// HTTPLoggingMiddleware logs all HTTP requests with comprehensive details
+// including IP addresses, headers, response time, and standard HTTP fields
+func HTTPLoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Extract client IP information
+		clientIP := extractClientIPForLogging(r)
+		xForwardedFor := r.Header.Get("X-Forwarded-For")
+		xRealIP := r.Header.Get("X-Real-IP")
+		userAgent := r.Header.Get("User-Agent")
+		referer := r.Header.Get("Referer")
+
+		// Get request size
+		requestSize := int64(0)
+		if contentLength := r.Header.Get("Content-Length"); contentLength != "" {
+			if size, err := strconv.ParseInt(contentLength, 10, 64); err == nil {
+				requestSize = size
+			}
+		}
+
+		// Wrap response writer to track response details
+		loggingWriter := &loggingResponseWriter{
+			ResponseWriter: w,
+			statusCode:     0,
+			responseSize:   0,
+			hijacked:       false,
+		}
+
+		// Process request
+		next.ServeHTTP(loggingWriter, r)
+
+		// Calculate response time
+		duration := time.Since(start)
+
+		// Build log attributes
+		logAttrs := []any{
+			"method", r.Method,
+			"path", r.URL.Path,
+			"query", r.URL.RawQuery,
+			"client_ip", clientIP,
+			"status", loggingWriter.statusCode,
+			"response_time_ms", duration.Milliseconds(),
+			"response_time_us", duration.Microseconds(),
+			"response_size", loggingWriter.responseSize,
+		}
+
+		// Add request size if available
+		if requestSize > 0 {
+			logAttrs = append(logAttrs, "request_size", requestSize)
+		}
+
+		// Add proxy headers if present
+		if xForwardedFor != "" {
+			logAttrs = append(logAttrs, "x_forwarded_for", xForwardedFor)
+		}
+		if xRealIP != "" {
+			logAttrs = append(logAttrs, "x_real_ip", xRealIP)
+		}
+
+		// Add user agent if present
+		if userAgent != "" {
+			logAttrs = append(logAttrs, "user_agent", userAgent)
+		}
+
+		// Add referer if present
+		if referer != "" {
+			logAttrs = append(logAttrs, "referer", referer)
+		}
+
+		// Add protocol
+		if r.TLS != nil {
+			logAttrs = append(logAttrs, "protocol", "HTTPS")
+		} else {
+			logAttrs = append(logAttrs, "protocol", "HTTP")
+		}
+
+		// Add remote address (original connection info)
+		logAttrs = append(logAttrs, "remote_addr", r.RemoteAddr)
+
+		// Log based on status code
+		switch {
+		case loggingWriter.hijacked:
+			// WebSocket connections are hijacked, log differently
+			slog.Info("http request (websocket)", logAttrs...)
+		case loggingWriter.statusCode == 0:
+			// Handler didn't write response
+			slog.Warn("http request (no response)", logAttrs...)
+		case loggingWriter.statusCode >= 500:
+			slog.Error("http request", logAttrs...)
+		case loggingWriter.statusCode >= 400:
+			slog.Warn("http request", logAttrs...)
+		default:
+			slog.Info("http request", logAttrs...)
+		}
+	})
+}
+
+// extractClientIPForLogging extracts the client IP for logging purposes
+// This is similar to extractClientIP but always extracts all available information
+// for logging, regardless of proxy trust settings
+func extractClientIPForLogging(r *http.Request) string {
+	// Try X-Real-IP first (most reliable if set by trusted proxy)
+	if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
+		return strings.TrimSpace(realIP)
+	}
+
+	// Try X-Forwarded-For (may contain multiple IPs)
+	// For logging, we'll take the leftmost IP (original client)
+	if forwardedFor := r.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		ips := strings.Split(forwardedFor, ",")
+		if len(ips) > 0 {
+			return strings.TrimSpace(ips[0])
+		}
+	}
+
+	// Fall back to RemoteAddr
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
+// loggingResponseWriter wraps http.ResponseWriter to track response details
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode   int
+	responseSize int64
+	hijacked     bool
+}
+
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
+}
+
+func (lrw *loggingResponseWriter) Write(b []byte) (int, error) {
+	if lrw.statusCode == 0 {
+		lrw.statusCode = http.StatusOK
+	}
+	n, err := lrw.ResponseWriter.Write(b)
+	lrw.responseSize += int64(n)
+	return n, err
+}
+
+// Implement http.Hijacker for WebSocket upgrades
+func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hijacker, ok := lrw.ResponseWriter.(http.Hijacker); ok {
+		lrw.hijacked = true
+		return hijacker.Hijack()
+	}
+	return nil, nil, fmt.Errorf("underlying ResponseWriter does not implement http.Hijacker")
+}
+
+// Implement http.Flusher
+func (lrw *loggingResponseWriter) Flush() {
+	if flusher, ok := lrw.ResponseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
 }

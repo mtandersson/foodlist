@@ -99,17 +99,22 @@ func main() {
 	}
 	mux.Handle(staticPath, fileServer)
 
-	// Wrap with IP whitelist middleware if configured
+	// Build middleware chain
 	var handler http.Handler = mux
+
+	// Wrap with IP whitelist middleware if configured
 	if cfg.SharedSecret != "" && len(cfg.CIDRWhitelist) > 0 {
 		slog.Info("IP whitelist enabled",
 			"cidr_whitelist", cfg.CIDRWhitelist,
 			"secret_path", pathPrefix,
 		)
-		handler = IPWhitelistMiddleware(cfg.CIDRWhitelist, cfg.SharedSecret, cfg.ProxyTrustCount, mux)
+		handler = IPWhitelistMiddleware(cfg.CIDRWhitelist, cfg.SharedSecret, cfg.ProxyTrustCount, handler)
 	} else if cfg.SharedSecret != "" {
 		slog.Warn("shared secret configured but no CIDR whitelist - security features partially disabled")
 	}
+
+	// Wrap with HTTP logging middleware (outermost - logs all requests)
+	handler = HTTPLoggingMiddleware(handler)
 
 	// Start HTTP server
 	addr := cfg.BindAddr + ":" + cfg.Port
