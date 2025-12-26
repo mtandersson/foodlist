@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TodoWebSocket, ConnectionState } from './websocket';
-import type { ServerMessage, TodoCreated } from './types';
+import type { ServerMessage, TodoCreated, StateRollup, CreateTodo } from './types';
 
 // Mock WebSocket
 class MockWebSocket {
@@ -143,24 +143,24 @@ describe('TodoWebSocket', () => {
     ws.close();
   });
 
-  it('should send events to server', async () => {
+  it('should send commands to server', async () => {
     const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
     
     await vi.runAllTimersAsync();
     
     mockWs = (ws as any).ws;
     
-    const event: TodoCreated = {
-      type: 'TodoCreated',
+    const command: CreateTodo = {
+      type: 'CreateTodo',
+      commandId: 'cmd-1',
       id: 'test-id',
       name: 'Test todo',
-      createdAt: new Date().toISOString(),
       sortOrder: 1000,
     };
     
-    ws.send(event);
+    ws.send(command);
     
-    expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(event));
+    expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(command));
     
     ws.close();
   });
@@ -260,7 +260,7 @@ describe('TodoWebSocket', () => {
     unsubscribe();
 
     const mockInstance = MockWebSocket.instances[0];
-    const testMessage: StateRollup = { type: 'StateRollup', todos: [] };
+    const testMessage: StateRollup = { type: 'StateRollup', todos: [], categories: [], listTitle: 'My Todo List' };
     mockInstance.simulateMessage(testMessage);
 
     // Handler should not be called
@@ -302,15 +302,15 @@ describe('TodoWebSocket', () => {
     mockWs.simulateClose();
     
     // Queue a message while disconnected
-    const event: TodoCreated = {
-      type: 'TodoCreated',
+    const command: CreateTodo = {
+      type: 'CreateTodo',
+      commandId: 'cmd-2',
       id: 'test-id',
       name: 'Queued todo',
-      createdAt: new Date().toISOString(),
       sortOrder: 1000,
     };
     
-    ws.send(event);
+    ws.send(command);
     
     // Reconnect
     await vi.advanceTimersByTimeAsync(100);
@@ -320,7 +320,7 @@ describe('TodoWebSocket', () => {
     const newMockWs = (ws as any).ws;
     
     // Check that queued message was sent
-    expect(newMockWs.send).toHaveBeenCalledWith(JSON.stringify(event));
+    expect(newMockWs.send).toHaveBeenCalledWith(JSON.stringify(command));
     
     ws.close();
   });

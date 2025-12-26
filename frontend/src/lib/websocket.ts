@@ -1,4 +1,4 @@
-import type { Event, ServerMessage, AutocompleteRequest, AutocompleteResponse } from './types';
+import type { Event, ServerMessage, AutocompleteRequest, AutocompleteResponse, Command } from './types';
 
 export enum ConnectionState {
   CONNECTING = 'CONNECTING',
@@ -24,7 +24,7 @@ export class TodoWebSocket {
   private messageHandlers: MessageHandler[] = [];
   private connectionHandlers: ConnectionHandler[] = [];
   private autocompleteHandlers: AutocompleteHandler[] = [];
-  private messageQueue: Event[] = [];
+  private messageQueue: Command[] = [];
   private reconnectAttempts = 0;
   private manualClose = false;
   private reconnectTimeout: number | null = null;
@@ -264,14 +264,14 @@ export class TodoWebSocket {
 
   private flushMessageQueue() {
     while (this.messageQueue.length > 0) {
-      const event = this.messageQueue.shift()!;
-      this.sendImmediate(event);
+      const command = this.messageQueue.shift()!;
+      this.sendImmediate(command);
     }
   }
 
-  private sendImmediate(event: Event) {
+  private sendImmediate(command: Command) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(event));
+      this.ws.send(JSON.stringify(command));
     }
   }
 
@@ -300,11 +300,11 @@ export class TodoWebSocket {
 
   // Public API
 
-  send(event: Event) {
+  send(command: Command) {
     if (this.connectionState === ConnectionState.CONNECTED) {
-      this.sendImmediate(event);
+      this.sendImmediate(command);
     } else {
-      this.messageQueue.push(event);
+      this.messageQueue.push(command);
     }
   }
 

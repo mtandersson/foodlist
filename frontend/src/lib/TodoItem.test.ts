@@ -113,8 +113,8 @@ describe('TodoItem - Mobile Categorization Logic', () => {
       onRequestCategorize(mockTodo);
       
       expect(receivedTodo).toEqual(mockTodo);
-      expect(receivedTodo?.id).toBe('1');
-      expect(receivedTodo?.name).toBe('Test Todo');
+      expect(receivedTodo!.id).toBe('1');
+      expect(receivedTodo!.name).toBe('Test Todo');
     });
   });
 

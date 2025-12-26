@@ -172,7 +172,7 @@ describe('TodoStore', () => {
   it('should send optimistic create and update on confirmation', () => {
     const store = createTodoStore('ws://localhost:8080/ws');
     
-    messageHandler!({ type: 'StateRollup', todos: [] });
+    messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'My Todo List' });
     
     // Create todo optimistically
     store.createTodo('Optimistic task');
@@ -247,6 +247,8 @@ describe('TodoStore', () => {
     messageHandler!({
       type: 'StateRollup',
       todos: [{ id: '1', name: 'Task', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false }],
+      categories: [],
+      listTitle: 'My Todo List'
     });
     
     // Complete the task
@@ -270,6 +272,8 @@ describe('TodoStore', () => {
         { id: '1', name: 'Task 1', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false },
         { id: '2', name: 'Task 2', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false },
       ],
+      categories: [],
+      listTitle: 'My Todo List'
     });
     
     // Star task 1 - should move to top

@@ -6,7 +6,7 @@ describe('LocalStorage Persistence', () => {
   beforeEach(() => {
     localStorageMock = {};
     
-    global.localStorage = {
+    (globalThis as any).localStorage = {
       getItem: (key: string) => localStorageMock[key] || null,
       setItem: (key: string, value: string) => {
         localStorageMock[key] = value;
