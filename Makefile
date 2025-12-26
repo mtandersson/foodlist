@@ -1,4 +1,4 @@
-.PHONY: help build run stop clean logs test docker-build docker-run docker-stop docker-clean dev-json test-logging
+.PHONY: help build run stop clean logs test docker-build docker-run docker-stop docker-clean dev-json dev-network test-logging
 
 # Detect container runtime (prefer podman over docker)
 CONTAINER_RUNTIME := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
@@ -13,7 +13,7 @@ COMPOSE_NAME := $(notdir $(COMPOSE_CMD))
 
 # Default target
 help:
-	@echo "GoTodo - Available Commands:"
+	@echo "FoodList - Available Commands:"
 	@echo ""
 	@echo "Container Runtime: $(CONTAINER_NAME)"
 	@echo "Compose Command: $(COMPOSE_NAME)"
@@ -23,6 +23,7 @@ help:
 	@echo "  make run            - Run development servers"
 	@echo "  make dev            - Run with live reload (logfmt logging)"
 	@echo "  make dev-json       - Run with live reload (JSON logging)"
+	@echo "  make dev-network    - Run with live reload, accessible from network (for phone testing)"
 	@echo "  make test           - Run all tests"
 	@echo "  make test-logging   - Test structured logging formats"
 	@echo "  make clean          - Clean build artifacts"
@@ -40,13 +41,13 @@ build:
 	@echo "Building frontend..."
 	cd frontend && npm install && npm run build
 	@echo "Building backend..."
-	cd backend && go build -o gotodo
+	cd backend && go build -o foodlist
 
 run:
 	@echo "Starting development servers..."
 	@echo "Backend: http://localhost:8080"
 	@echo "Frontend: http://localhost:5173"
-	cd backend && ./gotodo &
+	cd backend && ./foodlist &
 	cd frontend && npm run dev
 
 dev:
@@ -67,6 +68,23 @@ dev-json:
 	@(sleep 3 && open http://localhost:5173) &
 	cd backend && LOG_FORMAT=json air
 
+dev-network:
+	@command -v air >/dev/null || { echo "❌ 'air' not installed. Install with: go install github.com/air-verse/air@latest"; exit 1; }
+	@echo "Starting frontend (Vite dev server with network access)..."
+	cd frontend && npm install
+	cd frontend && npm run dev -- --host 0.0.0.0 --port 5173 &
+	@echo ""
+	@echo "Starting backend with live-reload (air) - network accessible..."
+	@echo ""
+	@echo "🌐 Network Access Enabled:"
+	@echo "   Frontend: http://$(shell ipconfig getifaddr en0 || hostname -I | awk '{print $$1}'):5173"
+	@echo "   Backend:  http://$(shell ipconfig getifaddr en0 || hostname -I | awk '{print $$1}'):8080"
+	@echo ""
+	@echo "📱 Use the frontend URL above to access from your phone"
+	@echo ""
+	@(sleep 3 && open http://localhost:5173) &
+	cd backend && BIND_ADDR=0.0.0.0 air
+
 test-logging:
 	@echo "Testing structured logging formats..."
 	./test-logging.sh
@@ -85,7 +103,7 @@ clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf frontend/dist
 	rm -rf frontend/node_modules
-	rm -f backend/gotodo
+	rm -f backend/foodlist
 	rm -f backend/events.jsonl
 	rm -f events.jsonl
 
@@ -106,7 +124,7 @@ docker-stop:
 docker-clean:
 	@echo "Removing containers and images..."
 	$(COMPOSE_CMD) down -v
-	$(CONTAINER_RUNTIME) rmi gotodo:latest 2>/dev/null || true
+	$(CONTAINER_RUNTIME) rmi foodlist:latest 2>/dev/null || true
 
 docker-logs:
 	$(COMPOSE_CMD) logs -f
@@ -114,14 +132,14 @@ docker-logs:
 # Production Container
 docker-prod:
 	@echo "Building and running production container setup..."
-	$(CONTAINER_RUNTIME) build -t gotodo:latest .
+	$(CONTAINER_RUNTIME) build -t foodlist:latest .
 	$(COMPOSE_CMD) -f docker-compose.prod.yml up -d
 	@echo "Production deployment running at http://localhost:80"
 
 # Quick start
 quick-start: docker-build docker-run
 	@echo ""
-	@echo "✅ GoTodo is now running!"
+	@echo "✅ FoodList is now running!"
 	@echo "🌐 Open http://localhost:8080 in your browser"
 	@echo ""
 	@echo "View logs: make docker-logs"

@@ -30,7 +30,7 @@ RUN go mod download
 COPY backend/ ./
 
 # Build the Go application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gotodo .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o foodlist .
 
 # Stage 3: Final Runtime Image
 FROM alpine:latest
@@ -41,7 +41,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 # Copy the built Go binary from backend-builder
-COPY --from=backend-builder /app/backend/gotodo .
+COPY --from=backend-builder /app/backend/foodlist .
 
 # Copy the built frontend from frontend-builder
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
@@ -58,5 +58,5 @@ ENV STATIC_DIR=/app/frontend/dist
 ENV PORT=8080
 
 # Run the application
-CMD ["./gotodo"]
+CMD ["./foodlist"]
 

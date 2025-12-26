@@ -23,7 +23,7 @@ The modal will appear when ALL of the following conditions are met:
 ## Components
 
 ### 1. CategorySelectorModal.svelte
-**Location**: `/Users/martin/gotodo/frontend/src/lib/CategorySelectorModal.svelte`
+**Location**: `/Users/martin/foodlist/frontend/src/lib/CategorySelectorModal.svelte`
 
 A new modal component that displays available categories in a mobile-friendly interface.
 
@@ -43,7 +43,7 @@ A new modal component that displays available categories in a mobile-friendly in
 - `onCancel`: Callback when modal is cancelled
 
 ### 2. TodoItem.svelte (Modified)
-**Location**: `/Users/martin/gotodo/frontend/src/lib/TodoItem.svelte`
+**Location**: `/Users/martin/foodlist/frontend/src/lib/TodoItem.svelte`
 
 **Changes**:
 - Added `onRequestCategorize?: (todo: Todo) => void` optional prop
@@ -66,7 +66,7 @@ if (wasQuickTap && onRequestCategorize) {
 ```
 
 ### 3. CategoriesView.svelte (Modified)
-**Location**: `/Users/martin/gotodo/frontend/src/lib/CategoriesView.svelte`
+**Location**: `/Users/martin/foodlist/frontend/src/lib/CategoriesView.svelte`
 
 **Changes**:
 - Added modal state management (`showCategoryModal`, `selectedTodoForCategorization`)
@@ -108,7 +108,7 @@ function handleRequestCategorize(todo: Todo) {
 All unit tests pass ✅
 
 ### E2E Tests
-Added comprehensive Cypress tests in `/Users/martin/gotodo/e2e/cypress/e2e/todo.cy.js`:
+Added comprehensive Cypress tests in `/Users/martin/foodlist/e2e/cypress/e2e/todo.cy.js`:
 
 - `shows category selector modal on tap for uncategorized todo`
 - `assigns category when selecting from mobile modal`
@@ -154,15 +154,15 @@ The CategorySelectorModal includes mobile-specific styling:
 ## Implementation Files
 
 ### New Files
-- `/Users/martin/gotodo/frontend/src/lib/CategorySelectorModal.svelte`
-- `/Users/martin/gotodo/frontend/src/lib/CategorySelectorModal.test.ts`
-- `/Users/martin/gotodo/frontend/src/lib/TodoItem.test.ts`
-- `/Users/martin/gotodo/MOBILE_CATEGORY_SELECTION.md` (this file)
+- `/Users/martin/foodlist/frontend/src/lib/CategorySelectorModal.svelte`
+- `/Users/martin/foodlist/frontend/src/lib/CategorySelectorModal.test.ts`
+- `/Users/martin/foodlist/frontend/src/lib/TodoItem.test.ts`
+- `/Users/martin/foodlist/MOBILE_CATEGORY_SELECTION.md` (this file)
 
 ### Modified Files
-- `/Users/martin/gotodo/frontend/src/lib/TodoItem.svelte`
-- `/Users/martin/gotodo/frontend/src/lib/CategoriesView.svelte`
-- `/Users/martin/gotodo/e2e/cypress/e2e/todo.cy.js`
+- `/Users/martin/foodlist/frontend/src/lib/TodoItem.svelte`
+- `/Users/martin/foodlist/frontend/src/lib/CategoriesView.svelte`
+- `/Users/martin/foodlist/e2e/cypress/e2e/todo.cy.js`
 
 ## Design Decisions
 

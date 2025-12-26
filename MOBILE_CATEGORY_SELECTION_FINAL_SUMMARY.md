@@ -131,27 +131,27 @@ function handleRequestCategorize(todo: Todo) {
 
 ## Files Modified
 
-1. `/Users/martin/gotodo/frontend/src/lib/TodoItem.svelte`
+1. `/Users/martin/foodlist/frontend/src/lib/TodoItem.svelte`
    - Removed `!todo.categoryId` check from tap handler
 
-2. `/Users/martin/gotodo/frontend/src/lib/TodoList.svelte`
+2. `/Users/martin/foodlist/frontend/src/lib/TodoList.svelte`
    - Passes `viewMode` prop to CategoriesView
 
-3. `/Users/martin/gotodo/frontend/src/lib/CategoriesView.svelte`
+3. `/Users/martin/foodlist/frontend/src/lib/CategoriesView.svelte`
    - Accepts `viewMode` prop
    - Checks view mode before showing modal
    - Passes `onRequestCategorize` to all TodoItems (including categorized ones)
 
-4. `/Users/martin/gotodo/frontend/src/lib/CategorySelectorModal.svelte`
+4. `/Users/martin/foodlist/frontend/src/lib/CategorySelectorModal.svelte`
    - Updated modal layout with separate title and subtitle
    - Improved visual design
 
-5. `/Users/martin/gotodo/e2e/cypress/e2e/todo.cy.js`
+5. `/Users/martin/foodlist/e2e/cypress/e2e/todo.cy.js`
    - Updated 9 mobile category tests for new behavior
    - Added `createCategory()` helper function
    - Fixed selectors and test flows
 
-6. `/Users/martin/gotodo/MOBILE_CATEGORY_SELECTION.md`
+6. `/Users/martin/foodlist/MOBILE_CATEGORY_SELECTION.md`
    - Updated documentation to reflect new behavior
 
 ## Benefits of the Update

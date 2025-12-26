@@ -2,7 +2,7 @@
 
 ## Overview
 
-The GoTodo app now features automatic dark/light mode theming that respects the browser/system's color scheme preference. The theme automatically switches when the user changes their system preferences without requiring any manual intervention.
+The FoodList app now features automatic dark/light mode theming that respects the browser/system's color scheme preference. The theme automatically switches when the user changes their system preferences without requiring any manual intervention.
 
 ## Implementation Details
 

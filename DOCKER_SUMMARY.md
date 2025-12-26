@@ -117,17 +117,17 @@ make docker-prod
 
 # Run with podman
 podman run -d \
-  --name gotodo \
+  --name foodlist \
   -p 8080:8080 \
   -v $(pwd)/data:/app/data \
-  gotodo:latest
+  foodlist:latest
 
 # Or with docker
 docker run -d \
-  --name gotodo \
+  --name foodlist \
   -p 8080:8080 \
   -v $(pwd)/data:/app/data \
-  gotodo:latest
+  foodlist:latest
 ```
 
 ## Architecture
@@ -207,7 +207,7 @@ Dockerfile
 │ Stage 2: Go     │
 │ Build Backend   │
 └────────┬────────┘
-         │ gotodo binary
+         │ foodlist binary
 ┌────────┴────────┐
 │ Stage 3: Alpine │
 │ Combine Both    │
@@ -224,7 +224,7 @@ Dockerfile
 
 # Run with auto-detected runtime
 CONTAINER=$(command -v podman || command -v docker)
-$CONTAINER run --rm -p 8080:8080 gotodo:test
+$CONTAINER run --rm -p 8080:8080 foodlist:test
 
 # Test
 curl http://localhost:8080

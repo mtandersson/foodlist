@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://gotodo.local/events.schema.json",
+  "$id": "https://foodlist.local/events.schema.json",
   "title": "Todo Events",
   "description": "Message types exchanged between client and server for the todo application",
   "definitions": {

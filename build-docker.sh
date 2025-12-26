@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# GoTodo Container Build Script
+# FoodList Container Build Script
 # Supports both Podman and Docker
 
 set -e
@@ -37,20 +37,20 @@ fi
 
 # Build the image
 echo "📦 Building multi-stage container image..."
-$CONTAINER_RUNTIME build -t gotodo:latest .
+$CONTAINER_RUNTIME build -t foodlist:latest .
 
 echo ""
 echo "✅ Build complete!"
 echo ""
 echo "📊 Image details:"
-$CONTAINER_RUNTIME images gotodo:latest
+$CONTAINER_RUNTIME images foodlist:latest
 
 echo ""
 echo "🚀 To run the application:"
 echo "   $COMPOSE_CMD up -d"
 echo ""
 echo "Or using $CONTAINER_RUNTIME directly:"
-echo "   $CONTAINER_RUNTIME run -d --name gotodo -p 8080:8080 -v \$(pwd)/data:/app/data gotodo:latest"
+echo "   $CONTAINER_RUNTIME run -d --name foodlist -p 8080:8080 -v \$(pwd)/data:/app/data foodlist:latest"
 echo ""
 echo "🌐 Access the app at: http://localhost:8080"
 

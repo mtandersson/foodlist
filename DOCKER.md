@@ -1,6 +1,6 @@
 # Container Deployment Guide
 
-This guide explains how to build and run the GoTodo application using containers (Podman or Docker).
+This guide explains how to build and run the FoodList application using containers (Podman or Docker).
 
 > **Note:** The build system automatically prefers Podman over Docker if both are installed. All commands work with either container runtime.
 
@@ -47,14 +47,14 @@ podman-compose down
 ./build-docker.sh
 
 # Manual build (replace 'podman' with 'docker' if needed)
-podman build -t gotodo:latest .
+podman build -t foodlist:latest .
 
 # Run the container
 podman run -d \
-  --name gotodo \
+  --name foodlist \
   -p 8080:8080 \
   -v $(pwd)/data:/app/data \
-  gotodo:latest
+  foodlist:latest
 ```
 
 ## Container Runtime Detection
@@ -83,7 +83,7 @@ The container image is built using a multi-stage build process:
    - Uses `golang:1.21-alpine`
    - Downloads Go dependencies
    - Compiles the Go backend
-   - Output: Single binary `gotodo`
+   - Output: Single binary `foodlist`
 
 3. **Stage 3 - Runtime:**
    - Uses `alpine:latest` (minimal footprint)
@@ -118,12 +118,12 @@ The container image is built using a multi-stage build process:
 
 ```bash
 docker run -d \
-  --name gotodo \
+  --name foodlist \
   -p 3000:3000 \
   -e PORT=3000 \
   -e DATA_DIR=/app/data \
   -v $(pwd)/data:/app/data \
-  gotodo:latest
+  foodlist:latest
 ```
 
 ## Data Persistence
@@ -170,8 +170,8 @@ podman-compose up -d
 ```bash
 # Auto-detects podman or docker
 ./build-docker.sh
-podman stop gotodo && podman rm gotodo
-podman run -d --name gotodo -p 8080:8080 -v $(pwd)/data:/app/data gotodo:latest
+podman stop foodlist && podman rm foodlist
+podman run -d --name foodlist -p 8080:8080 -v $(pwd)/data:/app/data foodlist:latest
 ```
 
 ### View real-time logs
@@ -181,7 +181,7 @@ podman run -d --name gotodo -p 8080:8080 -v $(pwd)/data:/app/data gotodo:latest
 make docker-logs
 
 # Or directly (auto-detected)
-podman-compose logs -f gotodo
+podman-compose logs -f foodlist
 ```
 
 ## Deployment
@@ -200,25 +200,25 @@ podman-compose logs -f gotodo
    ```bash
    # Replace CONTAINER with 'podman' or 'docker'
    CONTAINER=podman  # or docker
-   $CONTAINER tag gotodo:latest your-registry.com/gotodo:v1.0.0
+   $CONTAINER tag foodlist:latest your-registry.com/foodlist:v1.0.0
    ```
 
 3. **Push to registry:**
 
    ```bash
-   $CONTAINER push your-registry.com/gotodo:v1.0.0
+   $CONTAINER push your-registry.com/foodlist:v1.0.0
    ```
 
 4. **Deploy on server:**
    ```bash
    # On production server (use podman or docker)
-   $CONTAINER pull your-registry.com/gotodo:v1.0.0
+   $CONTAINER pull your-registry.com/foodlist:v1.0.0
    $CONTAINER run -d \
-     --name gotodo \
+     --name foodlist \
      --restart unless-stopped \
      -p 8080:8080 \
-     -v /var/lib/gotodo/data:/app/data \
-     your-registry.com/gotodo:v1.0.0
+     -v /var/lib/foodlist/data:/app/data \
+     your-registry.com/foodlist:v1.0.0
    ```
 
 ### Compose Production
@@ -242,7 +242,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ### Container won't start
 
 ```bash
-podman logs gotodo
+podman logs foodlist
 # or: make docker-logs
 ```
 
@@ -255,25 +255,25 @@ podman ps
 ### Inspect container
 
 ```bash
-podman inspect gotodo
+podman inspect foodlist
 ```
 
 ### Access container shell
 
 ```bash
-podman exec -it gotodo sh
+podman exec -it foodlist sh
 ```
 
 ### Check event store file
 
 ```bash
-podman exec gotodo cat /app/data/events.jsonl
+podman exec foodlist cat /app/data/events.jsonl
 ```
 
 ### Health check status
 
 ```bash
-podman inspect --format='{{json .State.Health}}' gotodo | jq
+podman inspect --format='{{json .State.Health}}' foodlist | jq
 ```
 
 ## Image Size
@@ -299,14 +299,14 @@ The final image is approximately **20-25MB** thanks to:
 ### Backup event store
 
 ```bash
-podman cp gotodo:/app/data/events.jsonl ./backup-$(date +%Y%m%d).jsonl
+podman cp foodlist:/app/data/events.jsonl ./backup-$(date +%Y%m%d).jsonl
 ```
 
 ### Restore event store
 
 ```bash
-podman cp ./backup.jsonl gotodo:/app/data/events.jsonl
-podman restart gotodo
+podman cp ./backup.jsonl foodlist:/app/data/events.jsonl
+podman restart foodlist
 ```
 
 ## Network
@@ -316,13 +316,13 @@ podman restart gotodo
 ```bash
 # Replace CONTAINER with 'podman' or 'docker'
 CONTAINER=podman
-$CONTAINER network create gotodo-network
+$CONTAINER network create foodlist-network
 $CONTAINER run -d \
-  --name gotodo \
-  --network gotodo-network \
+  --name foodlist \
+  --network foodlist-network \
   -p 8080:8080 \
   -v $(pwd)/data:/app/data \
-  gotodo:latest
+  foodlist:latest
 ```
 
 ### Behind reverse proxy (Nginx/Traefik)
@@ -372,8 +372,8 @@ jobs:
         run: |
           # Use docker in CI (pre-installed on GitHub runners)
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker tag gotodo:latest gotodo:${{ github.ref_name }}
-          docker push gotodo:${{ github.ref_name }}
+          docker tag foodlist:latest foodlist:${{ github.ref_name }}
+          docker push foodlist:${{ github.ref_name }}
 ```
 
 ## Support

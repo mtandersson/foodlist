@@ -1,4 +1,4 @@
-module gotodo
+module foodlist
 
 go 1.25.5
 

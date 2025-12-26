@@ -5,7 +5,7 @@ Added the ability to click on the list title (e.g., "🧀 Mat 2025") at the top 
 
 ## Implementation
 
-### Changes Made to `/Users/martin/gotodo/frontend/src/lib/TodoList.svelte`
+### Changes Made to `/Users/martin/foodlist/frontend/src/lib/TodoList.svelte`
 
 #### 1. Added State Management
 ```typescript

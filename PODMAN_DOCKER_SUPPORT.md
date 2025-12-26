@@ -1,6 +1,6 @@
 # Podman/Docker Support
 
-This document describes the container runtime auto-detection feature implemented in the GoTodo project.
+This document describes the container runtime auto-detection feature implemented in the FoodList project.
 
 ## Overview
 

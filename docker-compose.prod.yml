@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  gotodo:
-    image: gotodo:latest
-    container_name: gotodo-prod
+  foodlist:
+    image: foodlist:latest
+    container_name: foodlist-prod
     ports:
       - "80:8080"
     volumes:
-      - gotodo-data:/app/data
+      - foodlist-data:/app/data
     environment:
       - DATA_DIR=/app/data
       - STATIC_DIR=/app/frontend/dist
@@ -30,6 +30,6 @@ services:
           memory: 128M
 
 volumes:
-  gotodo-data:
+  foodlist-data:
     driver: local
 
