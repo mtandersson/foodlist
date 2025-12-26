@@ -1,9 +1,17 @@
-version: 2
+version: "2"
 
 run:
-  timeout: 5m
   tests: true
   modules-download-mode: readonly
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+    - gofumpt
+  settings:
+    gofumpt:
+      module-path: foodlist
 
 linters:
   enable:
@@ -14,25 +22,19 @@ linters:
   disable:
     - errcheck
     - godox
-
-formatters:
-  enable:
-    - gofmt
-    - goimports
-    - gofumpt
-
-linters-settings:
-  gofumpt:
-    module-path: gotodo
-  revive:
-    severity: warning
+  settings:
+    revive:
+      severity: warning
+      rules:
+        - name: indent-error-flow
+        - name: error-return
+        - name: var-naming
+  exclusions:
     rules:
-      - name: indent-error-flow
-      - name: error-return
-      - name: var-naming
+      - text: should have comment
+        linters:
+          - revive
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude:
-    - "should have comment"
