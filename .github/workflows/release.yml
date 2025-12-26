@@ -108,7 +108,7 @@ jobs:
           npm run build
           cd ..
 
-          # Create archives
+          # Create archives for individual binaries
           cd dist
           for binary in foodlist-*; do
             if [[ $binary == *.exe ]]; then
@@ -117,8 +117,17 @@ jobs:
               tar -czf "${binary}.tar.gz" "$binary"
             fi
           done
+          cd ..
 
-          # Note: Full package will be created after we know the version from semantic-release
+      - name: Create full package (pre-release)
+        run: |
+          # Create a temporary full package that will be renamed by semantic-release
+          mkdir -p dist/foodlist-full
+          cp -r frontend/dist dist/foodlist-full/frontend
+          cp dist/foodlist-linux-amd64 dist/foodlist-full/foodlist
+          cd dist
+          tar -czf foodlist-full.tar.gz foodlist-full
+          rm -rf foodlist-full
 
       - name: Create release
         id: semantic
@@ -129,26 +138,6 @@ jobs:
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
-
-      - name: Create full package
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          VERSION=${{ steps.semantic.outputs.new_release_version }}
-          mkdir -p dist/foodlist-${VERSION}
-          cp -r frontend/dist dist/foodlist-${VERSION}/frontend
-          cp dist/foodlist-linux-amd64 dist/foodlist-${VERSION}/foodlist
-          cd dist
-          tar -czf foodlist-${VERSION}-full.tar.gz foodlist-${VERSION}
-          rm -rf foodlist-${VERSION}
-
-      - name: Upload full package to release
-        if: steps.semantic.outputs.new_release_published == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.semantic.outputs.new_release_version }}
-          files: dist/foodlist-${{ steps.semantic.outputs.new_release_version }}-full.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
 
   build-and-push:
     name: Build and Push Docker Image
