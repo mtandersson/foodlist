@@ -17,6 +17,11 @@ on:
           - warn
           - error
 
+# Only allow one Renovate run at a time
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
