@@ -1,3 +1,12 @@
+## [1.0.1](https://github.com/mtandersson/foodlist/compare/v1.0.0...v1.0.1) (2025-12-26)
+
+
+### Chores
+
+* **ci:** fix format problem ([74d4e7b](https://github.com/mtandersson/foodlist/commit/74d4e7b24622a5fc89e978544790c9d11baa67ce))
+* **ci:** remove end-to-end testing setup and related documentation ([#25](https://github.com/mtandersson/foodlist/issues/25)) ([ba4d745](https://github.com/mtandersson/foodlist/commit/ba4d74519da2122e7f16454b0ff879e560ca45f1))
+* remove end-to-end testing setup and related documentation ([d9606a1](https://github.com/mtandersson/foodlist/commit/d9606a17ba75089bdb8bc2b67579314ee17bf1c4))
+
 ## 1.0.0 (2025-12-26)
 
 
