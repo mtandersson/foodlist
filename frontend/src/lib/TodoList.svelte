@@ -766,7 +766,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - var(--viewport-height-offset));
+    height: 100dvh;
     padding: 0 var(--spacing-2xl);
   }
 
@@ -1252,7 +1252,7 @@
   .add-todo-wrapper {
     position: relative;
     flex-shrink: 0;
-    margin-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-lg);
     /* Match scrollable-content's scrollbar gutter + padding-right */
     padding-right: calc(var(--scrollbar-width) + var(--spacing-xs));
   }
