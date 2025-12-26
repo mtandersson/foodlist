@@ -35,6 +35,6 @@ Thumbs.db
 # Frontend coverage
 frontend/coverage/
 
-# Event logs (optional - uncomment if you don't want to track these)
-# backend/events.jsonl
+# Event logs (database file - not tracked in git)
+backend/events.jsonl
 
