@@ -42,9 +42,9 @@ func TestLevenshteinDistance_SingleCharDifference(t *testing.T) {
 
 func TestLevenshteinDistance_MultipleDifferences(t *testing.T) {
 	assert.Equal(t, 3, levenshteinDistance("kitten", "sitting"))
-	assert.Equal(t, 1, levenshteinDistance("milk", "silk"))   // 1 sub: m -> s
-	assert.Equal(t, 3, levenshteinDistance("milk", "meal"))   // 3 subs: i->e, l->a, k->l
-	assert.Equal(t, 2, levenshteinDistance("book", "back"))   // 2 subs: o->a, o->c
+	assert.Equal(t, 1, levenshteinDistance("milk", "silk")) // 1 sub: m -> s
+	assert.Equal(t, 3, levenshteinDistance("milk", "meal")) // 3 subs: i->e, l->a, k->l
+	assert.Equal(t, 2, levenshteinDistance("book", "back")) // 2 subs: o->a, o->c
 }
 
 func TestLevenshteinDistance_CaseInsensitive(t *testing.T) {
@@ -441,4 +441,3 @@ func TestAutocomplete_ReturnsCategoryContext(t *testing.T) {
 	assert.Equal(t, &catID, suggestions[0].CategoryID)
 	assert.Equal(t, "Office", *suggestions[0].CategoryName)
 }
-

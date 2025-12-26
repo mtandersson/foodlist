@@ -164,4 +164,3 @@ func TestEventType_AllTypes(t *testing.T) {
 		assert.Equal(t, e.expectedType, e.event.EventType())
 	}
 }
-
