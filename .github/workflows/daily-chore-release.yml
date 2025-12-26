@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Check if a release already exists today (UTC)
         id: gate
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
