@@ -167,6 +167,10 @@
       gap: var(--spacing-sm);
       padding: var(--spacing-sm) var(--spacing-md);
     }
+
+    .category-badge {
+      display: none;
+    }
   }
 
   .todo-item.completed {
