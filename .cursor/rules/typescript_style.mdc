@@ -1,0 +1,40 @@
+# TypeScript/Svelte Style Guide
+
+## Code Style
+
+- Use TypeScript strict mode
+- Follow Svelte 5 conventions
+- Use `svelte-check` and `tsc` for type checking (run via `npm run check`)
+- Prefer type inference where possible
+- Use explicit types for function parameters and return values
+
+## Svelte Conventions
+
+- Use Svelte 5 runes (`$state`, `$derived`, `$effect`)
+- Component files should be PascalCase: `TodoItem.svelte`
+- Use TypeScript in `<script lang="ts">` blocks
+- Prefer composition over complex components
+- Use reactive statements appropriately
+
+## Testing
+
+- Use Vitest for testing
+- Write tests for components in `*.test.ts` files
+- Use `@testing-library/svelte` for component testing
+- Run tests: `npm test` or `npm run test:run`
+- Test files should be co-located with components
+
+## Type Safety
+
+- Define types in `src/lib/types.ts`
+- Use strict TypeScript configuration
+- Avoid `any` types - use `unknown` if type is truly unknown
+- Use type guards for runtime type checking
+
+## Project-Specific Conventions
+
+- Store logic in `src/lib/store.ts`
+- WebSocket client in `src/lib/websocket.ts`
+- Use reactive state management with Svelte stores
+- Follow event-sourced architecture patterns
+- Local storage persistence for offline support

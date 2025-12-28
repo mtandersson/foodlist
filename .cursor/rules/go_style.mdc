@@ -1,0 +1,34 @@
+# Go Style Guide
+
+## Code Style
+
+- Follow standard Go formatting (`go fmt`)
+- Use `golangci-lint` for linting (run via `make lint`)
+- Follow Go naming conventions:
+  - Exported functions/types start with capital letter
+  - Unexported start with lowercase
+  - Use camelCase for variables
+  - Use PascalCase for exported types
+
+## Testing
+
+- Write tests for all new functionality
+- Use table-driven tests when appropriate
+- Run tests with coverage: `go test -v -cover ./...`
+- Test files should be named `*_test.go`
+- Place tests in the same package as the code being tested
+
+## Error Handling
+
+- Always check and handle errors explicitly
+- Use `fmt.Errorf` with `%w` verb for error wrapping
+- Return errors, don't log and ignore them
+- Provide context in error messages
+
+## Project-Specific Conventions
+
+- Event-sourced architecture: events are append-only
+- WebSocket handlers should be in `server.go`
+- State management in `state.go`
+- Event store in `store.go`
+- Use structured logging (logfmt or JSON format)
