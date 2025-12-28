@@ -1,6 +1,9 @@
 # Stage 1: Build Frontend (Svelte/TypeScript)
 FROM node:24.12.0-alpine AS frontend-builder
 
+# Accept VERSION build arg
+ARG VERSION
+
 WORKDIR /app/frontend
 
 # Copy frontend package files
@@ -12,11 +15,18 @@ RUN npm ci
 # Copy frontend source
 COPY frontend/ ./
 
-# Build frontend
-RUN npm run build
+# Build frontend with version injection
+RUN if [ -n "$VERSION" ]; then \
+      RELEASE_VERSION=$VERSION npm run build; \
+    else \
+      npm run build; \
+    fi
 
 # Stage 2: Build Backend (Go)
 FROM golang:1.25.5-alpine AS backend-builder
+
+# Accept VERSION build arg
+ARG VERSION
 
 WORKDIR /app/backend
 
@@ -29,8 +39,12 @@ RUN go mod download
 # Copy backend source
 COPY backend/ ./
 
-# Build the Go application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o foodlist .
+# Build the Go application with version injection
+RUN if [ -n "$VERSION" ]; then \
+      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags "-X main.version=$VERSION" -o foodlist .; \
+    else \
+      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o foodlist .; \
+    fi
 
 # Stage 3: Final Runtime Image
 FROM alpine:latest

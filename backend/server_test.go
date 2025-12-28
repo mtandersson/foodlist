@@ -122,6 +122,92 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 	assert.Equal(t, 1, clientCount.Count)
 }
 
+func TestServer_StateRollupIncludesVersion(t *testing.T) {
+	// Save original version
+	originalVersion := version
+	defer func() {
+		version = originalVersion
+	}()
+
+	// Set version to a test value
+	version = "1.6.0"
+
+	_, ts, wsURL := setupTestServer(t)
+	defer ts.Close()
+
+	conn := connectWS(t, wsURL)
+	defer conn.Close()
+
+	// Read state rollup
+	var rollup StateRollup
+	rollupReceived := false
+
+	// Read up to 2 messages (rollup and client count)
+	for i := 0; i < 2; i++ {
+		_, msg, err := conn.ReadMessage()
+		require.NoError(t, err)
+
+		var tempRollup StateRollup
+		if err := json.Unmarshal(msg, &tempRollup); err == nil && tempRollup.Type == "StateRollup" {
+			rollup = tempRollup
+			rollupReceived = true
+			break
+		}
+	}
+
+	require.True(t, rollupReceived, "Should receive StateRollup message")
+	assert.Equal(t, "1.6.0", rollup.Version, "StateRollup should include version field")
+}
+
+func TestServer_StateRollupVersionOmittedWhenEmpty(t *testing.T) {
+	// Save original version
+	originalVersion := version
+	defer func() {
+		version = originalVersion
+	}()
+
+	// Set version to empty string to test omitempty behavior
+	version = ""
+
+	_, ts, wsURL := setupTestServer(t)
+	defer ts.Close()
+
+	conn := connectWS(t, wsURL)
+	defer conn.Close()
+
+	// Read state rollup
+	var rollup StateRollup
+	rollupReceived := false
+
+	// Read up to 2 messages (rollup and client count)
+	for i := 0; i < 2; i++ {
+		_, msg, err := conn.ReadMessage()
+		require.NoError(t, err)
+
+		var tempRollup StateRollup
+		if err := json.Unmarshal(msg, &tempRollup); err == nil && tempRollup.Type == "StateRollup" {
+			rollup = tempRollup
+			rollupReceived = true
+			break
+		}
+	}
+
+	require.True(t, rollupReceived, "Should receive StateRollup message")
+
+	// Marshal back to JSON to verify omitempty behavior
+	rollupData, err := json.Marshal(rollup)
+	require.NoError(t, err)
+
+	// Parse JSON to check if version field is present
+	var jsonMap map[string]interface{}
+	err = json.Unmarshal(rollupData, &jsonMap)
+	require.NoError(t, err)
+
+	// Version field should be omitted when empty (omitempty behavior)
+	_, versionPresent := jsonMap["version"]
+	assert.False(t, versionPresent, "Version field should be omitted when empty for backward compatibility")
+}
+
 func TestServer_BroadcastEventToAllClients(t *testing.T) {
 	_, ts, wsURL := setupTestServer(t)
 	defer ts.Close()

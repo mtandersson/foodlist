@@ -1,0 +1,3 @@
+# Air configuration file - valid TOML but linter doesn't recognize air's schema
+backend/.air.toml
+

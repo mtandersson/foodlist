@@ -79,33 +79,57 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Analyze version with semantic-release
+        id: analyze
+        run: |
+          # Run semantic-release in analyze-only mode to get next version
+          # This doesn't create a release, just determines what version would be released
+          npx semantic-release --dry-run --extends .releaserc.cjs > semantic-output.txt 2>&1 || true
+          # Extract version from output (semantic-release prints "next release version is X.Y.Z")
+          RELEASE_VERSION=$(grep -oP 'next release version is \K[0-9]+\.[0-9]+\.[0-9]+' semantic-output.txt || echo "")
+          if [ -z "$RELEASE_VERSION" ]; then
+            # Fallback: if no version determined, check VERSION file or use default
+            if [ -f VERSION ]; then
+              RELEASE_VERSION=$(cat VERSION)
+            else
+              RELEASE_VERSION="dev"
+            fi
+          fi
+          echo "version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "Next release version: $RELEASE_VERSION"
+          # Write to VERSION file for use in build steps
+          echo "$RELEASE_VERSION" > VERSION
+
       - name: Build release assets
         run: |
+          RELEASE_VERSION="${{ steps.analyze.outputs.version }}"
+          echo "Building version: $RELEASE_VERSION"
+          
           # Build for multiple platforms
           mkdir -p dist
 
           # Linux AMD64
           cd backend
-          GOOS=linux GOARCH=amd64 go build -o ../dist/foodlist-linux-amd64 .
+          GOOS=linux GOARCH=amd64 go build -ldflags "-X main.version=$RELEASE_VERSION" -o ../dist/foodlist-linux-amd64 .
 
           # Linux ARM64
-          GOOS=linux GOARCH=arm64 go build -o ../dist/foodlist-linux-arm64 .
+          GOOS=linux GOARCH=arm64 go build -ldflags "-X main.version=$RELEASE_VERSION" -o ../dist/foodlist-linux-arm64 .
 
           # macOS AMD64
-          GOOS=darwin GOARCH=amd64 go build -o ../dist/foodlist-darwin-amd64 .
+          GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.version=$RELEASE_VERSION" -o ../dist/foodlist-darwin-amd64 .
 
           # macOS ARM64 (Apple Silicon)
-          GOOS=darwin GOARCH=arm64 go build -o ../dist/foodlist-darwin-arm64 .
+          GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.version=$RELEASE_VERSION" -o ../dist/foodlist-darwin-arm64 .
 
           # Windows AMD64
-          GOOS=windows GOARCH=amd64 go build -o ../dist/foodlist-windows-amd64.exe .
+          GOOS=windows GOARCH=amd64 go build -ldflags "-X main.version=$RELEASE_VERSION" -o ../dist/foodlist-windows-amd64.exe .
 
           cd ..
 
-          # Build frontend
+          # Build frontend with version injection
           cd frontend
           npm ci
-          npm run build
+          RELEASE_VERSION=$RELEASE_VERSION npm run build
           cd ..
 
           # Create archives for individual binaries
@@ -167,6 +191,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            VERSION=${{ needs.release.outputs.new_release_version }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ needs.release.outputs.new_release_version }}

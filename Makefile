@@ -43,7 +43,15 @@ build:
 	@echo "Building frontend..."
 	cd frontend && npm install && npm run build
 	@echo "Building backend..."
-	cd backend && go build -o foodlist
+	@if [ -f VERSION ]; then \
+		VERSION=$$(cat VERSION); \
+		if [ -z "$$CI" ] && [ -z "$$GITHUB_ACTIONS" ]; then \
+			VERSION="$${VERSION}-dev"; \
+		fi; \
+		cd backend && go build -ldflags "-X main.version=$$VERSION" -o foodlist; \
+	else \
+		cd backend && go build -o foodlist; \
+	fi
 
 run:
 	@echo "Starting development servers..."
@@ -70,7 +78,15 @@ dev-secure:
 	@echo "Building frontend (production build)..."
 	cd frontend && npm install && npm run build
 	@echo "Building backend..."
-	cd backend && go build -o foodlist
+	@if [ -f VERSION ]; then \
+		VERSION=$$(cat VERSION); \
+		if [ -z "$$CI" ] && [ -z "$$GITHUB_ACTIONS" ]; then \
+			VERSION="$${VERSION}-dev"; \
+		fi; \
+		cd backend && go build -ldflags "-X main.version=$$VERSION" -o foodlist; \
+	else \
+		cd backend && go build -o foodlist; \
+	fi
 	@echo "Stopping anything already listening on :8080..."
 	@lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 	@echo ""
@@ -115,7 +131,15 @@ dev-secure-net:
 	@echo "Building frontend (production build)..."
 	cd frontend && npm install && npm run build
 	@echo "Building backend..."
-	cd backend && go build -o foodlist
+	@if [ -f VERSION ]; then \
+		VERSION=$$(cat VERSION); \
+		if [ -z "$$CI" ] && [ -z "$$GITHUB_ACTIONS" ]; then \
+			VERSION="$${VERSION}-dev"; \
+		fi; \
+		cd backend && go build -ldflags "-X main.version=$$VERSION" -o foodlist; \
+	else \
+		cd backend && go build -o foodlist; \
+	fi
 	@echo "Stopping anything already listening on :8080..."
 	@lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 	@echo ""

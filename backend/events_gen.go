@@ -113,6 +113,7 @@ type StateRollup struct {
 	Todos      []Todo     `json:"todos"`
 	Categories []Category `json:"categories"`
 	ListTitle  string     `json:"listTitle"`
+	Version    string     `json:"version,omitempty"`
 }
 
 // Event is an interface for all event types

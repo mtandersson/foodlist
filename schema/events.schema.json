@@ -283,7 +283,8 @@
           "type": "array",
           "items": {"$ref": "#/definitions/Category"}
         },
-        "listTitle": {"type": "string"}
+        "listTitle": {"type": "string"},
+        "version": {"type": "string"}
       },
       "required": ["type", "todos", "categories", "listTitle"],
       "additionalProperties": false

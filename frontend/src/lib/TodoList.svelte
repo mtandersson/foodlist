@@ -9,20 +9,37 @@
   import CategoriesView from './CategoriesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
   import CheckboxRing from './CheckboxRing.svelte';
+  import AboutModal from './AboutModal.svelte';
   import { getStoredTheme, setTheme, type ThemeMode } from './theme';
   import type { Todo, AutocompleteSuggestion } from './types';
 
   // Determine WebSocket URL
-  // Use the same path as the current page (to support secret paths like /secret-123/ws)
-  // Extract the base path from the current location (everything before the last segment)
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const basePath = window.location.pathname.endsWith('/') 
-    ? window.location.pathname 
-    : window.location.pathname + '/';
-  const wsUrl = `${wsProtocol}//${window.location.host}${basePath}ws`;
+  // Check for VITE_BACKEND_URL environment variable first (for testing remote servers)
+  // Otherwise use the same path as the current page (to support secret paths like /secret-123/ws)
+  let wsUrl: string;
+  if (import.meta.env.VITE_BACKEND_URL) {
+    // Use explicit backend URL from environment
+    // Convert http/https to ws/wss and append /ws
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const wsProtocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:';
+    const urlWithoutProtocol = backendUrl.replace(/^https?:\/\//, '');
+    const [host, ...pathParts] = urlWithoutProtocol.split('/');
+    const path = pathParts.length > 0 ? '/' + pathParts.join('/') : '';
+    wsUrl = `${wsProtocol}//${host}${path}/ws`;
+  } else {
+    // Extract the base path from the current location (everything before the last segment)
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const basePath = window.location.pathname.endsWith('/') 
+      ? window.location.pathname 
+      : window.location.pathname + '/';
+    wsUrl = `${wsProtocol}//${window.location.host}${basePath}ws`;
+  }
 
   const store = createTodoStore(wsUrl);
-  const { activeTodosCollapsed, completedTodos, completedTodosCollapsed, categories, activeTodosByCategoryCollapsed, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced } = store;
+  const { activeTodosCollapsed, completedTodos, completedTodosCollapsed, categories, activeTodosByCategoryCollapsed, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced, serverVersion } = store;
+  
+  // Get client version from build-time injection
+  const clientVersion = import.meta.env.VITE_APP_VERSION || 'dev';
 
   // Watch for error messages related to category operations
   $effect(() => {
@@ -109,6 +126,7 @@
 
   let pendingCategoryId: string | null = $state(null);
   let menuOpen = $state(false);
+  let showAboutModal = $state(false);
   
   // Theme state
   let currentTheme: ThemeMode = $state(getStoredTheme());
@@ -307,6 +325,15 @@
 
   function closeMenu() {
     menuOpen = false;
+  }
+
+  function handleAboutClick() {
+    showAboutModal = true;
+    closeMenu();
+  }
+
+  function handleAboutClose() {
+    showAboutModal = false;
   }
 
   function handleNewCategory() {
@@ -582,6 +609,11 @@
                 <span class="menu-checkmark">✓</span>
               {/if}
             </button>
+            <div class="menu-divider"></div>
+            <button class="menu-item" onclick={handleAboutClick}>
+              <span class="menu-icon">ℹ️</span>
+              Om
+            </button>
           </div>
           <button class="menu-backdrop" onclick={closeMenu} aria-label="Close menu"></button>
         {/if}
@@ -782,6 +814,14 @@
     </form>
   </div>
 </div>
+
+{#if showAboutModal}
+  <AboutModal 
+    clientVersion={clientVersion}
+    serverVersion={$serverVersion}
+    onCancel={handleAboutClose}
+  />
+{/if}
 
 <style>
   .todo-list-container {

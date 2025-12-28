@@ -2,6 +2,44 @@
 import { defineConfig } from "vitest/config";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { VitePWA } from "vite-plugin-pwa";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+// Read version from environment variable, VERSION file, or default to "dev"
+function getVersion(): string {
+  // CI builds: use RELEASE_VERSION if set
+  if (process.env.RELEASE_VERSION) {
+    return process.env.RELEASE_VERSION;
+  }
+
+  // Local builds: try to read from VERSION file
+  try {
+    const versionPath = join(__dirname, "..", "VERSION");
+    const version = readFileSync(versionPath, "utf-8").trim();
+    if (version) {
+      return version;
+    }
+  } catch {
+    // VERSION file doesn't exist or can't be read
+  }
+
+  // Default fallback
+  return "dev";
+}
+
+// Append "-dev" suffix if not in CI
+function getVersionWithSuffix(): string {
+  const version = getVersion();
+  const isCI = process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+  
+  if (!isCI && version !== "dev") {
+    return `${version}-dev`;
+  }
+  
+  return version;
+}
+
+const appVersion = getVersionWithSuffix();
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -13,6 +51,9 @@ export default defineConfig(({ mode }) => ({
   // component mounting works (Svelte 5 exports also include a server runtime).
   resolve: {
     conditions: ["browser", "module", "import", "default"],
+  },
+  define: {
+    "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion),
   },
   plugins: [
     svelte(),
