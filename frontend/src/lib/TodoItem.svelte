@@ -5,13 +5,14 @@
   interface Props {
     todo: Todo;
     categoryName?: string | null;
+    duplicateCount?: number;
     onToggleComplete: (id: string) => void;
     onToggleStar: (id: string) => void;
     onRename: (id: string, name: string) => void;
     onRequestCategorize?: (todo: Todo) => void;
   }
 
-  let { todo, categoryName = null, onToggleComplete, onToggleStar, onRename, onRequestCategorize }: Props = $props();
+  let { todo, categoryName = null, duplicateCount = 1, onToggleComplete, onToggleStar, onRename, onRequestCategorize }: Props = $props();
 
   let isEditing = $state(false);
   let editName = $state('');
@@ -128,8 +129,16 @@
       onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); } }}
       aria-label="Double-click or long-press to edit"
     >
-      {todo.name}
+      <span class="todo-name">
+        {todo.name}
+      </span>
     </button>
+  {/if}
+
+  {#if duplicateCount > 1}
+    <span class="duplicate-badge" aria-label={`${duplicateCount}x`}>
+      {duplicateCount}x
+    </span>
   {/if}
 
   {#if categoryName}
@@ -202,6 +211,34 @@
     text-align: left;
     font-family: inherit;
     width: 100%;
+  }
+
+  .todo-name {
+    min-width: 0;
+  }
+
+  .duplicate-badge {
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--radius-full);
+    background: #e9d5ff; /* Light purple for light mode */
+    color: #6b21a8; /* Dark purple text for light mode */
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    flex-shrink: 0;
+  }
+
+  /* Dark mode styling */
+  @media (prefers-color-scheme: dark) {
+    .duplicate-badge {
+      background: #c4b5fd; /* Lighter purple for dark mode */
+      color: white;
+    }
+  }
+
+  :global(:root[data-theme="dark"]) .duplicate-badge {
+    background: #c4b5fd; /* Lighter purple for dark mode */
+    color: white;
   }
 
   .todo-name-button.long-pressing {

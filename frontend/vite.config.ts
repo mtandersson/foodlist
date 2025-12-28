@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => ({
   // from any prefix like /<SHARED_SECRET>/ (e.g. /dev/).
   // Keep dev as absolute root for best HMR behavior.
   base: mode === 'production' ? './' : '/',
+  // Ensure Svelte resolves to the browser runtime during tests (jsdom) so
+  // component mounting works (Svelte 5 exports also include a server runtime).
+  resolve: {
+    conditions: ['browser', 'module', 'import', 'default'],
+  },
   plugins: [svelte()],
   test: {
     globals: true,

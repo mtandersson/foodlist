@@ -493,6 +493,195 @@ describe('TodoStore', () => {
     store.destroy();
   });
 
+  describe('Collapsed duplicates (same exact name + category + starred)', () => {
+    it('collapses duplicates into a single display item with count', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'b', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: 'dairy' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.activeTodosCollapsed);
+      expect(collapsed).toHaveLength(1);
+      expect(collapsed[0].todo.id).toBe('a'); // highest sortOrder representative
+      expect(collapsed[0].count).toBe(2);
+
+      store.destroy();
+    });
+
+    it('is case sensitive (does not collapse different casing)', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Milk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false, categoryId: null },
+          { id: 'b', name: 'milk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: null },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.activeTodosCollapsed);
+      expect(collapsed).toHaveLength(2);
+
+      store.destroy();
+    });
+
+    it('does not collapse across different categories', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false, categoryId: 'cat1' },
+          { id: 'b', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: 'cat2' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.activeTodosCollapsed);
+      expect(collapsed).toHaveLength(2);
+
+      store.destroy();
+    });
+
+    it('does not collapse across different star status', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Pasta', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: true, categoryId: null },
+          { id: 'b', name: 'Pasta', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: null },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.activeTodosCollapsed);
+      expect(collapsed).toHaveLength(2);
+
+      store.destroy();
+    });
+
+    it('completing a collapsed item completes the lowest sortOrder item (one only)', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'hi', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'lo', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: 'dairy' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      // User clicks the representative (highest), but we must complete the lowest.
+      store.toggleComplete('hi');
+
+      const sent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sent.type).toBe('CompleteTodo');
+      expect(sent.id).toBe('lo');
+
+      // Only one todo is completed optimistically.
+      const all = get(store.todos);
+      const hi = all.find((t) => t.id === 'hi')!;
+      const lo = all.find((t) => t.id === 'lo')!;
+      expect(hi.completedAt).toBeNull();
+      expect(lo.completedAt).not.toBeNull();
+
+      store.destroy();
+    });
+
+    it('reordering a collapsed item upwards only reorders the highest sortOrder item', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'hi', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 3000, starred: false, categoryId: null },
+          { id: 'lo', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: null },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      store.reorder('hi', 6000); // delta >= 0
+
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      const sent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sent.type).toBe('ReorderTodo');
+      expect(sent.id).toBe('hi');
+      expect(sent.sortOrder).toBe(6000);
+
+      store.destroy();
+    });
+
+    it('reordering a collapsed item downwards shifts the whole duplicate group', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'hi', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 3000, starred: false, categoryId: null },
+          { id: 'mid', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false, categoryId: null },
+          { id: 'lo', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: null },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      // Move the group down by 5000 (delta = -5000)
+      store.reorder('hi', -2000);
+
+      expect(mockSend).toHaveBeenCalledTimes(3);
+      const sentCommands = mockSend.mock.calls.map((c) => JSON.parse(c[0]));
+      expect(sentCommands.every((c) => c.type === 'ReorderTodo')).toBe(true);
+
+      const byId = new Map(sentCommands.map((c) => [c.id, c.sortOrder]));
+      expect(byId.get('hi')).toBe(-2000);
+      expect(byId.get('mid')).toBe(-3000);
+      expect(byId.get('lo')).toBe(-4000);
+
+      store.destroy();
+    });
+
+    it('collapses per-category in activeTodosByCategoryCollapsed', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a1', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 2000, starred: false, categoryId: 'dairy' },
+          { id: 'a2', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'b1', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 3000, starred: false, categoryId: 'other' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const map = get(store.activeTodosByCategoryCollapsed);
+      const dairy = map.get('dairy')!;
+      const other = map.get('other')!;
+
+      expect(dairy).toHaveLength(1);
+      expect(dairy[0].count).toBe(2);
+      expect(other).toHaveLength(1);
+      expect(other[0].count).toBe(1);
+
+      store.destroy();
+    });
+  });
+
   it('should sort completed todos by completedAt descending (most recent first)', () => {
     const store = createTodoStore('ws://localhost:8080/ws');
     
@@ -516,6 +705,193 @@ describe('TodoStore', () => {
     expect(completed[2].name).toBe('Completed First'); // 10:00
     
     store.destroy();
+  });
+
+  describe('Collapsed duplicates in completed todos', () => {
+    it('collapses duplicates into a single display item with count', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'b', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.completedTodosCollapsed);
+      expect(collapsed).toHaveLength(1);
+      expect(collapsed[0].count).toBe(2);
+      // Should use the most recently completed as representative
+      expect(collapsed[0].todo.id).toBe('b'); // completedAt: 12:00 (most recent)
+
+      store.destroy();
+    });
+
+    it('maintains completedAt sorting after collapse (most recent first)', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'b', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'c', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 2000, starred: false, categoryId: null },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.completedTodosCollapsed);
+      expect(collapsed).toHaveLength(2);
+      // Should be sorted by completedAt descending (most recent first)
+      expect(collapsed[0].todo.id).toBe('c'); // 14:00 - most recent
+      expect(collapsed[1].todo.id).toBe('b'); // 12:00 - representative of Mjölk group
+
+      store.destroy();
+    });
+
+    it('is case sensitive (does not collapse different casing)', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Milk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: false, categoryId: null },
+          { id: 'b', name: 'milk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: null },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.completedTodosCollapsed);
+      expect(collapsed).toHaveLength(2);
+
+      store.destroy();
+    });
+
+    it('does not collapse across different categories', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: false, categoryId: 'cat1' },
+          { id: 'b', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'cat2' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.completedTodosCollapsed);
+      expect(collapsed).toHaveLength(2);
+
+      store.destroy();
+    });
+
+    it('does not collapse across different star status', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Pasta', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: true, categoryId: null },
+          { id: 'b', name: 'Pasta', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: null },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.completedTodosCollapsed);
+      expect(collapsed).toHaveLength(2);
+
+      store.destroy();
+    });
+
+    it('uncompleting a collapsed item uncompletes the most recently completed item (one only)', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'old', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'recent', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      // The collapsed item shows 'recent' as representative (most recent completedAt)
+      // When uncompleting, we should uncomplete 'recent' (the most recently completed)
+      store.toggleComplete('recent');
+
+      const sent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sent.type).toBe('UncompleteTodo');
+      expect(sent.id).toBe('recent');
+
+      // Only one todo is uncompleted optimistically
+      const all = get(store.todos);
+      const old = all.find((t) => t.id === 'old')!;
+      const recent = all.find((t) => t.id === 'recent')!;
+      expect(old.completedAt).not.toBeNull(); // Still completed
+      expect(recent.completedAt).toBeNull(); // Uncompleted
+
+      store.destroy();
+    });
+
+    it('handles 3x duplicates correctly', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'a', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'b', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false, categoryId: 'dairy' },
+          { id: 'c', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const collapsed = get(store.completedTodosCollapsed);
+      expect(collapsed).toHaveLength(1);
+      expect(collapsed[0].count).toBe(3);
+      expect(collapsed[0].todo.id).toBe('c'); // Most recently completed
+
+      store.destroy();
+    });
+
+    it('uncompleting from a 3x group uncompletes only the most recent', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [
+          { id: 'old', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'mid', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false, categoryId: 'dairy' },
+          { id: 'recent', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+        ],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      // Uncomplete the collapsed item (represented by 'recent')
+      store.toggleComplete('recent');
+
+      const sent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sent.type).toBe('UncompleteTodo');
+      expect(sent.id).toBe('recent');
+
+      // Only 'recent' should be uncompleted
+      const all = get(store.todos);
+      expect(all.find((t) => t.id === 'old')!.completedAt).not.toBeNull();
+      expect(all.find((t) => t.id === 'mid')!.completedAt).not.toBeNull();
+      expect(all.find((t) => t.id === 'recent')!.completedAt).toBeNull();
+
+      store.destroy();
+    });
   });
 
   it('should handle list title changes', () => {
