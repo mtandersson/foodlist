@@ -1,3 +1,9 @@
+## [1.7.4](https://github.com/mtandersson/foodlist/compare/v1.7.3...v1.7.4) (2025-12-28)
+
+### Reverts
+
+* Revert "chore(docker): optimize dependency installation with BuildKit cache" ([0ec71cd](https://github.com/mtandersson/foodlist/commit/0ec71cda0c37d9ad148d2fd0a0b788fc65035301))
+
 ## [1.7.3](https://github.com/mtandersson/foodlist/compare/v1.7.2...v1.7.3) (2025-12-28)
 
 ### Bug Fixes
