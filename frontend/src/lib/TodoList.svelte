@@ -126,6 +126,7 @@
   let showAutocomplete = $state(false);
   let selectedAutocompleteIndex = $state(-1);
   let inputFocused = $state(false);
+  let todoInputEl: HTMLInputElement | null = null;
 
   function handleAddTodo() {
     const name = newTodoName.trim();
@@ -133,7 +134,18 @@
       store.createTodo(name, pendingCategoryId);
       newTodoName = '';
       pendingCategoryId = null;
-      hideAutocomplete();
+      selectedAutocompleteIndex = -1;
+
+      // Keep suggestions open for fast multi-add if the input is still focused.
+      // (Previously we always hid + cleared suggestions, which made the dropdown disappear
+      // even if more suggestions were available.)
+      if (inputFocused) {
+        store.requestAutocomplete(newTodoName);
+        showAutocomplete = true;
+        queueMicrotask(() => todoInputEl?.focus());
+      } else {
+        hideAutocomplete();
+      }
     }
   }
 
@@ -188,11 +200,19 @@
   }
 
   function selectSuggestion(suggestion: AutocompleteSuggestion) {
-    newTodoName = suggestion.name;
-    pendingCategoryId = suggestion.categoryId ?? null;
-    hideAutocomplete();
-    // Immediately add the todo
-    handleAddTodo();
+    // Immediately add the todo (without closing the dropdown)
+    store.createTodo(suggestion.name, suggestion.categoryId ?? null);
+    newTodoName = '';
+    pendingCategoryId = null;
+    selectedAutocompleteIndex = -1;
+
+    if (inputFocused) {
+      store.requestAutocomplete(newTodoName);
+      showAutocomplete = true;
+      queueMicrotask(() => todoInputEl?.focus());
+    } else {
+      hideAutocomplete();
+    }
   }
 
   function hideAutocomplete() {
@@ -719,7 +739,7 @@
             type="button"
             class="autocomplete-item"
             class:selected={index === selectedAutocompleteIndex}
-            onmousedown={() => selectSuggestion(suggestion)}
+            onmousedown={(e) => { e.preventDefault(); selectSuggestion(suggestion); }}
             onmouseenter={() => selectedAutocompleteIndex = index}
           >
             <div class="autocomplete-item-main">
@@ -747,6 +767,7 @@
       <input
         type="text"
         placeholder="Lägg till en uppgift"
+        bind:this={todoInputEl}
         bind:value={newTodoName}
         onkeydown={handleKeydown}
         oninput={handleInput}
