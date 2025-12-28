@@ -1,3 +1,9 @@
+## [1.7.3](https://github.com/mtandersson/foodlist/compare/v1.7.2...v1.7.3) (2025-12-28)
+
+### Bug Fixes
+
+* **frontend:** prevent focus ring on mobile for checkbox and star buttons ([bad9e87](https://github.com/mtandersson/foodlist/commit/bad9e87c427d976713ef598fadb0adee02f734c1))
+
 ## [1.7.2](https://github.com/mtandersson/foodlist/compare/v1.7.1...v1.7.2) (2025-12-28)
 
 ### Chores
