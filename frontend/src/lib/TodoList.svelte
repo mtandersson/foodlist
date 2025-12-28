@@ -22,7 +22,7 @@
   const wsUrl = `${wsProtocol}//${window.location.host}${basePath}ws`;
 
   const store = createTodoStore(wsUrl);
-  const { activeTodos, completedTodos, categories, activeTodosByCategory, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced } = store;
+  const { activeTodosCollapsed, completedTodos, completedTodosCollapsed, categories, activeTodosByCategoryCollapsed, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced } = store;
 
   // Watch for error messages related to category operations
   $effect(() => {
@@ -126,6 +126,7 @@
   let showAutocomplete = $state(false);
   let selectedAutocompleteIndex = $state(-1);
   let inputFocused = $state(false);
+  let todoInputEl: HTMLInputElement | null = null;
 
   function handleAddTodo() {
     const name = newTodoName.trim();
@@ -133,7 +134,18 @@
       store.createTodo(name, pendingCategoryId);
       newTodoName = '';
       pendingCategoryId = null;
-      hideAutocomplete();
+      selectedAutocompleteIndex = -1;
+
+      // Keep suggestions open for fast multi-add if the input is still focused.
+      // (Previously we always hid + cleared suggestions, which made the dropdown disappear
+      // even if more suggestions were available.)
+      if (inputFocused) {
+        store.requestAutocomplete(newTodoName);
+        showAutocomplete = true;
+        queueMicrotask(() => todoInputEl?.focus());
+      } else {
+        hideAutocomplete();
+      }
     }
   }
 
@@ -188,11 +200,19 @@
   }
 
   function selectSuggestion(suggestion: AutocompleteSuggestion) {
-    newTodoName = suggestion.name;
-    pendingCategoryId = suggestion.categoryId ?? null;
-    hideAutocomplete();
-    // Immediately add the todo
-    handleAddTodo();
+    // Immediately add the todo (without closing the dropdown)
+    store.createTodo(suggestion.name, suggestion.categoryId ?? null);
+    newTodoName = '';
+    pendingCategoryId = null;
+    selectedAutocompleteIndex = -1;
+
+    if (inputFocused) {
+      store.requestAutocomplete(newTodoName);
+      showAutocomplete = true;
+      queueMicrotask(() => todoInputEl?.focus());
+    } else {
+      hideAutocomplete();
+    }
   }
 
   function hideAutocomplete() {
@@ -351,7 +371,7 @@
   let dropPosition: 'above' | 'below' | null = $state(null);
   let isDragging = $state(false);
 
-  function computeSortOrder(todos: Todo[], newIndex: number): number {
+  function computeSortOrder(todos: Array<{ sortOrder: number }>, newIndex: number): number {
     if (todos.length === 0) return 0;
     if (newIndex <= 0) return todos[0].sortOrder + 1000;
     if (newIndex >= todos.length) return todos[todos.length - 1].sortOrder - 1000;
@@ -372,7 +392,8 @@
   }
 
   function wouldMove(targetId: string, position: 'above' | 'below'): boolean {
-    const todos = $activeTodos;
+    const entries = $activeTodosCollapsed;
+    const todos = entries.map((e) => e.todo);
     const draggedIndex = todos.findIndex((t) => t.id === draggedId);
     const targetIndex = todos.findIndex((t) => t.id === targetId);
     if (draggedIndex === -1 || targetIndex === -1) return false;
@@ -404,7 +425,7 @@
 
     const listEl = e.currentTarget as HTMLElement;
     const wrappers = Array.from(listEl.querySelectorAll('.todo-wrapper')) as HTMLElement[];
-    const todos = $activeTodos;
+    const todos = $activeTodosCollapsed.map((e) => e.todo);
 
     if (!wrappers.length || !todos.length) {
       dropTargetId = null;
@@ -451,7 +472,7 @@
       return;
     }
 
-    const todos = $activeTodos;
+    const todos = $activeTodosCollapsed.map((e) => e.todo);
     const targetIndex = todos.findIndex((t) => t.id === dropTargetId);
     
     if (targetIndex === -1) {
@@ -629,31 +650,32 @@
         ondrop={handleDrop}
         role="list"
       >
-        {#each $activeTodos as todo (todo.id)}
+        {#each $activeTodosCollapsed as entry (entry.todo.id)}
           <div
             class="todo-container"
-            class:spacer-top={dropTargetId === todo.id && dropPosition === 'above'}
-            class:spacer-bottom={dropTargetId === todo.id && dropPosition === 'below'}
+            class:spacer-top={dropTargetId === entry.todo.id && dropPosition === 'above'}
+            class:spacer-bottom={dropTargetId === entry.todo.id && dropPosition === 'below'}
             animate:flip={{ duration: isDragging ? 0 : 300 }}
             transition:fade={{ duration: 200 }}
           >
             <div
               class="todo-wrapper"
               role="listitem"
-              aria-grabbed={draggedId === todo.id}
-              class:drop-above={dropTargetId === todo.id && dropPosition === 'above'}
-              class:drop-below={dropTargetId === todo.id && dropPosition === 'below'}
+              aria-grabbed={draggedId === entry.todo.id}
+              class:drop-above={dropTargetId === entry.todo.id && dropPosition === 'above'}
+              class:drop-below={dropTargetId === entry.todo.id && dropPosition === 'below'}
               draggable="true"
-              ondragstart={(e) => handleDragStart(e, todo)}
-              ondragover={(e) => handleDragOverItem(e, todo)}
-              ondragleave={(e) => handleDragLeaveItem(e, todo.id)}
+              ondragstart={(e) => handleDragStart(e, entry.todo)}
+              ondragover={(e) => handleDragOverItem(e, entry.todo)}
+              ondragleave={(e) => handleDragLeaveItem(e, entry.todo.id)}
               ondrop={handleDrop}
               ondragend={handleDragEnd}
-              class:dragging={draggedId === todo.id}
+              class:dragging={draggedId === entry.todo.id}
             >
               <TodoItem
-                {todo}
-                categoryName={getCategoryName(todo.categoryId ?? null)}
+                todo={entry.todo}
+                duplicateCount={entry.count}
+                categoryName={getCategoryName(entry.todo.categoryId ?? null)}
                 onToggleComplete={store.toggleComplete}
                 onToggleStar={store.toggleStar}
                 onRename={store.rename}
@@ -664,21 +686,22 @@
       </div>
 
       <!-- Completed section -->
-      {#if $completedTodos.length > 0}
+      {#if $completedTodosCollapsed.length > 0}
         <CollapsibleSection
           title="Slutfört"
           expanded={completedExpanded}
           onToggle={toggleCompletedSection}
         >
-          {#each $completedTodos as todo (todo.id)}
+          {#each $completedTodosCollapsed as collapsed (collapsed.todo.id)}
             <div
               class="todo-wrapper"
               animate:flip={{ duration: 300 }}
               transition:fade={{ duration: 200 }}
             >
               <TodoItem
-                {todo}
-                categoryName={getCategoryName(todo.categoryId ?? null)}
+                todo={collapsed.todo}
+                duplicateCount={collapsed.count}
+                categoryName={getCategoryName(collapsed.todo.categoryId ?? null)}
                 onToggleComplete={store.toggleComplete}
                 onToggleStar={store.toggleStar}
                 onRename={store.rename}
@@ -690,8 +713,8 @@
     {:else}
       <CategoriesView
         categories={$categories}
-        activeTodosByCategory={$activeTodosByCategory}
-        completedTodos={$completedTodos}
+        activeTodosByCategory={$activeTodosByCategoryCollapsed}
+        completedTodos={$completedTodosCollapsed}
         getCategoryName={getCategoryName}
         onToggleComplete={store.toggleComplete}
         onToggleStar={store.toggleStar}
@@ -719,7 +742,7 @@
             type="button"
             class="autocomplete-item"
             class:selected={index === selectedAutocompleteIndex}
-            onmousedown={() => selectSuggestion(suggestion)}
+            onmousedown={(e) => { e.preventDefault(); selectSuggestion(suggestion); }}
             onmouseenter={() => selectedAutocompleteIndex = index}
           >
             <div class="autocomplete-item-main">
@@ -747,6 +770,7 @@
       <input
         type="text"
         placeholder="Lägg till en uppgift"
+        bind:this={todoInputEl}
         bind:value={newTodoName}
         onkeydown={handleKeydown}
         oninput={handleInput}

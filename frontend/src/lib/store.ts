@@ -42,9 +42,11 @@ export interface TodoStore {
   activeTodos: ReturnType<
     typeof derived<ReturnType<typeof writable<Todo[]>>, Todo[]>
   >
+  activeTodosCollapsed: ReturnType<typeof derived<any, CollapsedTodo[]>>
   completedTodos: ReturnType<
     typeof derived<ReturnType<typeof writable<Todo[]>>, Todo[]>
   >
+  completedTodosCollapsed: ReturnType<typeof derived<any, CollapsedTodo[]>>
   categories: ReturnType<
     typeof derived<
       ReturnType<typeof writable<Map<string, Category>>>,
@@ -63,6 +65,7 @@ export interface TodoStore {
       Map<string | null, Todo[]>
     >
   >
+  activeTodosByCategoryCollapsed: ReturnType<typeof derived<any, Map<string | null, CollapsedTodo[]>>>
   connectionState: ReturnType<typeof writable<ConnectionState>>
   userCount: ReturnType<typeof writable<number>>
   listTitle: ReturnType<typeof writable<string>>
@@ -84,6 +87,39 @@ export interface TodoStore {
   clearAutocomplete: () => void
   clearError: () => void
   destroy: () => void
+}
+
+export type CollapsedTodo = {
+  todo: Todo
+  count: number
+}
+
+function categoryKey(categoryId: string | null | undefined): string {
+  return categoryId ?? "__uncategorized__"
+}
+
+function duplicateKey(todo: Todo): string {
+  return `${todo.name}||${categoryKey(todo.categoryId)}||${todo.starred ? "1" : "0"}`
+}
+
+function collapseTodos(todos: Todo[]): CollapsedTodo[] {
+  const groups = new Map<string, Todo[]>()
+  for (const t of todos) {
+    const key = duplicateKey(t)
+    const list = groups.get(key) ?? []
+    list.push(t)
+    groups.set(key, list)
+  }
+
+  const collapsed: CollapsedTodo[] = []
+  for (const [, list] of groups) {
+    list.sort((a, b) => b.sortOrder - a.sortOrder)
+    collapsed.push({todo: list[0], count: list.length})
+  }
+
+  // Ensure deterministic ordering by representative sortOrder desc
+  collapsed.sort((a, b) => b.todo.sortOrder - a.todo.sortOrder)
+  return collapsed
 }
 
 export function createTodoStore(wsUrl: string): TodoStore {
@@ -120,6 +156,11 @@ export function createTodoStore(wsUrl: string): TodoStore {
       .sort((a, b) => b.sortOrder - a.sortOrder)
   )
 
+  // Active todos collapsed by exact name + category + starred (case sensitive)
+  const activeTodosCollapsed = derived(activeTodos, ($activeTodos) =>
+    collapseTodos($activeTodos)
+  )
+
   // Completed todos, sorted by completedAt descending (most recently completed first)
   const completedTodos = derived(todos, ($todos) =>
     $todos
@@ -132,6 +173,42 @@ export function createTodoStore(wsUrl: string): TodoStore {
         return 0
       })
   )
+
+  // Completed todos collapsed by exact name + category + starred (case sensitive)
+  // Maintains completedAt sorting (most recent first)
+  // Uses most recently completed item as representative (not highest sortOrder)
+  const completedTodosCollapsed = derived(completedTodos, ($completedTodos) => {
+    const groups = new Map<string, Todo[]>()
+    for (const t of $completedTodos) {
+      const key = duplicateKey(t)
+      const list = groups.get(key) ?? []
+      list.push(t)
+      groups.set(key, list)
+    }
+
+    const collapsed: CollapsedTodo[] = []
+    for (const [, list] of groups) {
+      // Sort by completedAt descending (most recent first), then by sortOrder descending
+      list.sort((a, b) => {
+        if (a.completedAt && b.completedAt) {
+          const dateCompare = b.completedAt.localeCompare(a.completedAt)
+          if (dateCompare !== 0) return dateCompare
+        }
+        return b.sortOrder - a.sortOrder
+      })
+      // Use the most recently completed as representative
+      collapsed.push({todo: list[0], count: list.length})
+    }
+
+    // Sort collapsed items by completedAt descending (most recent first)
+    collapsed.sort((a, b) => {
+      if (a.todo.completedAt && b.todo.completedAt) {
+        return b.todo.completedAt.localeCompare(a.todo.completedAt)
+      }
+      return 0
+    })
+    return collapsed
+  })
 
   const categories = derived(categoriesMap, ($map) => {
     const arr = Array.from($map.values())
@@ -155,6 +232,17 @@ export function createTodoStore(wsUrl: string): TodoStore {
     }
     return grouped
   })
+
+  const activeTodosByCategoryCollapsed = derived(
+    activeTodosByCategory,
+    ($activeByCategory) => {
+      const collapsedByCat = new Map<string | null, CollapsedTodo[]>()
+      for (const [catId, list] of $activeByCategory) {
+        collapsedByCat.set(catId, collapseTodos(list))
+      }
+      return collapsedByCat
+    }
+  )
 
   // WebSocket connection
   const ws = new TodoWebSocket(wsUrl)
@@ -402,6 +490,35 @@ export function createTodoStore(wsUrl: string): TodoStore {
     return Math.max(...currentCategories.map((c) => c.sortOrder))
   }
 
+  function getActiveDuplicateGroupForId(id: string): Todo[] {
+    const currentActive = get(activeTodos)
+    const base = currentActive.find((t) => t.id === id)
+    if (!base) return []
+
+    const key = duplicateKey(base)
+    return currentActive
+      .filter((t) => duplicateKey(t) === key)
+      .sort((a, b) => b.sortOrder - a.sortOrder)
+  }
+
+  function getCompletedDuplicateGroupForId(id: string): Todo[] {
+    const currentCompleted = get(completedTodos)
+    const base = currentCompleted.find((t) => t.id === id)
+    if (!base) return []
+
+    const key = duplicateKey(base)
+    return currentCompleted
+      .filter((t) => duplicateKey(t) === key)
+      .sort((a, b) => {
+        // Sort by completedAt descending (most recent first), then by sortOrder descending
+        if (a.completedAt && b.completedAt) {
+          const dateCompare = b.completedAt.localeCompare(a.completedAt)
+          if (dateCompare !== 0) return dateCompare
+        }
+        return b.sortOrder - a.sortOrder
+      })
+  }
+
   function sendCommand(
     command: Command,
     optimisticEvent?: Event
@@ -529,18 +646,42 @@ export function createTodoStore(wsUrl: string): TodoStore {
     const todo = currentTodos.find((t) => t.id === id)
     if (!todo) return
 
-    const commandId = uuidv4()
+    // If this represents a collapsed duplicate group (same exact name + category + starred),
+    // completing should only complete ONE item: the lowest sortOrder in that group.
+    // Uncompleting should uncomplete ONE item: the oldest completedAt (lowest timestamp) in that group.
+    let targetId = id
     if (todo.completedAt === null) {
-      const command: CompleteTodo = {type: "CompleteTodo", commandId, id}
+      const group = getActiveDuplicateGroupForId(id)
+      if (group.length > 1) {
+        const lowest = [...group].sort((a, b) => a.sortOrder - b.sortOrder)[0]
+        targetId = lowest.id
+      }
+    } else {
+      const group = getCompletedDuplicateGroupForId(id)
+      if (group.length > 1) {
+        // Uncomplete the one with the oldest completedAt (lowest timestamp = most recently completed)
+        // Actually, we want the one that was completed most recently (highest completedAt timestamp)
+        // so it appears at the top when uncompleted
+        const mostRecent = group[0] // Already sorted by completedAt descending
+        targetId = mostRecent.id
+      }
+    }
+
+    const targetTodo = currentTodos.find((t) => t.id === targetId)
+    if (!targetTodo) return
+
+    const commandId = uuidv4()
+    if (targetTodo.completedAt === null) {
+      const command: CompleteTodo = {type: "CompleteTodo", commandId, id: targetId}
       const optimistic: TodoCompleted = {
         type: "TodoCompleted",
-        id,
+        id: targetId,
         completedAt: new Date().toISOString(),
       }
       sendCommand(command, optimistic)
     } else {
-      const command: UncompleteTodo = {type: "UncompleteTodo", commandId, id}
-      const optimistic: TodoUncompleted = {type: "TodoUncompleted", id}
+      const command: UncompleteTodo = {type: "UncompleteTodo", commandId, id: targetId}
+      const optimistic: TodoUncompleted = {type: "TodoUncompleted", id: targetId}
       sendCommand(command, optimistic)
     }
   }
@@ -564,7 +705,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
     }
   }
 
-  function reorder(id: string, newSortOrder: number) {
+  function reorderSingle(id: string, newSortOrder: number) {
     const commandId = uuidv4()
     const command: ReorderTodo = {
       type: "ReorderTodo",
@@ -578,6 +719,31 @@ export function createTodoStore(wsUrl: string): TodoStore {
       sortOrder: newSortOrder,
     }
     sendCommand(command, optimistic)
+  }
+
+  function reorder(id: string, newSortOrder: number) {
+    const group = getActiveDuplicateGroupForId(id)
+    if (group.length <= 1) {
+      reorderSingle(id, newSortOrder)
+      return
+    }
+
+    // Representative is the highest sortOrder item; the collapsed item should "live" there.
+    // When moving down (lowering sortOrder), adjust the whole group by the same delta so the
+    // representative stays at the requested position.
+    const highest = group[0]
+    const delta = newSortOrder - highest.sortOrder
+
+    if (delta >= 0) {
+      // Move up: only adjust the highest item.
+      reorderSingle(highest.id, newSortOrder)
+      return
+    }
+
+    // Move down: shift the whole group together to keep it cohesive.
+    for (const t of group) {
+      reorderSingle(t.id, t.sortOrder + delta)
+    }
   }
 
   function rename(id: string, name: string) {
@@ -612,10 +778,13 @@ export function createTodoStore(wsUrl: string): TodoStore {
   return {
     todos: todos as any, // Cast to satisfy interface
     activeTodos: activeTodos as any,
+    activeTodosCollapsed: activeTodosCollapsed as any,
     completedTodos: completedTodos as any,
+    completedTodosCollapsed: completedTodosCollapsed as any,
     categories: categories as any,
     categoryLookup: categoryLookup as any,
     activeTodosByCategory: activeTodosByCategory as any,
+    activeTodosByCategoryCollapsed: activeTodosByCategoryCollapsed as any,
     connectionState,
     userCount,
     listTitle,

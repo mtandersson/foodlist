@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
 import type { Todo } from './types';
+import TodoItem from './TodoItem.svelte';
 
 describe('TodoItem - Mobile Categorization Logic', () => {
   let mockTodo: Todo;
@@ -14,6 +16,54 @@ describe('TodoItem - Mobile Categorization Logic', () => {
       starred: false,
       categoryId: null, // Uncategorized
     };
+  });
+
+  describe('Duplicate badge rendering', () => {
+    it('does not show a badge when duplicateCount is 1 (default)', () => {
+      render(TodoItem, {
+        props: {
+          todo: mockTodo,
+          categoryName: null,
+          onToggleComplete: vi.fn(),
+          onToggleStar: vi.fn(),
+          onRename: vi.fn(),
+        },
+      });
+
+      expect(screen.queryByText('1x')).toBeNull();
+      expect(screen.queryByText('2x')).toBeNull();
+    });
+
+    it('shows a 2x badge directly after the name when duplicateCount is 2', () => {
+      render(TodoItem, {
+        props: {
+          todo: mockTodo,
+          duplicateCount: 2,
+          categoryName: null,
+          onToggleComplete: vi.fn(),
+          onToggleStar: vi.fn(),
+          onRename: vi.fn(),
+        },
+      });
+
+      expect(screen.getByText('Test Todo')).toBeInTheDocument();
+      expect(screen.getByText('2x')).toBeInTheDocument();
+    });
+
+    it('shows a 3x badge when duplicateCount is 3', () => {
+      render(TodoItem, {
+        props: {
+          todo: mockTodo,
+          duplicateCount: 3,
+          categoryName: null,
+          onToggleComplete: vi.fn(),
+          onToggleStar: vi.fn(),
+          onRename: vi.fn(),
+        },
+      });
+
+      expect(screen.getByText('3x')).toBeInTheDocument();
+    });
   });
 
   describe('Quick tap logic', () => {
