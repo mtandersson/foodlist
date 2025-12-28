@@ -1,4 +1,96 @@
-# Cursor IDE Rules for FoodList Project
+# FoodList Project - Base Rules
+
+## Development Workflow
+
+### Documentation First
+
+**ALWAYS read relevant documentation before making changes:**
+
+1. **Before starting any task:**
+   - Read `README.md` for project overview
+   - Check `CONTRIBUTING.md` for development guidelines
+   - Review `docs/README.md` for documentation index
+   - Search `docs/` directory for relevant guides
+
+2. **For specific tasks, consult:**
+   - Architecture changes → `docs/architecture/`
+   - Feature implementation → `docs/features/`
+   - Setup/configuration → `docs/setup/`
+   - Development guides → `docs/guides/`
+   - AI development → `docs/guides/AI_DEVELOPMENT_GUIDE.md`
+
+3. **When modifying code:**
+   - Read existing code comments and documentation
+   - Check related test files for usage examples
+   - Review similar implementations in the codebase
+
+### Lint and Test Requirements
+
+**ALWAYS run lint and tests before completing any code changes:**
+
+1. **After making code changes, run:**
+   ```bash
+   # Run all linting (backend + frontend)
+   make lint
+   cd frontend && npm run check
+   
+   # Run all tests (backend + frontend)
+   make test
+   ```
+
+2. **For backend-only changes:**
+   ```bash
+   # Backend lint
+   make lint
+   
+   # Backend tests
+   cd backend && go test -v -cover ./...
+   ```
+
+3. **For frontend-only changes:**
+   ```bash
+   # Frontend lint
+   cd frontend && npm run check
+   
+   # Frontend tests
+   cd frontend && npm test
+   ```
+
+### Fix Problems
+
+**ALWAYS fix lint errors and test failures before completing work:**
+
+1. **If lint fails:**
+   - Fix all linting errors immediately
+   - Address warnings if they indicate real issues
+   - Do not skip or ignore lint errors
+
+2. **If tests fail:**
+   - Fix failing tests before proceeding
+   - Update tests if implementation changed intentionally
+   - Ensure test coverage is maintained or improved
+
+3. **If build fails:**
+   - Fix compilation/type errors immediately
+   - Ensure all dependencies are properly installed
+   - Verify code follows project conventions
+
+4. **Never commit code that:**
+   - Has lint errors
+   - Has failing tests
+   - Has build/compilation errors
+   - Reduces test coverage without justification
+
+### Workflow Summary
+
+**Required steps for every code change:**
+1. ✅ Read relevant documentation
+2. ✅ Make code changes
+3. ✅ Run lint (`make lint` and `cd frontend && npm run check`)
+4. ✅ Run tests (`make test`)
+5. ✅ Fix any lint errors or test failures
+6. ✅ Verify all checks pass
+7. ✅ Commit using conventional commit format
 
 ## Commit Messages
 
