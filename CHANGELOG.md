@@ -1,3 +1,17 @@
+## [1.7.0](https://github.com/mtandersson/foodlist/compare/v1.6.0...v1.7.0) (2025-12-28)
+
+### Features
+
+* **schema:** add version field to StateRollup schema and update related types ([6bfde3b](https://github.com/mtandersson/foodlist/commit/6bfde3b2afdebf85a873e9334419d6ebf68b934d))
+
+### Styles
+
+* **frontend:** add responsive margin for todo wrapper on mobile ([122660e](https://github.com/mtandersson/foodlist/commit/122660edc5500f1458c298a1a67e68da4b34f92e))
+
+### Chores
+
+* remove .cursorrules file containing commit message guidelines ([4039f5a](https://github.com/mtandersson/foodlist/commit/4039f5af598eebf4c5795bb2f53792c5ff04a686))
+
 ## [1.6.0](https://github.com/mtandersson/foodlist/compare/v1.5.1...v1.6.0) (2025-12-28)
 
 ### Features
