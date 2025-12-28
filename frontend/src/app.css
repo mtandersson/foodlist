@@ -226,8 +226,9 @@ html {
   background-color: var(--app-bg-color);
   background-image: var(--app-bg-image);
   background-attachment: fixed;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   /* Ensure content respects safe areas generally */
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);

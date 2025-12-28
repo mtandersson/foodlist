@@ -8,16 +8,17 @@
 
 <style>
   main {
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
     display: flex;
     justify-content: center;
-    padding: var(--spacing-lg) 0;
+    padding-top: var(--spacing-lg);
+    overflow: hidden;
   }
 
   @media (max-width: 768px) {
     main {
-      padding: 0;
+      padding-top: 0;
     }
   }
 </style>
