@@ -532,6 +532,12 @@
     transition: transform var(--duration-instant);
   }
 
+  @media (max-width: 768px) {
+    .todo-wrapper {
+      margin-bottom: var(--spacing-xs);
+    }
+  }
+
   .dragging {
     opacity: var(--opacity-dragging);
   }
