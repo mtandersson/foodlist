@@ -1,3 +1,19 @@
+## [1.5.1](https://github.com/mtandersson/foodlist/compare/v1.5.0...v1.5.1) (2025-12-28)
+
+### Styles
+
+* **ui:** update height and padding for responsive layout ([8933878](https://github.com/mtandersson/foodlist/commit/89338788f08288898483db4b2940b16f0e91434e))
+* **ui:** update height and padding for responsive layout ([#55](https://github.com/mtandersson/foodlist/issues/55)) ([705acf5](https://github.com/mtandersson/foodlist/commit/705acf5d8f903198098d6da2b0d860f82c952b79))
+
+### Chores
+
+* **ci:** remove daily chore release workflow ([424703d](https://github.com/mtandersson/foodlist/commit/424703de532ad758760b3e6406b78c0f36e69afd))
+* **ci:** remove daily release gate job from workflow ([1979178](https://github.com/mtandersson/foodlist/commit/1979178ba513ebe4e2f5652ebd3b4dfe1e2d2998))
+* **ci:** remove daily release gate job from workflow ([#56](https://github.com/mtandersson/foodlist/issues/56)) ([59bbcdb](https://github.com/mtandersson/foodlist/commit/59bbcdbb0c14ee077d721a41b2c190d5a5a8ec7e))
+* **deps:** update actions/setup-node action to v6 ([811b8eb](https://github.com/mtandersson/foodlist/commit/811b8eb3680af05bbe98c6484d415f69308f8147))
+* **deps:** update actions/setup-node action to v6 ([#34](https://github.com/mtandersson/foodlist/issues/34)) ([d443ec4](https://github.com/mtandersson/foodlist/commit/d443ec48869c816545ee5fe732d46cd07e9f2bf5))
+* **releaserc:** update release rules to always publish patch for chore commits ([1aef94e](https://github.com/mtandersson/foodlist/commit/1aef94ee9d38c204b75281a592592132f7c7799b))
+
 ## [1.5.0](https://github.com/mtandersson/foodlist/compare/v1.4.0...v1.5.0) (2025-12-28)
 
 ### Features
