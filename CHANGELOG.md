@@ -1,3 +1,10 @@
+## [1.6.0](https://github.com/mtandersson/foodlist/compare/v1.5.1...v1.6.0) (2025-12-28)
+
+### Features
+
+* **frontend:** add vite-plugin-pwa for improved PWA support ([38f70a5](https://github.com/mtandersson/foodlist/commit/38f70a58ee049a0989255c9b2ba11e9325b60206))
+* **frontend:** integrate PWA support with vite-plugin-pwa ([8f7c310](https://github.com/mtandersson/foodlist/commit/8f7c310e842dcf99cc0a0e4336a049d6d5bf26da))
+
 ## [1.5.1](https://github.com/mtandersson/foodlist/compare/v1.5.0...v1.5.1) (2025-12-28)
 
 ### Styles
