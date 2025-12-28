@@ -790,15 +790,15 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    height: 100dvh;
+    height: calc(100dvh - var(--spacing-lg));
     padding: 0 var(--spacing-2xl);
+    padding-bottom: var(--spacing-lg);
   }
 
   @media (max-width: 768px) {
     .todo-list-container {
       width: 100%;
-      padding: 0 var(--spacing-md);
-      padding-top: env(safe-area-inset-top);
+      padding: env(safe-area-inset-top) var(--spacing-md) calc(var(--spacing-lg) + env(safe-area-inset-bottom));
       height: 100dvh;
     }
   }
@@ -821,7 +821,6 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    margin-bottom: var(--spacing-lg);
     padding-right: var(--spacing-xs);
     min-height: 0;
     /* Force scrollbar to always be visible for consistent layout */
@@ -1280,14 +1279,12 @@
   .add-todo-wrapper {
     position: relative;
     flex-shrink: 0;
-    margin-bottom: var(--spacing-lg);
     /* Match scrollable-content's scrollbar gutter + padding-right */
     padding-right: calc(var(--scrollbar-width) + var(--spacing-xs));
   }
 
   @media (max-width: 768px) {
     .add-todo-wrapper {
-      margin-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
       padding-right: 0;
     }
   }
