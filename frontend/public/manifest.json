@@ -13,5 +13,20 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "handla",
+      "short_name": "handla",
+      "description": "Lägg till en vara i listan",
+      "url": "./?action=add&text=%s",
+      "icons": [
+        {
+          "src": "./icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
   ]
 }
