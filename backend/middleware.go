@@ -238,10 +238,17 @@ func isPWAFile(path string) bool {
 		"/favicon.ico",
 		"/robots.txt",
 		"/site.webmanifest",
+		"/sw.js",     // Service worker (vite-plugin-pwa)
+		"/sw.js.map", // Service worker source map
+		"/workbox-",  // Workbox files (prefix check below)
 	}
 
 	for _, file := range pwaFiles {
 		if path == file {
+			return true
+		}
+		// Check for workbox files (prefix match)
+		if file == "/workbox-" && strings.HasPrefix(path, "/workbox-") {
 			return true
 		}
 	}

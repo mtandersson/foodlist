@@ -84,6 +84,31 @@ func main() {
 		mux.HandleFunc("/ws", server.HandleWebSocket)
 	}
 
+	// Serve PWA files at root level (always accessible, middleware handles security)
+	// These files need to be accessible from root for service worker registration
+	// and mobile app installation to work properly
+	mux.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "sw.js"))
+	})
+	mux.HandleFunc("/sw.js.map", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "sw.js.map"))
+	})
+	mux.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "manifest.json"))
+	})
+	mux.HandleFunc("/manifest.webmanifest", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "manifest.webmanifest"))
+	})
+	mux.HandleFunc("/registerSW.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "registerSW.js"))
+	})
+	// Handle workbox files dynamically (they have hashed names)
+	mux.HandleFunc("/workbox-", func(w http.ResponseWriter, r *http.Request) {
+		// Extract filename from path
+		filename := filepath.Base(r.URL.Path)
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, filename))
+	})
+
 	// Serve static files under secret path
 	staticPath := pathPrefix
 	fileServer := http.FileServer(http.Dir(cfg.StaticDir))
