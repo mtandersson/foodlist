@@ -17,59 +17,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  gate:
-    name: Gate (max 1 release per day)
-    runs-on: ubuntu-latest
-    outputs:
-      skip_today: ${{ steps.gate.outputs.skip_today }}
-      latest_release_tag: ${{ steps.gate.outputs.latest_release_tag }}
-    steps:
-      - name: Check if a release already exists today (UTC)
-        id: gate
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-
-            // Start of "today" in UTC
-            const now = new Date();
-            const startOfTodayUtc = new Date(Date.UTC(
-              now.getUTCFullYear(),
-              now.getUTCMonth(),
-              now.getUTCDate(),
-              0, 0, 0, 0
-            ));
-
-            let latest;
-            try {
-              const res = await github.rest.repos.getLatestRelease({ owner, repo });
-              latest = res.data;
-            } catch (e) {
-              // If there are no releases yet, allow the workflow to proceed.
-              if (e?.status === 404) {
-                core.setOutput("skip_today", "false");
-                core.setOutput("latest_release_tag", "");
-                return;
-              }
-              throw e;
-            }
-
-            const createdAt = new Date(latest.created_at);
-            const skip = createdAt >= startOfTodayUtc;
-
-            core.info(`Latest release: ${latest.tag_name} @ ${latest.created_at}`);
-            core.info(`Start of today (UTC): ${startOfTodayUtc.toISOString()}`);
-            core.info(`Skip today: ${skip}`);
-
-            core.setOutput("skip_today", skip ? "true" : "false");
-            core.setOutput("latest_release_tag", latest.tag_name || "");
-
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    needs: gate
-    if: needs.gate.outputs.skip_today != 'true'
 
     steps:
       - name: Checkout code
@@ -103,9 +53,8 @@ jobs:
 
   release:
     name: Create Daily Chore Release
-    needs: [gate, test]
+    needs: [test]
     runs-on: ubuntu-latest
-    if: needs.gate.outputs.skip_today != 'true'
     outputs:
       new_release_published: ${{ steps.semantic.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic.outputs.new_release_version }}
@@ -146,9 +95,9 @@ jobs:
 
   build-and-push:
     name: Build and Push Docker Image (daily)
-    needs: [gate, release]
+    needs: [release]
     runs-on: ubuntu-latest
-    if: needs.gate.outputs.skip_today != 'true' && needs.release.outputs.new_release_published == 'true'
+    if: needs.release.outputs.new_release_published == 'true'
 
     steps:
       - name: Checkout code
@@ -178,4 +127,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
-
