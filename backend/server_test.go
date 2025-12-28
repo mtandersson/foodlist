@@ -41,6 +41,68 @@ func connectWS(t *testing.T, wsURL string) *websocket.Conn {
 	return conn
 }
 
+// readInitialMessages reads the initial StateRollup and ClientCount messages
+// in any order and returns them. This handles race conditions where messages
+// can arrive in different orders.
+func readInitialMessages(t *testing.T, conn *websocket.Conn) (StateRollup, ClientCountMessage) {
+	var rollup StateRollup
+	var clientCount ClientCountMessage
+	rollupReceived := false
+	clientCountReceived := false
+
+	// Read messages until we have both StateRollup and ClientCount
+	// (should be the first 2 messages, but order may vary)
+	// Allow up to 5 messages in case of timing issues or unexpected messages
+	maxMessages := 5
+	for i := 0; i < maxMessages && (!rollupReceived || !clientCountReceived); i++ {
+		conn.SetReadDeadline(time.Now().Add(time.Second))
+		_, msg, err := conn.ReadMessage()
+		require.NoError(t, err)
+
+		// Try to unmarshal as StateRollup
+		if !rollupReceived {
+			var tempRollup StateRollup
+			if err := json.Unmarshal(msg, &tempRollup); err == nil && tempRollup.Type == "StateRollup" {
+				rollup = tempRollup
+				rollupReceived = true
+				continue
+			}
+		}
+
+		// Try to unmarshal as ClientCount
+		if !clientCountReceived {
+			var tempCount ClientCountMessage
+			if err := json.Unmarshal(msg, &tempCount); err == nil && tempCount.Type == "ClientCount" {
+				clientCount = tempCount
+				clientCountReceived = true
+				continue
+			}
+		}
+
+		// If we get an unexpected message type, continue reading
+		// (might be a client count update from another client connecting)
+	}
+
+	require.True(t, rollupReceived, "Should receive StateRollup message")
+	require.True(t, clientCountReceived, "Should receive ClientCount message")
+	return rollup, clientCount
+}
+
+// readClientCount reads a ClientCount message, ignoring other message types
+func readClientCount(t *testing.T, conn *websocket.Conn) ClientCountMessage {
+	for {
+		conn.SetReadDeadline(time.Now().Add(time.Second))
+		_, msg, err := conn.ReadMessage()
+		require.NoError(t, err)
+
+		var clientCount ClientCountMessage
+		if err := json.Unmarshal(msg, &clientCount); err == nil && clientCount.Type == "ClientCount" {
+			return clientCount
+		}
+		// If not a ClientCount, continue reading
+	}
+}
+
 func TestServer_AcceptConnection(t *testing.T) {
 	_, ts, wsURL := setupTestServer(t)
 	defer ts.Close()
@@ -218,12 +280,11 @@ func TestServer_BroadcastEventToAllClients(t *testing.T) {
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
-	// Read initial rollups and client counts
-	conn1.ReadMessage() // rollup
-	conn1.ReadMessage() // client count (1)
-	conn2.ReadMessage() // rollup
-	conn2.ReadMessage() // client count (2)
-	conn1.ReadMessage() // client count (2) to first client
+	// Read initial rollups and client counts (order may vary)
+	readInitialMessages(t, conn1)
+	readInitialMessages(t, conn2)
+	// Read client count update when second client connects
+	readClientCount(t, conn1)
 
 	// Send CreateTodo command from client1
 	cmd := CreateTodoCommand{
@@ -265,9 +326,8 @@ func TestServer_PersistEventToStore(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup and client count
-	conn.ReadMessage()
-	conn.ReadMessage()
+	// Read initial rollup and client count (order may vary)
+	readInitialMessages(t, conn)
 
 	// Send command
 	cmd := CreateTodoCommand{
@@ -299,9 +359,8 @@ func TestServer_UpdateStateOnEvent(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup and client count
-	conn.ReadMessage()
-	conn.ReadMessage()
+	// Read initial rollup and client count (order may vary)
+	readInitialMessages(t, conn)
 
 	// Send command
 	cmd := CreateTodoCommand{
@@ -322,9 +381,7 @@ func TestServer_UpdateStateOnEvent(t *testing.T) {
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
-	_, msg, _ := conn2.ReadMessage()
-	var rollup StateRollup
-	json.Unmarshal(msg, &rollup)
+	rollup, _ := readInitialMessages(t, conn2)
 
 	require.Len(t, rollup.Todos, 1)
 	assert.Equal(t, "state-test", rollup.Todos[0].ID)
@@ -338,12 +395,11 @@ func TestServer_HandleClientDisconnect(t *testing.T) {
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
-	// Read rollups and client counts
-	conn1.ReadMessage() // rollup
-	conn1.ReadMessage() // client count (1)
-	conn2.ReadMessage() // rollup
-	conn2.ReadMessage() // client count (2)
-	conn1.ReadMessage() // client count (2) to first client
+	// Read rollups and client counts (order may vary)
+	readInitialMessages(t, conn1)
+	readInitialMessages(t, conn2)
+	// Read client count update when second client connects
+	readClientCount(t, conn1)
 
 	// Disconnect client 1
 	conn1.Close()
@@ -384,9 +440,8 @@ func TestServer_RejectInvalidEvent(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup and client count
-	conn.ReadMessage()
-	conn.ReadMessage()
+	// Read initial rollup and client count (order may vary)
+	readInitialMessages(t, conn)
 
 	// Send invalid JSON
 	err := conn.WriteMessage(websocket.TextMessage, []byte("not valid json"))
@@ -453,9 +508,7 @@ func TestServer_LoadExistingEventsOnStart(t *testing.T) {
 	defer conn.Close()
 
 	// Should receive rollup with existing todo
-	_, msg, _ := conn.ReadMessage()
-	var rollup StateRollup
-	json.Unmarshal(msg, &rollup)
+	rollup, _ := readInitialMessages(t, conn)
 
 	require.Len(t, rollup.Todos, 1)
 	assert.Equal(t, "preexisting", rollup.Todos[0].ID)
@@ -552,16 +605,13 @@ func TestServer_Run_BroadcastToMultipleClients(t *testing.T) {
 	conn3 := connectWS(t, wsURL)
 	defer conn3.Close()
 
-	// Read initial rollups and client counts
-	conn1.ReadMessage() // rollup
-	conn1.ReadMessage() // client count (1)
-	conn2.ReadMessage() // rollup
-	conn2.ReadMessage() // client count (2)
-	conn1.ReadMessage() // client count (2) to first client
-	conn3.ReadMessage() // rollup
-	conn3.ReadMessage() // client count (3)
-	conn1.ReadMessage() // client count (3) to first client
-	conn2.ReadMessage() // client count (3) to second client
+	// Read initial rollups and client counts (order may vary)
+	readInitialMessages(t, conn1)
+	readInitialMessages(t, conn2)
+	readClientCount(t, conn1) // client count (2) when conn2 connects
+	readInitialMessages(t, conn3)
+	readClientCount(t, conn1) // client count (3) when conn3 connects
+	readClientCount(t, conn2) // client count (3) when conn3 connects
 
 	// Send command from client1
 	cmd := CreateTodoCommand{
@@ -605,8 +655,8 @@ func TestServer_WritePump_HandleClosedConnection(t *testing.T) {
 
 	conn := connectWS(t, wsURL)
 
-	// Read initial rollup
-	conn.ReadMessage()
+	// Read initial messages (order may vary)
+	readInitialMessages(t, conn)
 
 	// Close connection immediately
 	conn.Close()
@@ -632,9 +682,8 @@ func TestServer_ReadPump_IgnoreMalformedMessages(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup and client count
-	conn.ReadMessage()
-	conn.ReadMessage()
+	// Read initial rollup and client count (order may vary)
+	readInitialMessages(t, conn)
 
 	// Send malformed messages
 	conn.WriteMessage(websocket.TextMessage, []byte("not json"))
@@ -674,13 +723,8 @@ func TestServer_SetListTitle(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial rollup and client count
-	_, msg, err := conn.ReadMessage()
-	require.NoError(t, err)
-	conn.ReadMessage() // skip client count
-
-	var rollup StateRollup
-	json.Unmarshal(msg, &rollup)
+	// Read initial rollup and client count (order may vary)
+	rollup, _ := readInitialMessages(t, conn)
 	assert.Equal(t, "My Todo List", rollup.ListTitle)
 
 	// Send SetListTitle command
@@ -715,12 +759,11 @@ func TestServer_SetListTitle_BroadcastsToAllClients(t *testing.T) {
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
-	// Read initial rollups and client counts
-	conn1.ReadMessage() // rollup
-	conn1.ReadMessage() // client count (1)
-	conn2.ReadMessage() // rollup
-	conn2.ReadMessage() // client count (2)
-	conn1.ReadMessage() // client count (2) to first client
+	// Read initial rollups and client counts (order may vary)
+	readInitialMessages(t, conn1)
+	readInitialMessages(t, conn2)
+	// Read client count update when second client connects
+	readClientCount(t, conn1)
 
 	// Client 1 changes the title
 	cmdJSON := `{"type":"SetListTitle","commandId":"set-title-2","title":"Shared List"}`
@@ -1206,13 +1249,8 @@ func TestServer_SendErrorMessageOnDuplicateCategory(t *testing.T) {
 	conn := connectWS(t, wsURL)
 	defer conn.Close()
 
-	// Read initial state rollup
-	_, _, err := conn.ReadMessage()
-	require.NoError(t, err)
-
-	// Read client count message
-	_, _, err = conn.ReadMessage()
-	require.NoError(t, err)
+	// Read initial rollup and client count (order may vary)
+	readInitialMessages(t, conn)
 
 	// Try to create duplicate category with commandId
 	command := map[string]interface{}{
@@ -1221,7 +1259,7 @@ func TestServer_SendErrorMessageOnDuplicateCategory(t *testing.T) {
 		"id":        "cat-2",
 		"name":      "Work",
 	}
-	err = conn.WriteJSON(command)
+	err := conn.WriteJSON(command)
 	require.NoError(t, err)
 
 	// Should receive error response
