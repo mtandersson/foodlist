@@ -1,53 +1,54 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vitest/config";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { VitePWA } from "vite-plugin-pwa";
-import { readFileSync } from "fs";
-import { join } from "path";
+import {defineConfig} from "vitest/config"
+import {svelte} from "@sveltejs/vite-plugin-svelte"
+import {VitePWA} from "vite-plugin-pwa"
+import {readFileSync} from "fs"
+import {join} from "path"
 
 // Read version from environment variable, VERSION file, or default to "dev"
 function getVersion(): string {
   // CI builds: use RELEASE_VERSION if set (indicates CI build)
   if (process.env.RELEASE_VERSION) {
-    return process.env.RELEASE_VERSION;
+    return process.env.RELEASE_VERSION
   }
 
   // Local builds: try to read from VERSION file
   try {
-    const versionPath = join(__dirname, "..", "VERSION");
-    const version = readFileSync(versionPath, "utf-8").trim();
+    const versionPath = join(__dirname, "..", "VERSION")
+    const version = readFileSync(versionPath, "utf-8").trim()
     if (version) {
-      return version;
+      return version
     }
   } catch {
     // VERSION file doesn't exist or can't be read
   }
 
   // Default fallback
-  return "dev";
+  return "dev"
 }
 
 // Append "-dev" suffix if not in CI
 // CI is detected by: RELEASE_VERSION env var (most reliable), CI=true, or GITHUB_ACTIONS=true
 function getVersionWithSuffix(): string {
-  const version = getVersion();
-  
+  const version = getVersion()
+
   // If RELEASE_VERSION is set, it's a CI build - don't append -dev
-  const isCI = !!process.env.RELEASE_VERSION || 
-               process.env.CI === "true" || 
-               process.env.GITHUB_ACTIONS === "true";
-  
+  const isCI =
+    !!process.env.RELEASE_VERSION ||
+    process.env.CI === "true" ||
+    process.env.GITHUB_ACTIONS === "true"
+
   if (!isCI && version !== "dev") {
-    return `${version}-dev`;
+    return `${version}-dev`
   }
-  
-  return version;
+
+  return version
 }
 
-const appVersion = getVersionWithSuffix();
+const appVersion = getVersionWithSuffix()
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({mode}) => ({
   // For production builds we need relative asset URLs so the app can be served
   // from any prefix like /<SHARED_SECRET>/ (e.g. /dev/).
   // Keep dev as absolute root for best HMR behavior.
@@ -156,4 +157,4 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}));
+}))
