@@ -1,3 +1,23 @@
+## [1.5.0](https://github.com/mtandersson/foodlist/compare/v1.4.0...v1.5.0) (2025-12-28)
+
+### Features
+
+* **ui:** enhance todo input handling with autocomplete suggestions ([e1bfe94](https://github.com/mtandersson/foodlist/commit/e1bfe94bdc6a1b9ae700935c30118ab41106a151))
+* **ui:** implement duplicate todo item collapsing with count display ([880a61f](https://github.com/mtandersson/foodlist/commit/880a61f659ea9c49421536085b7d66137980ed1a))
+
+### Styles
+
+* **ui:** hide category badge in TodoItem component ([5824a58](https://github.com/mtandersson/foodlist/commit/5824a5855bb9f74d7f13ee29197c5c5029923849))
+* **ui:** hide category badge in TodoItem component ([#50](https://github.com/mtandersson/foodlist/issues/50)) ([d877f83](https://github.com/mtandersson/foodlist/commit/d877f838954dfadf75fdda85a3486d2b8925be92))
+
+### Chores
+
+* **ci:** remove github template ([bda07da](https://github.com/mtandersson/foodlist/commit/bda07da3e05220548a699aed0e8a8b90e839b875))
+* **releaserc:** add style rule for UI in release configuration ([ac3ded9](https://github.com/mtandersson/foodlist/commit/ac3ded90432b12edb670d73d876930f1deb9f7d5))
+* **releaserc:** add style rule for UI in release configuration ([#52](https://github.com/mtandersson/foodlist/issues/52)) ([e52df0e](https://github.com/mtandersson/foodlist/commit/e52df0e7f7135d3095141be1f8e9a2a4f0e72098))
+* **ui:** add favicon link to index.html ([45d5dd0](https://github.com/mtandersson/foodlist/commit/45d5dd0902f5325877328444bc885962bc12a45c))
+* **ui:** add favicon link to index.html ([#53](https://github.com/mtandersson/foodlist/issues/53)) ([0f45a7d](https://github.com/mtandersson/foodlist/commit/0f45a7d09f928c2e0fe607aaef7be63c3f35f374))
+
 ## [1.4.0](https://github.com/mtandersson/foodlist/compare/v1.3.0...v1.4.0) (2025-12-26)
 
 ### Features
