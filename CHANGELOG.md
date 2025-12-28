@@ -1,3 +1,17 @@
+## [1.7.1](https://github.com/mtandersson/foodlist/compare/v1.7.0...v1.7.1) (2025-12-28)
+
+### Bug Fixes
+
+* **frontend:** clean up Vite config formatting and improve version handling ([5f343e7](https://github.com/mtandersson/foodlist/commit/5f343e780b976425feac39e7159fac0199d43b88))
+
+### Code Refactoring
+
+* **tests:** streamline WebSocket message handling in server tests ([92b3fc7](https://github.com/mtandersson/foodlist/commit/92b3fc7aa518516b402b270346359714894ca872))
+
+### Chores
+
+* **release:** 1.7.0 [skip ci] ([d982028](https://github.com/mtandersson/foodlist/commit/d982028ab0fa4a88793bcf50c8f9f00ac3c789e7))
+
 ## [1.7.0](https://github.com/mtandersson/foodlist/compare/v1.6.0...v1.7.0) (2025-12-28)
 
 ### Features
