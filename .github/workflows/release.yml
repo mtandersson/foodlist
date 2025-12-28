@@ -193,9 +193,14 @@ jobs:
           push: true
           build-args: |
             VERSION=${{ needs.release.outputs.new_release_version }}
+            BUILDKIT_INLINE_CACHE=1
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ needs.release.outputs.new_release_version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/${{ github.repository }}:latest
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=ghcr.io/${{ github.repository }}:latest,mode=max
           platforms: linux/amd64,linux/arm64
