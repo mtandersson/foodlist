@@ -1,10 +1,6 @@
 // Semantic-release configuration
-// - Default behavior: do NOT publish releases for `chore` commits
-// - Daily chore release workflow: set DAILY_CHORE_RELEASE=true to publish a patch
-//   release even when only `chore(...)` commits happened since the last release.
-const dailyChoreRelease = process.env.DAILY_CHORE_RELEASE === "true"
-
-const baseReleaseRules = [
+// - Always publish patch releases for `chore` commits
+const releaseRules = [
   {type: "feat", release: "minor"},
   {type: "fix", release: "patch"},
   {type: "perf", release: "patch"},
@@ -14,14 +10,11 @@ const baseReleaseRules = [
   {type: "style", release: false},
   {type: "refactor", release: "patch"},
   {type: "test", release: false},
-  {type: "build", release: "patch"},
+  {type: "build", release: false},
   {type: "ci", release: false},
+  {type: "chore", release: "patch"},
   {breaking: true, release: "major"},
 ]
-
-const releaseRules = dailyChoreRelease
-  ? [...baseReleaseRules, {type: "chore", release: "patch"}]
-  : baseReleaseRules
 
 module.exports = {
   branches: ["main"],
