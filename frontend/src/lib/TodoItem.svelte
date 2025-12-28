@@ -20,13 +20,29 @@
   let isLongPressing = $state(false);
   let touchStartTime = $state(0);
   let touchMoved = $state(false);
+  let checkboxButton: HTMLButtonElement | null = $state(null);
+  let starButton: HTMLButtonElement | null = $state(null);
 
   function handleCheckClick() {
     onToggleComplete(todo.id);
+    // Blur the button after click to prevent focus from moving to next item
+    // This fixes the issue where the item below gets a focus ring on mobile
+    // Use queueMicrotask to ensure blur happens after browser's default focus behavior
+    queueMicrotask(() => {
+      if (checkboxButton) {
+        checkboxButton.blur();
+      }
+    });
   }
 
   function handleStarClick() {
     onToggleStar(todo.id);
+    // Blur the button after click to prevent focus from moving to next item
+    queueMicrotask(() => {
+      if (starButton) {
+        starButton.blur();
+      }
+    });
   }
 
   function startEditing() {
@@ -102,6 +118,7 @@
 <div class="todo-item" class:completed={todo.completedAt !== null}>
   <button 
     class="checkbox" 
+    bind:this={checkboxButton}
     onclick={handleCheckClick}
     aria-label={todo.completedAt ? 'Mark as incomplete' : 'Mark as complete'}
   >
@@ -150,6 +167,7 @@
   <button 
     class="star-btn" 
     class:starred={todo.starred}
+    bind:this={starButton}
     onclick={handleStarClick}
     aria-label={todo.starred ? 'Unstar' : 'Star'}
   >
@@ -194,6 +212,18 @@
     align-items: center;
     justify-content: center;
     padding: 0;
+    outline: none;
+  }
+
+  /* Prevent focus rings on mobile for checkbox buttons */
+  @media (max-width: 768px) {
+    .checkbox:focus {
+      outline: none;
+    }
+    
+    .checkbox:focus-visible {
+      outline: none;
+    }
   }
 
   .todo-name-button {
@@ -286,6 +316,18 @@
     justify-content: center;
     transition: all var(--transition-normal);
     padding: 0;
+    outline: none;
+  }
+
+  /* Prevent focus rings on mobile for star buttons */
+  @media (max-width: 768px) {
+    .star-btn:focus {
+      outline: none;
+    }
+    
+    .star-btn:focus-visible {
+      outline: none;
+    }
   }
 
   .star-btn:hover {
