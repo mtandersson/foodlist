@@ -9,8 +9,9 @@ WORKDIR /app/frontend
 # Copy frontend package files
 COPY frontend/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies with BuildKit cache mount for faster rebuilds
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy frontend source
 COPY frontend/ ./
@@ -33,8 +34,9 @@ WORKDIR /app/backend
 # Copy go mod files
 COPY backend/go.mod backend/go.sum ./
 
-# Download dependencies
-RUN go mod download
+# Download dependencies with BuildKit cache mount for faster rebuilds
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 # Copy backend source
 COPY backend/ ./
