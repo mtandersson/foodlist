@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/mtandersson/foodlist/compare/v1.7.1...v1.7.2) (2025-12-28)
+
+### Chores
+
+* **docker:** optimize dependency installation with BuildKit cache ([4fea3df](https://github.com/mtandersson/foodlist/commit/4fea3df492f15b61f22d639c31e1195ec4e0f694))
+* **release:** 1.7.0 [skip ci] ([c326970](https://github.com/mtandersson/foodlist/commit/c32697088c0430acffce2477ee39d3e9ee1d5231))
+
 ## [1.7.1](https://github.com/mtandersson/foodlist/compare/v1.7.0...v1.7.1) (2025-12-28)
 
 ### Bug Fixes
