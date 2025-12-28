@@ -10,6 +10,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// version is set at build time via ldflags: -X main.version=<version>
+// Default value is "dev" if not set during build
+var version = "dev"
+
 // Config holds all configuration for the application
 type Config struct {
 	// Server configuration

@@ -85,6 +85,90 @@ describe('TodoStore', () => {
     store.destroy();
   });
 
+  describe('Version handling in StateRollup', () => {
+    it('should extract and store version from StateRollup when present', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      const rollup: StateRollup = {
+        type: 'StateRollup',
+        todos: [],
+        categories: [],
+        listTitle: 'Test',
+        version: '1.6.0'
+      };
+      
+      messageHandler!(rollup);
+      
+      const serverVersion = get(store.serverVersion);
+      expect(serverVersion).toBe('1.6.0');
+      
+      store.destroy();
+    });
+
+    it('should handle StateRollup without version field (backward compatibility)', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      const rollup: StateRollup = {
+        type: 'StateRollup',
+        todos: [],
+        categories: [],
+        listTitle: 'Test'
+        // version field omitted
+      };
+      
+      messageHandler!(rollup);
+      
+      const serverVersion = get(store.serverVersion);
+      expect(serverVersion).toBeNull();
+      
+      store.destroy();
+    });
+
+    it('should handle StateRollup with undefined version', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      const rollup: StateRollup = {
+        type: 'StateRollup',
+        todos: [],
+        categories: [],
+        listTitle: 'Test',
+        version: undefined
+      };
+      
+      messageHandler!(rollup);
+      
+      const serverVersion = get(store.serverVersion);
+      expect(serverVersion).toBeNull();
+      
+      store.destroy();
+    });
+
+    it('should update serverVersion when new StateRollup received', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      // First rollup with version
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [],
+        categories: [],
+        listTitle: 'Test',
+        version: '1.6.0'
+      });
+      
+      expect(get(store.serverVersion)).toBe('1.6.0');
+      
+      // Second rollup with different version
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [],
+        categories: [],
+        listTitle: 'Test',
+        version: '1.7.0'
+      });
+      
+      expect(get(store.serverVersion)).toBe('1.7.0');
+      
+      store.destroy();
+    });
+  });
+
   it('should apply TodoCreated event to add new todo', () => {
     const store = createTodoStore('ws://localhost:8080/ws');
     

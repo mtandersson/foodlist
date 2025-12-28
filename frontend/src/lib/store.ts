@@ -72,6 +72,7 @@ export interface TodoStore {
   autocompleteSuggestions: ReturnType<typeof writable<AutocompleteSuggestion[]>>
   errorMessage: ReturnType<typeof writable<string | null>>
   isSynced: ReturnType<typeof writable<boolean>>
+  serverVersion: ReturnType<typeof writable<string | null>>
   createTodo: (name: string, categoryId?: string | null) => void
   createCategory: (name: string, id?: string) => Promise<string>
   renameCategory: (id: string, name: string) => Promise<void>
@@ -131,6 +132,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
   const autocompleteSuggestions = writable<AutocompleteSuggestion[]>([])
   const errorMessage = writable<string | null>(null)
   const isSynced = writable<boolean>(false)
+  const serverVersion = writable<string | null>(null)
   let errorTimeout: number | null = null
 
   // Track pending autocomplete request to match responses
@@ -278,6 +280,8 @@ export function createTodoStore(wsUrl: string): TodoStore {
       }
       categoriesMap.set(catMap)
       listTitle.set(message.listTitle)
+      // Extract server version from rollup (handles undefined/missing gracefully)
+      serverVersion.set(message.version ?? null)
       isSynced.set(true)
       return
     }
@@ -791,6 +795,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
     autocompleteSuggestions,
     errorMessage,
     isSynced,
+    serverVersion,
     createTodo,
     createCategory,
     renameCategory,

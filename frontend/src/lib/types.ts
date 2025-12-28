@@ -193,6 +193,7 @@ export interface StateRollup {
   todos: Todo[]
   categories: Category[]
   listTitle: string
+  version?: string
 }
 
 // Union types

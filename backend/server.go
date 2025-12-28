@@ -216,6 +216,7 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		Todos:      s.state.GetTodos(),
 		Categories: s.state.GetCategories(),
 		ListTitle:  s.state.GetListTitle(),
+		Version:    version,
 	}
 	rollupData, err := json.Marshal(rollup)
 	if err != nil {
