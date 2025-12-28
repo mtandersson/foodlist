@@ -1,43 +1,43 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vitest/config'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from "vitest/config";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
   // For production builds we need relative asset URLs so the app can be served
   // from any prefix like /<SHARED_SECRET>/ (e.g. /dev/).
   // Keep dev as absolute root for best HMR behavior.
-  base: mode === 'production' ? './' : '/',
+  base: mode === "production" ? "./" : "/",
   // Ensure Svelte resolves to the browser runtime during tests (jsdom) so
   // component mounting works (Svelte 5 exports also include a server runtime).
   resolve: {
-    conditions: ['browser', 'module', 'import', 'default'],
+    conditions: ["browser", "module", "import", "default"],
   },
   plugins: [
     svelte(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: "autoUpdate",
       // Use relative paths to work with secret paths (e.g., /dev/)
       // The service worker will be registered relative to the current page
-      strategies: 'generateSW',
-      includeAssets: ['favicon.ico', 'icon.svg'],
+      strategies: "generateSW",
+      includeAssets: ["favicon.ico", "icon.svg"],
       // Ensure service worker works with relative base paths
-      injectRegister: 'auto',
+      injectRegister: "auto",
       manifest: {
-        name: 'FoodList',
-        short_name: 'FoodList',
-        description: 'A beautiful, real-time shopping list app',
-        theme_color: '#6366f1',
-        background_color: '#6366f1',
-        display: 'standalone',
-        start_url: './',
+        name: "FoodList",
+        short_name: "FoodList",
+        description: "A beautiful, real-time shopping list app",
+        theme_color: "#6366f1",
+        background_color: "#6366f1",
+        display: "standalone",
+        start_url: "./",
         icons: [
           {
-            src: './icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            src: "./icon.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any maskable",
           },
         ],
       },
@@ -51,9 +51,9 @@ export default defineConfig(({ mode }) => ({
           {
             // Static assets (JS, CSS, HTML, JSON) - NetworkFirst for fast updates
             urlPattern: /\.(js|css|html|json)$/,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'static-resources',
+              cacheName: "static-resources",
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
@@ -67,9 +67,9 @@ export default defineConfig(({ mode }) => ({
           {
             // Images - CacheFirst for performance
             urlPattern: /\.(png|jpg|jpeg|svg|gif|webp|ico)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'images',
+              cacheName: "images",
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
@@ -79,7 +79,7 @@ export default defineConfig(({ mode }) => ({
           {
             // WebSocket connections - don't cache, always use network
             urlPattern: /^wss?:\/\/.*$/,
-            handler: 'NetworkOnly',
+            handler: "NetworkOnly",
           },
         ],
         // Enable navigation preload for faster page loads
@@ -90,24 +90,24 @@ export default defineConfig(({ mode }) => ({
       // Enable in dev mode for testing
       devOptions: {
         enabled: true,
-        type: 'module',
+        type: "module",
       },
     }),
   ],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/setupTests.ts'],
-    include: ['src/**/*.{test,spec}.{js,ts}'],
+    environment: "jsdom",
+    setupFiles: ["./src/setupTests.ts"],
+    include: ["src/**/*.{test,spec}.{js,ts}"],
   },
   server: {
-    host: '0.0.0.0', // Allow external connections
+    host: "0.0.0.0", // Allow external connections
     proxy: {
-      '/ws': {
-        target: process.env.VITE_BACKEND_URL || 'ws://localhost:8080',
+      "/ws": {
+        target: process.env.VITE_BACKEND_URL || "ws://localhost:8080",
         ws: true,
         changeOrigin: true,
       },
     },
   },
-}))
+}));

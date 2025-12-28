@@ -1,6 +1,6 @@
 /**
  * PWA Update Management
- * 
+ *
  * Enhances vite-plugin-pwa's auto-update with periodic checking for faster updates.
  * The plugin handles registration automatically, this adds aggressive update checking.
  */
@@ -11,7 +11,7 @@ let updateCheckInterval: number | null = null;
  * Check for service worker updates and apply immediately if available
  */
 export async function checkForUpdates(): Promise<boolean> {
-  if (!('serviceWorker' in navigator)) {
+  if (!("serviceWorker" in navigator)) {
     return false;
   }
 
@@ -23,17 +23,17 @@ export async function checkForUpdates(): Promise<boolean> {
 
     // Force check for updates
     await registration.update();
-    
+
     // Check if there's a waiting service worker
     if (registration.waiting) {
       // Service worker is waiting, trigger skipWaiting
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
       return true;
     }
 
     return false;
   } catch (error) {
-    console.error('Error checking for updates:', error);
+    console.error("Error checking for updates:", error);
     return false;
   }
 }
@@ -43,7 +43,7 @@ export async function checkForUpdates(): Promise<boolean> {
  * Checks every 30 seconds for new versions (aggressive checking)
  */
 export function startUpdateChecking(intervalMs: number = 30000): void {
-  if (!('serviceWorker' in navigator)) {
+  if (!("serviceWorker" in navigator)) {
     return;
   }
 
@@ -76,13 +76,13 @@ export function stopUpdateChecking(): void {
  * Works with vite-plugin-pwa's auto-registration
  */
 export function initPWAUpdates(): void {
-  if (!('serviceWorker' in navigator)) {
+  if (!("serviceWorker" in navigator)) {
     return;
   }
 
   // Wait for service worker to be ready
-  if (document.readyState === 'loading') {
-    window.addEventListener('load', () => {
+  if (document.readyState === "loading") {
+    window.addEventListener("load", () => {
       setupUpdateListeners();
     });
   } else {
@@ -100,22 +100,27 @@ function setupUpdateListeners(): void {
     }
 
     // Listen for updates found
-    registration.addEventListener('updatefound', () => {
+    registration.addEventListener("updatefound", () => {
       const newWorker = registration.installing;
       if (!newWorker) return;
 
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+      newWorker.addEventListener("statechange", () => {
+        if (
+          newWorker.state === "installed" &&
+          navigator.serviceWorker.controller
+        ) {
           // New service worker installed, it will activate automatically
           // due to skipWaiting: true in config
-          console.log('New service worker installed, update will apply on next reload');
+          console.log(
+            "New service worker installed, update will apply on next reload",
+          );
         }
       });
     });
 
     // Listen for controller change (service worker takeover)
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('Service worker updated, reloading page...');
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      console.log("Service worker updated, reloading page...");
       window.location.reload();
     });
   });
@@ -123,4 +128,3 @@ function setupUpdateListeners(): void {
   // Start aggressive periodic checking (every 30 seconds)
   startUpdateChecking(30000);
 }
-
