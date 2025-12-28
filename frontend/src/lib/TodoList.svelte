@@ -12,6 +12,7 @@
   import AboutModal from './AboutModal.svelte';
   import { getStoredTheme, setTheme, type ThemeMode } from './theme';
   import type { Todo, AutocompleteSuggestion } from './types';
+  import { smartSplit as smartSplitUtil, extractVoiceInput } from './voiceInputParser';
 
   // Determine WebSocket URL
   // Check for VITE_BACKEND_URL environment variable first (for testing remote servers)
@@ -528,6 +529,161 @@
     dropPosition = null;
     isDragging = false;
   }
+
+  // Get all previous items from server (for smart matching)
+  function getAllPreviousItems(): Promise<string[]> {
+    return new Promise((resolve) => {
+      let timeoutId: number | null = null;
+      let unsubscribe: (() => void) | null = null;
+      let suggestionsReceived = false;
+      
+      // Clear any existing suggestions first
+      store.clearAutocomplete();
+      
+      // Use a small delay to ensure the clear has taken effect
+      queueMicrotask(() => {
+        // Set up a one-time listener for autocomplete response
+        unsubscribe = store.autocompleteSuggestions.subscribe((suggestions) => {
+          // Only process suggestions that arrive after our request
+          if (!suggestionsReceived && suggestions.length > 0) {
+            suggestionsReceived = true;
+            
+            // Extract item names from suggestions
+            const items = suggestions.map(s => s.name);
+            
+            // Clean up
+            if (timeoutId !== null) clearTimeout(timeoutId);
+            if (unsubscribe) unsubscribe();
+            store.clearAutocomplete();
+            
+            resolve(items);
+          }
+        });
+        
+        // Request autocomplete with empty query to get all items
+        store.requestAutocomplete('');
+      });
+      
+      // Timeout after 2 seconds - if no response, return empty array
+      timeoutId = window.setTimeout(() => {
+        if (!suggestionsReceived) {
+          suggestionsReceived = true;
+          if (unsubscribe) unsubscribe();
+          store.clearAutocomplete();
+          resolve([]);
+        }
+      }, 2000);
+    });
+  }
+
+  // Extract queries from voice input (removes "handla" prefix and smart-splits into multiple items)
+  async function extractQueries(text: string): Promise<string[]> {
+    if (!text) return [];
+    
+    // Extract voice input (removes prefix)
+    const itemsText = extractVoiceInput(text);
+    
+    // Get all previous items for smart matching
+    const knownItems = await getAllPreviousItems();
+    
+    // Use smart splitting to match known items first
+    return smartSplitUtil(itemsText, knownItems);
+  }
+
+  // Get best match from autocomplete using server suggestions
+  function getBestMatch(query: string): Promise<string> {
+    return new Promise((resolve) => {
+      if (!query) {
+        resolve('');
+        return;
+      }
+      
+      let timeoutId: number | null = null;
+      let unsubscribe: (() => void) | null = null;
+      let suggestionsReceived = false;
+      
+      // Clear any existing suggestions first
+      store.clearAutocomplete();
+      
+      // Use a small delay to ensure the clear has taken effect
+      queueMicrotask(() => {
+        // Set up a one-time listener for autocomplete response
+        unsubscribe = store.autocompleteSuggestions.subscribe((suggestions) => {
+          // Only process suggestions that arrive after our request (ignore initial empty state)
+          // Check if we have suggestions and haven't already resolved
+          if (!suggestionsReceived && suggestions.length > 0) {
+            suggestionsReceived = true;
+            
+            // Use the first suggestion (best match from server, sorted by frequency/score)
+            const bestMatch = suggestions[0].name;
+            
+            // Clean up
+            if (timeoutId !== null) clearTimeout(timeoutId);
+            if (unsubscribe) unsubscribe();
+            store.clearAutocomplete();
+            
+            resolve(bestMatch);
+          }
+        });
+        
+        // Request autocomplete after subscription is set up
+        store.requestAutocomplete(query);
+      });
+      
+      // Timeout after 2 seconds - if no response, use the query as-is
+      timeoutId = window.setTimeout(() => {
+        if (!suggestionsReceived) {
+          suggestionsReceived = true;
+          if (unsubscribe) unsubscribe();
+          store.clearAutocomplete();
+          resolve(query); // Fallback to original query
+        }
+      }, 2000);
+    });
+  }
+
+  // Handle URL parameters for shortcuts
+  async function handleShortcutParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    const text = urlParams.get('text');
+    
+    if (action === 'add' && text) {
+      const voiceInput = decodeURIComponent(text);
+      
+      // Wait for store to sync before processing
+      const checkSync = async () => {
+        if ($isSynced) {
+          // Extract queries using smart splitting (matches known items first)
+          const queries = await extractQueries(voiceInput);
+          
+          if (queries.length > 0) {
+            // Get best match for each item from server autocomplete
+            // Process sequentially to avoid overwhelming the server
+            for (const query of queries) {
+              const itemName = await getBestMatch(query);
+              if (itemName) {
+                store.createTodo(itemName);
+                // Small delay between items to ensure proper ordering
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+            }
+          }
+          // Clean up URL parameters
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        } else {
+          // Retry after a short delay
+          setTimeout(checkSync, 100);
+        }
+      };
+      checkSync();
+    }
+  }
+
+  onMount(() => {
+    handleShortcutParams();
+  });
 
   onDestroy(() => {
     store.destroy();
