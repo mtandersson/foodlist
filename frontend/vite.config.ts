@@ -7,7 +7,7 @@ import { join } from "path";
 
 // Read version from environment variable, VERSION file, or default to "dev"
 function getVersion(): string {
-  // CI builds: use RELEASE_VERSION if set
+  // CI builds: use RELEASE_VERSION if set (indicates CI build)
   if (process.env.RELEASE_VERSION) {
     return process.env.RELEASE_VERSION;
   }
@@ -28,9 +28,14 @@ function getVersion(): string {
 }
 
 // Append "-dev" suffix if not in CI
+// CI is detected by: RELEASE_VERSION env var (most reliable), CI=true, or GITHUB_ACTIONS=true
 function getVersionWithSuffix(): string {
   const version = getVersion();
-  const isCI = process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+  
+  // If RELEASE_VERSION is set, it's a CI build - don't append -dev
+  const isCI = !!process.env.RELEASE_VERSION || 
+               process.env.CI === "true" || 
+               process.env.GITHUB_ACTIONS === "true";
   
   if (!isCI && version !== "dev") {
     return `${version}-dev`;
