@@ -1,3 +1,9 @@
+## [1.8.0](https://github.com/mtandersson/foodlist/compare/v1.7.4...v1.8.0) (2025-12-28)
+
+### Features
+
+* **frontend:** add voice input handling and shortcuts for adding items ([0bbfdd5](https://github.com/mtandersson/foodlist/commit/0bbfdd5f390d8acf0a52863d73c12ad11a425bda))
+
 ## [1.7.4](https://github.com/mtandersson/foodlist/compare/v1.7.3...v1.7.4) (2025-12-28)
 
 ### Reverts
