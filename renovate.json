@@ -52,7 +52,8 @@
     "enabled": true
   },
   "dockerfile": {
-    "enabled": true
+    "enabled": true,
+    "pinDigests": true
   },
   "github-actions": {
     "enabled": true,
