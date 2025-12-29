@@ -46,11 +46,11 @@ RUN if [ -n "$VERSION" ]; then \
       CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o foodlist .; \
     fi
 
-# Stage 3: Final Runtime Image
-FROM alpine:latest
+# Create data directory structure for distroless (no shell available)
+RUN mkdir -p /app/data
 
-# Install ca-certificates for HTTPS
-RUN apk --no-cache add ca-certificates
+# Stage 3: Final Runtime Image
+FROM gcr.io/distroless/static-debian13:nonroot
 
 WORKDIR /app
 
@@ -60,8 +60,8 @@ COPY --from=backend-builder /app/backend/foodlist .
 # Copy the built frontend from frontend-builder
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Create directory for event store
-RUN mkdir -p /app/data
+# Copy data directory structure from backend-builder (distroless has no shell for RUN commands)
+COPY --chown=nonroot:nonroot --from=backend-builder /app/data /app/data
 
 # Expose port
 EXPOSE 8080
