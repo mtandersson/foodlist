@@ -1,3 +1,14 @@
+## [1.8.1](https://github.com/mtandersson/foodlist/compare/v1.8.0...v1.8.1) (2025-12-29)
+
+### Code Refactoring
+
+* **docker:** update Dockerfile for distroless image and data handling ([46b5bc2](https://github.com/mtandersson/foodlist/commit/46b5bc2b3d404cb590e99729e6076f818e18f949))
+
+### Chores
+
+* **deps:** update renovatebot/github-action action to v44.2.2 ([4e78e38](https://github.com/mtandersson/foodlist/commit/4e78e38963cbb84787f595c2aa51d644e6a70a80))
+* **renovate:** enable pinDigests for Dockerfile ([6f5ae69](https://github.com/mtandersson/foodlist/commit/6f5ae699302be931db2c76afff1cbbfe4d59e2b2))
+
 ## [1.8.0](https://github.com/mtandersson/foodlist/compare/v1.7.4...v1.8.0) (2025-12-28)
 
 ### Features
