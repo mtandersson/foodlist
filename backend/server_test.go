@@ -1275,3 +1275,205 @@ func TestServer_SendErrorMessageOnDuplicateCategory(t *testing.T) {
 	assert.False(t, response.Success)
 	assert.Contains(t, response.Error, "already exists")
 }
+
+func TestServer_TrimWhitespaceFromCreateTodo(t *testing.T) {
+	server, _, _ := setupTestServer(t)
+
+	// Test trimming leading and trailing spaces
+	event, err := server.commandToEvent(CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-1"},
+		ID:          "todo-1",
+		Name:        "  Test task  ",
+		SortOrder:   1000,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event)
+
+	created := event.(TodoCreated)
+	assert.Equal(t, "Test task", created.Name)
+
+	// Test trimming only leading spaces
+	event2, err := server.commandToEvent(CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-2"},
+		ID:          "todo-2",
+		Name:        "  Leading spaces",
+		SortOrder:   1000,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event2)
+
+	created2 := event2.(TodoCreated)
+	assert.Equal(t, "Leading spaces", created2.Name)
+
+	// Test trimming only trailing spaces
+	event3, err := server.commandToEvent(CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-3"},
+		ID:          "todo-3",
+		Name:        "Trailing spaces  ",
+		SortOrder:   1000,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event3)
+
+	created3 := event3.(TodoCreated)
+	assert.Equal(t, "Trailing spaces", created3.Name)
+
+	// Test empty string after trimming (should return error)
+	event4, err := server.commandToEvent(CreateTodoCommand{
+		BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: "cmd-4"},
+		ID:          "todo-4",
+		Name:        "   ",
+		SortOrder:   1000,
+	})
+	require.Error(t, err)
+	assert.Nil(t, event4)
+	assert.Contains(t, err.Error(), "cannot be empty")
+}
+
+func TestServer_TrimWhitespaceFromCreateCategory(t *testing.T) {
+	server, _, _ := setupTestServer(t)
+
+	// Test trimming leading and trailing spaces
+	event, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory", CommandID: "cmd-1"},
+		ID:          "cat-1",
+		Name:        "  Test category  ",
+		SortOrder:   1000,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event)
+
+	created := event.(CategoryCreated)
+	assert.Equal(t, "Test category", created.Name)
+
+	// Test empty string after trimming (should return error)
+	event2, err := server.commandToEvent(CreateCategoryCommand{
+		BaseCommand: BaseCommand{Type: "CreateCategory", CommandID: "cmd-2"},
+		ID:          "cat-2",
+		Name:        "   ",
+		SortOrder:   1000,
+	})
+	require.Error(t, err)
+	assert.Nil(t, event2)
+	assert.Contains(t, err.Error(), "cannot be empty")
+}
+
+func TestServer_TrimWhitespaceFromRenameTodo(t *testing.T) {
+	server, _, _ := setupTestServer(t)
+
+	now := time.Now().UTC()
+	// Create a todo first
+	server.state.Apply(TodoCreated{
+		Type:      "TodoCreated",
+		ID:        "todo-1",
+		Name:      "Original name",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Test trimming leading and trailing spaces
+	event, err := server.commandToEvent(RenameTodoCommand{
+		BaseCommand: BaseCommand{Type: "RenameTodo", CommandID: "cmd-1"},
+		ID:          "todo-1",
+		Name:        "  New name  ",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event)
+
+	renamed := event.(TodoRenamed)
+	assert.Equal(t, "New name", renamed.Name)
+
+	// Test empty string after trimming (should return error)
+	event2, err := server.commandToEvent(RenameTodoCommand{
+		BaseCommand: BaseCommand{Type: "RenameTodo", CommandID: "cmd-2"},
+		ID:          "todo-1",
+		Name:        "   ",
+	})
+	require.Error(t, err)
+	assert.Nil(t, event2)
+	assert.Contains(t, err.Error(), "cannot be empty")
+}
+
+func TestServer_TrimWhitespaceFromRenameCategory(t *testing.T) {
+	server, _, _ := setupTestServer(t)
+
+	now := time.Now().UTC()
+	// Create a category first
+	server.state.Apply(CategoryCreated{
+		Type:      "CategoryCreated",
+		ID:        "cat-1",
+		Name:      "Original name",
+		CreatedAt: now,
+		SortOrder: 1000,
+	})
+
+	// Test trimming leading and trailing spaces
+	event, err := server.commandToEvent(RenameCategoryCommand{
+		BaseCommand: BaseCommand{Type: "RenameCategory", CommandID: "cmd-1"},
+		ID:          "cat-1",
+		Name:        "  New name  ",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event)
+
+	renamed := event.(CategoryRenamed)
+	assert.Equal(t, "New name", renamed.Name)
+
+	// Test empty string after trimming (should return error)
+	event2, err := server.commandToEvent(RenameCategoryCommand{
+		BaseCommand: BaseCommand{Type: "RenameCategory", CommandID: "cmd-2"},
+		ID:          "cat-1",
+		Name:        "   ",
+	})
+	require.Error(t, err)
+	assert.Nil(t, event2)
+	assert.Contains(t, err.Error(), "cannot be empty")
+}
+
+func TestServer_TrimWhitespaceFromSetListTitle(t *testing.T) {
+	server, _, _ := setupTestServer(t)
+
+	// Test trimming leading and trailing spaces
+	event, err := server.commandToEvent(SetListTitleCommand{
+		BaseCommand: BaseCommand{Type: "SetListTitle", CommandID: "cmd-1"},
+		Title:       "  My List Title  ",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event)
+
+	changed := event.(ListTitleChanged)
+	assert.Equal(t, "My List Title", changed.Title)
+
+	// Test trimming only leading spaces
+	event2, err := server.commandToEvent(SetListTitleCommand{
+		BaseCommand: BaseCommand{Type: "SetListTitle", CommandID: "cmd-2"},
+		Title:       "  Leading spaces",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event2)
+
+	changed2 := event2.(ListTitleChanged)
+	assert.Equal(t, "Leading spaces", changed2.Title)
+
+	// Test trimming only trailing spaces
+	event3, err := server.commandToEvent(SetListTitleCommand{
+		BaseCommand: BaseCommand{Type: "SetListTitle", CommandID: "cmd-3"},
+		Title:       "Trailing spaces  ",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event3)
+
+	changed3 := event3.(ListTitleChanged)
+	assert.Equal(t, "Trailing spaces", changed3.Title)
+
+	// Test empty string after trimming (should be allowed for title, just trimmed to empty)
+	event4, err := server.commandToEvent(SetListTitleCommand{
+		BaseCommand: BaseCommand{Type: "SetListTitle", CommandID: "cmd-4"},
+		Title:       "   ",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, event4)
+
+	changed4 := event4.(ListTitleChanged)
+	assert.Equal(t, "", changed4.Title)
+}
