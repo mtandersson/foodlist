@@ -1,3 +1,9 @@
+## [1.9.0](https://github.com/mtandersson/foodlist/compare/v1.8.1...v1.9.0) (2026-01-01)
+
+### Features
+
+* trim whitespace from todo and category names ([6cced49](https://github.com/mtandersson/foodlist/commit/6cced493c0322d038aa67f6c2a538030e9f2d27a))
+
 ## [1.8.1](https://github.com/mtandersson/foodlist/compare/v1.8.0...v1.8.1) (2025-12-29)
 
 ### Code Refactoring
