@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -496,6 +497,11 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		if c.ID == "" {
 			return nil, nil
 		}
+		// Trim whitespace from name
+		trimmedName := strings.TrimSpace(c.Name)
+		if trimmedName == "" {
+			return nil, fmt.Errorf("todo name cannot be empty")
+		}
 		var categoryID *string
 		if c.CategoryID != nil {
 			categoryID = c.CategoryID
@@ -507,7 +513,7 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		return TodoCreated{
 			Type:       "TodoCreated",
 			ID:         c.ID,
-			Name:       c.Name,
+			Name:       trimmedName,
 			CreatedAt:  time.Now().UTC(),
 			SortOrder:  sortOrder,
 			CategoryID: categoryID,
@@ -532,13 +538,19 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 			return nil, fmt.Errorf("missing category id")
 		}
 
+		// Trim whitespace from name
+		trimmedName := strings.TrimSpace(c.Name)
+		if trimmedName == "" {
+			return nil, fmt.Errorf("category name cannot be empty")
+		}
+
 		// Check if an active category with this name already exists
-		if s.state.CategoryNameExists(c.Name) {
-			return nil, fmt.Errorf("category with name '%s' already exists", c.Name)
+		if s.state.CategoryNameExists(trimmedName) {
+			return nil, fmt.Errorf("category with name '%s' already exists", trimmedName)
 		}
 
 		// Check if there's a deleted category with the same name (case-sensitive)
-		deletedCategoryID := s.state.FindDeletedCategoryByName(c.Name)
+		deletedCategoryID := s.state.FindDeletedCategoryByName(trimmedName)
 
 		// If a deleted category with this name exists, reuse its ID
 		categoryID := c.ID
@@ -553,7 +565,7 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		return CategoryCreated{
 			Type:      "CategoryCreated",
 			ID:        categoryID,
-			Name:      c.Name,
+			Name:      trimmedName,
 			CreatedAt: time.Now().UTC(),
 			SortOrder: sortOrder,
 		}, nil
@@ -562,19 +574,25 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 			return nil, fmt.Errorf("category not found")
 		}
 
+		// Trim whitespace from name
+		trimmedName := strings.TrimSpace(c.Name)
+		if trimmedName == "" {
+			return nil, fmt.Errorf("category name cannot be empty")
+		}
+
 		// Check if another category with this name already exists
-		if s.state.CategoryNameExists(c.Name) {
+		if s.state.CategoryNameExists(trimmedName) {
 			// Get the current category to check if it's renaming to itself
 			currentCat, _ := s.state.GetCategory(c.ID)
-			if currentCat.Name != c.Name {
-				return nil, fmt.Errorf("category with name '%s' already exists", c.Name)
+			if currentCat.Name != trimmedName {
+				return nil, fmt.Errorf("category with name '%s' already exists", trimmedName)
 			}
 		}
 
 		return CategoryRenamed{
 			Type: "CategoryRenamed",
 			ID:   c.ID,
-			Name: c.Name,
+			Name: trimmedName,
 		}, nil
 	case DeleteCategoryCommand:
 		if s.state.CategoryHasTodos(c.ID) {
@@ -625,15 +643,22 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 			SortOrder: int(c.SortOrder),
 		}, nil
 	case RenameTodoCommand:
+		// Trim whitespace from name
+		trimmedName := strings.TrimSpace(c.Name)
+		if trimmedName == "" {
+			return nil, fmt.Errorf("todo name cannot be empty")
+		}
 		return TodoRenamed{
 			Type: "TodoRenamed",
 			ID:   c.ID,
-			Name: c.Name,
+			Name: trimmedName,
 		}, nil
 	case SetListTitleCommand:
+		// Trim whitespace from title
+		trimmedTitle := strings.TrimSpace(c.Title)
 		return ListTitleChanged{
 			Type:  "ListTitleChanged",
-			Title: c.Title,
+			Title: trimmedTitle,
 		}, nil
 	default:
 		return nil, nil

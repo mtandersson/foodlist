@@ -1168,5 +1168,222 @@ describe('TodoStore', () => {
       store.destroy();
     });
   });
+
+  describe('Trimming whitespace', () => {
+    it('should trim whitespace from createTodo', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'My Todo List' });
+      
+      // Test trimming leading and trailing spaces
+      store.createTodo('  Test task  ');
+      
+      const sentEvent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sentEvent.type).toBe('CreateTodo');
+      expect(sentEvent.name).toBe('Test task');
+      
+      // Test trimming only leading spaces
+      store.createTodo('  Leading spaces');
+      const sentEvent2 = JSON.parse(mockSend.mock.calls[1][0]);
+      expect(sentEvent2.name).toBe('Leading spaces');
+      
+      // Test trimming only trailing spaces
+      store.createTodo('Trailing spaces  ');
+      const sentEvent3 = JSON.parse(mockSend.mock.calls[2][0]);
+      expect(sentEvent3.name).toBe('Trailing spaces');
+      
+      store.destroy();
+    });
+
+    it('should not create todo with only whitespace', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'My Todo List' });
+      
+      const initialCallCount = mockSend.mock.calls.length;
+      
+      // Should not send command for whitespace-only strings
+      store.createTodo('   ');
+      store.createTodo('\t\t');
+      store.createTodo('\n\n');
+      
+      expect(mockSend.mock.calls.length).toBe(initialCallCount);
+      
+      store.destroy();
+    });
+
+    it('should trim whitespace from createCategory', async () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'My Todo List' });
+      
+      // Test trimming leading and trailing spaces
+      const promise = store.createCategory('  Test category  ');
+      
+      const sentEvent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sentEvent.type).toBe('CreateCategory');
+      expect(sentEvent.name).toBe('Test category');
+      
+      // Simulate server success
+      messageHandler!({
+        type: 'CommandResponse',
+        commandId: sentEvent.commandId,
+        success: true,
+      });
+      
+      await promise;
+      
+      store.destroy();
+    });
+
+    it('should reject createCategory with only whitespace', async () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'My Todo List' });
+      
+      await expect(store.createCategory('   ')).rejects.toBe('Category name cannot be empty');
+      await expect(store.createCategory('\t\t')).rejects.toBe('Category name cannot be empty');
+      
+      expect(mockSend).not.toHaveBeenCalled();
+      
+      store.destroy();
+    });
+
+    it('should trim whitespace from rename', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [{
+          id: '1',
+          name: 'Old Name',
+          createdAt: '2024-01-01T00:00:00Z',
+          completedAt: null,
+          sortOrder: 1000,
+          starred: false,
+        }],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      // Test trimming leading and trailing spaces
+      store.rename('1', '  New Name  ');
+      
+      const sentEvent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sentEvent.type).toBe('RenameTodo');
+      expect(sentEvent.name).toBe('New Name');
+      
+      store.destroy();
+    });
+
+    it('should not rename todo with only whitespace', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [{
+          id: '1',
+          name: 'Old Name',
+          createdAt: '2024-01-01T00:00:00Z',
+          completedAt: null,
+          sortOrder: 1000,
+          starred: false,
+        }],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+
+      const initialCallCount = mockSend.mock.calls.length;
+      
+      // Should not send command for whitespace-only strings
+      store.rename('1', '   ');
+      store.rename('1', '\t\t');
+      
+      expect(mockSend.mock.calls.length).toBe(initialCallCount);
+      
+      store.destroy();
+    });
+
+    it('should trim whitespace from renameCategory', async () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [],
+        categories: [{
+          id: 'cat-1',
+          name: 'Old Name',
+          createdAt: '2024-01-01T00:00:00Z',
+          sortOrder: 1000,
+        }],
+        listTitle: 'My Todo List',
+      });
+
+      // Test trimming leading and trailing spaces
+      const promise = store.renameCategory('cat-1', '  New Name  ');
+      
+      const sentEvent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sentEvent.type).toBe('RenameCategory');
+      expect(sentEvent.name).toBe('New Name');
+      
+      // Simulate server success
+      messageHandler!({
+        type: 'CommandResponse',
+        commandId: sentEvent.commandId,
+        success: true,
+      });
+      
+      await promise;
+      
+      store.destroy();
+    });
+
+    it('should reject renameCategory with only whitespace', async () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [],
+        categories: [{
+          id: 'cat-1',
+          name: 'Old Name',
+          createdAt: '2024-01-01T00:00:00Z',
+          sortOrder: 1000,
+        }],
+        listTitle: 'My Todo List',
+      });
+
+      await expect(store.renameCategory('cat-1', '   ')).rejects.toBe('Category name cannot be empty');
+      
+      expect(mockSend).not.toHaveBeenCalled();
+      
+      store.destroy();
+    });
+
+    it('should trim whitespace from setListTitle', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'My Todo List' });
+
+      // Test trimming leading and trailing spaces
+      store.setListTitle('  New Title  ');
+      
+      const sentEvent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sentEvent.type).toBe('SetListTitle');
+      expect(sentEvent.title).toBe('New Title');
+      
+      // Test trimming only leading spaces
+      store.setListTitle('  Leading spaces');
+      const sentEvent2 = JSON.parse(mockSend.mock.calls[1][0]);
+      expect(sentEvent2.title).toBe('Leading spaces');
+      
+      // Test trimming only trailing spaces
+      store.setListTitle('Trailing spaces  ');
+      const sentEvent3 = JSON.parse(mockSend.mock.calls[2][0]);
+      expect(sentEvent3.title).toBe('Trailing spaces');
+      
+      store.destroy();
+    });
+  });
 });
 

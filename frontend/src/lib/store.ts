@@ -553,20 +553,24 @@ export function createTodoStore(wsUrl: string): TodoStore {
   // Public actions
 
   function createTodo(name: string, categoryId: string | null = null) {
+    // Trim whitespace from name
+    const trimmedName = name.trim()
+    if (!trimmedName) return
+    
     const commandId = uuidv4()
     const id = uuidv4()
     const command: CreateTodo = {
       type: "CreateTodo",
       commandId,
       id,
-      name,
+      name: trimmedName,
       sortOrder: getHighestSortOrder() + 1000,
       categoryId,
     }
     const optimistic: TodoCreated = {
       type: "TodoCreated",
       id,
-      name,
+      name: trimmedName,
       createdAt: new Date().toISOString(),
       sortOrder: command.sortOrder ?? getHighestSortOrder() + 1000,
       categoryId,
@@ -575,19 +579,25 @@ export function createTodoStore(wsUrl: string): TodoStore {
   }
 
   function createCategory(name: string, id?: string): Promise<string> {
+    // Trim whitespace from name
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      return Promise.reject("Category name cannot be empty")
+    }
+    
     const commandId = uuidv4()
     const newId = id || uuidv4()
     const command: CreateCategory = {
       type: "CreateCategory",
       commandId,
       id: newId,
-      name,
+      name: trimmedName,
       sortOrder: getHighestCategorySortOrder() + 1000,
     }
     const optimistic: CategoryCreated = {
       type: "CategoryCreated",
       id: newId,
-      name,
+      name: trimmedName,
       createdAt: new Date().toISOString(),
       sortOrder: command.sortOrder!,
     }
@@ -595,12 +605,18 @@ export function createTodoStore(wsUrl: string): TodoStore {
   }
 
   function renameCategory(id: string, name: string): Promise<void> {
+    // Trim whitespace from name
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      return Promise.reject("Category name cannot be empty")
+    }
+    
     const commandId = uuidv4()
     const command: RenameCategory = {
       type: "RenameCategory",
       commandId,
       id,
-      name,
+      name: trimmedName,
     }
     // No optimistic update - wait for server response
     return sendCommand(command)
@@ -751,16 +767,23 @@ export function createTodoStore(wsUrl: string): TodoStore {
   }
 
   function rename(id: string, name: string) {
+    // Trim whitespace from name
+    const trimmedName = name.trim()
+    if (!trimmedName) return
+    
     const commandId = uuidv4()
-    const command: RenameTodo = {type: "RenameTodo", commandId, id, name}
-    const optimistic: TodoRenamed = {type: "TodoRenamed", id, name}
+    const command: RenameTodo = {type: "RenameTodo", commandId, id, name: trimmedName}
+    const optimistic: TodoRenamed = {type: "TodoRenamed", id, name: trimmedName}
     sendCommand(command, optimistic)
   }
 
   function setListTitle(title: string) {
+    // Trim whitespace from title
+    const trimmedTitle = title.trim()
+    
     const commandId = uuidv4()
-    const command: SetListTitle = {type: "SetListTitle", commandId, title}
-    const optimistic: ListTitleChanged = {type: "ListTitleChanged", title}
+    const command: SetListTitle = {type: "SetListTitle", commandId, title: trimmedTitle}
+    const optimistic: ListTitleChanged = {type: "ListTitleChanged", title: trimmedTitle}
     sendCommand(command, optimistic)
   }
 
