@@ -98,6 +98,78 @@ func containsEmoji(s string) bool {
 	return false
 }
 
+// findBestMatchingCategoryForName searches history for fuzzy matches of the given name
+// and returns the last category ID used for the best matching name (case-insensitive)
+// Returns nil if no good match is found
+func (s *Server) findBestMatchingCategoryForName(name string) *string {
+	nameLower := strings.ToLower(strings.TrimSpace(name))
+	if nameLower == "" {
+		return nil
+	}
+
+	// First check for exact case-insensitive match
+	if lastCat := s.state.GetLastCategoryForName(name); lastCat != nil {
+		// Verify the category still exists
+		if _, ok := s.state.GetCategory(*lastCat); ok {
+			return lastCat
+		}
+	}
+
+	// Get all historical names and their categories
+	nameFrequency := s.state.GetNameFrequency()
+
+	type candidate struct {
+		name       string
+		distance   int
+		categoryID *string
+	}
+
+	var candidates []candidate
+
+	for historicalName := range nameFrequency {
+		historicalNameLower := strings.ToLower(historicalName)
+
+		// Skip exact matches (already checked above)
+		if historicalNameLower == nameLower {
+			continue
+		}
+
+		// Calculate edit distance for fuzzy matching
+		distance := levenshteinDistance(nameLower, historicalNameLower)
+
+		// Only consider close matches (distance <= 3)
+		// Also check for substring matches
+		isSubstring := strings.Contains(historicalNameLower, nameLower) ||
+			strings.Contains(nameLower, historicalNameLower)
+
+		if distance <= 3 || isSubstring {
+			lastCat := s.state.GetLastCategoryForName(historicalName)
+			if lastCat != nil {
+				// Verify the category still exists
+				if _, ok := s.state.GetCategory(*lastCat); ok {
+					candidates = append(candidates, candidate{
+						name:       historicalName,
+						distance:   distance,
+						categoryID: lastCat,
+					})
+				}
+			}
+		}
+	}
+
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	// Sort by distance (ascending) - prefer closer matches
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].distance < candidates[j].distance
+	})
+
+	// Return the category from the best match
+	return candidates[0].categoryID
+}
+
 // getAutocompleteSuggestions returns up to 4 autocomplete suggestions based on query
 // It uses fuzzy matching with Levenshtein distance and ranks by frequency + recency of category
 func (s *Server) getAutocompleteSuggestions(query string) []AutocompleteSuggestion {

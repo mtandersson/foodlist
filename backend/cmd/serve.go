@@ -1,0 +1,195 @@
+package cmd
+
+import (
+	"log/slog"
+	"net/http"
+	"os"
+	"path/filepath"
+
+	"foodlist/server"
+
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
+)
+
+// Config holds all configuration for the application
+type Config struct {
+	// Server configuration
+	BindAddr  string `env:"BIND_ADDR" envDefault:"localhost"`
+	Port      string `env:"PORT" envDefault:"8080"`
+	StaticDir string `env:"STATIC_DIR" envDefault:"../frontend/dist"`
+
+	// Data configuration
+	DataDir string `env:"DATA_DIR" envDefault:"."`
+
+	// Logging configuration
+	LogFormat string `env:"LOG_FORMAT" envDefault:"logfmt"`
+
+	// Security configuration
+	SharedSecret    string   `env:"SHARED_SECRET" envDefault:""`
+	CIDRWhitelist   []string `env:"CIDR_WHITELIST" envSeparator:","`
+	ProxyTrustCount int      `env:"PROXY_TRUST_COUNT" envDefault:"0"`
+}
+
+func runServer(cmd *cobra.Command, args []string) {
+	// Load .env file if it exists (ignore error if file doesn't exist)
+	_ = godotenv.Load()
+
+	// Parse configuration from environment variables
+	cfg := Config{}
+	if err := env.Parse(&cfg); err != nil {
+		slog.Error("failed to parse configuration", "error", err)
+		os.Exit(1)
+	}
+
+	// Configure structured logging
+	setupLogger(cfg.LogFormat)
+
+	// Initialize event store
+	eventFile := filepath.Join(cfg.DataDir, "events.jsonl")
+	absEventFile, _ := filepath.Abs(eventFile)
+	slog.Info("initializing event store", "file", absEventFile)
+
+	store, err := server.NewEventStore(eventFile)
+	if err != nil {
+		slog.Error("failed to initialize event store", "error", err)
+		os.Exit(1)
+	}
+	defer store.Close()
+
+	// Create server and load existing events
+	srv := server.NewServer(store)
+	if err := srv.LoadEvents(); err != nil {
+		slog.Error("failed to load events", "error", err)
+		return // defer will close store
+	}
+
+	// Start server event loop
+	go srv.Run()
+
+	// Set up HTTP routes
+	mux := http.NewServeMux()
+
+	// Determine path prefix based on shared secret
+	pathPrefix := "/"
+	if cfg.SharedSecret != "" {
+		pathPrefix = "/" + cfg.SharedSecret + "/"
+	}
+
+	// WebSocket endpoint
+	wsPath := pathPrefix + "ws"
+	mux.HandleFunc(wsPath, srv.HandleWebSocket)
+
+	// Also register WebSocket at /ws for whitelisted IPs (middleware will handle security)
+	// This is needed because WebSocket connections can't follow HTTP redirects
+	if cfg.SharedSecret != "" && len(cfg.CIDRWhitelist) > 0 {
+		mux.HandleFunc("/ws", srv.HandleWebSocket)
+	}
+
+	// Serve PWA files at root level (always accessible, middleware handles security)
+	mux.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "sw.js"))
+	})
+	mux.HandleFunc("/sw.js.map", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "sw.js.map"))
+	})
+	mux.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "manifest.json"))
+	})
+	mux.HandleFunc("/manifest.webmanifest", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "manifest.webmanifest"))
+	})
+	mux.HandleFunc("/registerSW.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, "registerSW.js"))
+	})
+	// Handle workbox files dynamically
+	mux.HandleFunc("/workbox-", func(w http.ResponseWriter, r *http.Request) {
+		filename := filepath.Base(r.URL.Path)
+		http.ServeFile(w, r, filepath.Join(cfg.StaticDir, filename))
+	})
+
+	// Serve static files under secret path
+	staticPath := pathPrefix
+	fileServer := http.FileServer(http.Dir(cfg.StaticDir))
+	if pathPrefix != "/" {
+		// Strip the secret prefix before serving files
+		// pathPrefix is like "/dev/", we need to strip "/dev" (without trailing slash)
+		prefixToStrip := pathPrefix[:len(pathPrefix)-1]
+		fileServer = http.StripPrefix(prefixToStrip, fileServer)
+		// Also handle requests without trailing slash by redirecting
+		mux.HandleFunc(pathPrefix[:len(pathPrefix)-1], func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, pathPrefix, http.StatusMovedPermanently)
+		})
+	}
+	mux.Handle(staticPath, fileServer)
+
+	// Build middleware chain
+	var handler http.Handler = mux
+
+	// Wrap with IP whitelist middleware if configured
+	if cfg.SharedSecret != "" && len(cfg.CIDRWhitelist) > 0 {
+		slog.Info("IP whitelist enabled",
+			"cidr_whitelist", cfg.CIDRWhitelist,
+			"secret_path", pathPrefix,
+		)
+		handler = server.IPWhitelistMiddleware(cfg.CIDRWhitelist, cfg.SharedSecret, cfg.ProxyTrustCount, handler)
+	} else if cfg.SharedSecret != "" {
+		slog.Warn("shared secret configured but no CIDR whitelist - security features partially disabled")
+	}
+
+	// Wrap with HTTP logging middleware (outermost - logs all requests)
+	handler = server.HTTPLoggingMiddleware(handler)
+
+	// Start HTTP server
+	addr := cfg.BindAddr + ":" + cfg.Port
+
+	slog.Info("starting server",
+		"bind_addr", cfg.BindAddr,
+		"port", cfg.Port,
+		"address", addr,
+		"websocket_endpoint", "ws://"+cfg.BindAddr+":"+cfg.Port+wsPath,
+		"static_dir", cfg.StaticDir,
+		"data_dir", cfg.DataDir,
+		"path_prefix", pathPrefix,
+	)
+
+	if err := http.ListenAndServe(addr, handler); err != nil {
+		slog.Error("server failed", "error", err)
+	}
+}
+
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Start the foodlist server",
+	Run:   runServer,
+}
+
+func init() {
+	rootCmd.AddCommand(serveCmd)
+}
+
+// setupLogger configures the global logger based on the provided format
+// Supported formats: "logfmt" (default) or "json"
+func setupLogger(logFormat string) {
+	var handler slog.Handler
+	opts := &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}
+
+	switch logFormat {
+	case "json":
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+		slog.SetDefault(slog.New(handler))
+		slog.Info("logger configured", "format", "json")
+	case "logfmt":
+		handler = slog.NewTextHandler(os.Stdout, opts)
+		slog.SetDefault(slog.New(handler))
+		slog.Info("logger configured", "format", "logfmt")
+	default:
+		// Default to logfmt for unknown formats
+		handler = slog.NewTextHandler(os.Stdout, opts)
+		slog.SetDefault(slog.New(handler))
+		slog.Warn("unknown log format, defaulting to logfmt", "requested_format", logFormat, "format", "logfmt")
+	}
+}
