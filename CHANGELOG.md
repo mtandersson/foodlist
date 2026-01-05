@@ -1,3 +1,9 @@
+## [1.9.1](https://github.com/mtandersson/foodlist/compare/v1.9.0...v1.9.1) (2026-01-05)
+
+### Chores
+
+* **deps:** update renovatebot/github-action action to v44.2.3 ([ba2b0d2](https://github.com/mtandersson/foodlist/commit/ba2b0d29e434f7d16317b1631e114c266c1a49b0))
+
 ## [1.9.0](https://github.com/mtandersson/foodlist/compare/v1.8.1...v1.9.0) (2026-01-01)
 
 ### Features
