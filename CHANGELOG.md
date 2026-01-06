@@ -1,3 +1,9 @@
+## [1.9.2](https://github.com/mtandersson/foodlist/compare/v1.9.1...v1.9.2) (2026-01-06)
+
+### Chores
+
+* **deps:** update @sveltejs/vite-plugin-svelte to ^6.2.2 ([3ead104](https://github.com/mtandersson/foodlist/commit/3ead10434e90ca6d1d0b5da5bc03d838ec66ff44))
+
 ## [1.9.1](https://github.com/mtandersson/foodlist/compare/v1.9.0...v1.9.1) (2026-01-05)
 
 ### Chores
