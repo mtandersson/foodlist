@@ -1,3 +1,9 @@
+## [1.9.6](https://github.com/mtandersson/foodlist/compare/v1.9.5...v1.9.6) (2026-01-10)
+
+### Chores
+
+* **deps:** update @types/node to ^24.10.6 ([9ca8136](https://github.com/mtandersson/foodlist/commit/9ca81365553c71afced9ec63aae0baa039f6f5e4))
+
 ## [1.9.5](https://github.com/mtandersson/foodlist/compare/v1.9.4...v1.9.5) (2026-01-10)
 
 ### Chores
