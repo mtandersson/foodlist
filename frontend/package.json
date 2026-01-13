@@ -17,7 +17,7 @@
     "@testing-library/svelte": "^5.3.1",
     "@tsconfig/svelte": "^5.0.6",
     "@types/node": "^24.10.7",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.17",
     "jsdom": "^27.4.0",
     "svelte": "^5.46.3",
     "svelte-check": "^4.3.5",
@@ -25,6 +25,6 @@
     "uuid": "^13.0.0",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.17"
   }
 }
