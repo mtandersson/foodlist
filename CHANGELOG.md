@@ -1,3 +1,9 @@
+## [1.9.30](https://github.com/mtandersson/foodlist/compare/v1.9.29...v1.9.30) (2026-01-31)
+
+### Chores
+
+* **deps:** update semantic-release monorepo ([5fd5509](https://github.com/mtandersson/foodlist/commit/5fd550918175ab036df5bcf09f82d6e7b10e065a))
+
 ## [1.9.29](https://github.com/mtandersson/foodlist/compare/v1.9.28...v1.9.29) (2026-01-30)
 
 ### Chores
