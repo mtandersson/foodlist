@@ -1,3 +1,9 @@
+## [1.9.35](https://github.com/mtandersson/foodlist/compare/v1.9.34...v1.9.35) (2026-02-04)
+
+### Chores
+
+* **deps:** update @tsconfig/svelte to ^5.0.7 ([5fa5e27](https://github.com/mtandersson/foodlist/commit/5fa5e278936b1d908d9d5b5126a765c7bd06b346))
+
 ## [1.9.34](https://github.com/mtandersson/foodlist/compare/v1.9.33...v1.9.34) (2026-02-03)
 
 ### Chores
