@@ -1,3 +1,9 @@
+## [1.9.37](https://github.com/mtandersson/foodlist/compare/v1.9.36...v1.9.37) (2026-02-05)
+
+### Chores
+
+* **deps:** update golang Docker tag to v1.25.7 ([768c60c](https://github.com/mtandersson/foodlist/commit/768c60c44474f46758b36c1a7c4db9ef38bd1a93))
+
 ## [1.9.36](https://github.com/mtandersson/foodlist/compare/v1.9.35...v1.9.36) (2026-02-04)
 
 ### Chores
