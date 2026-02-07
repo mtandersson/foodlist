@@ -1,3 +1,10 @@
+## [1.9.40](https://github.com/mtandersson/foodlist/compare/v1.9.39...v1.9.40) (2026-02-07)
+
+### Chores
+
+* **deps:** update @semantic-release/github to ^12.0.5 ([337819f](https://github.com/mtandersson/foodlist/commit/337819fe0a882782f02b7390b0648ac47ae2c3d2))
+* **deps:** update svelte to ^5.50.0 ([70eb5fe](https://github.com/mtandersson/foodlist/commit/70eb5fef9f0d5afc5fdbea5f107d6865f1ee272d))
+
 ## [1.9.39](https://github.com/mtandersson/foodlist/compare/v1.9.38...v1.9.39) (2026-02-05)
 
 ### Chores
