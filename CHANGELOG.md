@@ -1,3 +1,9 @@
+## [1.9.48](https://github.com/mtandersson/foodlist/compare/v1.9.47...v1.9.48) (2026-02-12)
+
+### Chores
+
+* **deps:** update go to v1.26.0 ([2945a92](https://github.com/mtandersson/foodlist/commit/2945a92d1b7edbc4a56c084feda1ce4adfb4dd8c))
+
 ## [1.9.47](https://github.com/mtandersson/foodlist/compare/v1.9.46...v1.9.47) (2026-02-12)
 
 ### Chores
