@@ -1,3 +1,9 @@
+## [1.9.50](https://github.com/mtandersson/foodlist/compare/v1.9.49...v1.9.50) (2026-02-13)
+
+### Chores
+
+* **deps:** update Node.js to v24.13.1 ([2d32ae3](https://github.com/mtandersson/foodlist/commit/2d32ae3997143299354517ee8473d4db9f5aece7))
+
 ## [1.9.49](https://github.com/mtandersson/foodlist/compare/v1.9.48...v1.9.49) (2026-02-13)
 
 ### Chores
