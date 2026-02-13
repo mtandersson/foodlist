@@ -1,3 +1,9 @@
+## [1.9.49](https://github.com/mtandersson/foodlist/compare/v1.9.48...v1.9.49) (2026-02-13)
+
+### Chores
+
+* **deps:** update @semantic-release/github to ^12.0.6 ([4aff79e](https://github.com/mtandersson/foodlist/commit/4aff79e6ab5ca69909d31e98eeed4e15214685ab))
+
 ## [1.9.48](https://github.com/mtandersson/foodlist/compare/v1.9.47...v1.9.48) (2026-02-12)
 
 ### Chores
