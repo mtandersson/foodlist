@@ -1,3 +1,9 @@
+## [1.9.53](https://github.com/mtandersson/foodlist/compare/v1.9.52...v1.9.53) (2026-02-14)
+
+### Chores
+
+* **deps:** update svelte-check to ^4.4.0 ([d8dc43f](https://github.com/mtandersson/foodlist/commit/d8dc43f608bc2e1bc711acf5a692d905d1dadc59))
+
 ## [1.9.52](https://github.com/mtandersson/foodlist/compare/v1.9.51...v1.9.52) (2026-02-14)
 
 ### Chores
