@@ -329,7 +329,7 @@ func (s *Server) readPump(client *Client) {
 		}
 
 		// Apply event to state
-		s.state.Apply(event)
+		s.state.ApplyEvents([]Event{event})
 
 		// Send success response to the client
 		response := CommandResponse{
@@ -672,6 +672,24 @@ func (s *Server) LoadEvents() error {
 		return err
 	}
 	s.state.ApplyEvents(events)
+	s.rebuildAutocomplete()
 	slog.Info("loaded events from store", "event_count", len(events))
 	return nil
+}
+
+// rebuildAutocomplete rebuilds the entire autocomplete index from the event history.
+func (s *Server) rebuildAutocomplete() {
+	s.state.autocomplete.Reset()
+	events, err := s.store.ReadAll()
+	if err != nil {
+		slog.Error("failed to read all events for autocomplete rebuild", "error", err)
+		return
+	}
+	for _, event := range events {
+		var todo *Todo
+		if e, ok := event.(interface{ GetID() string }); ok {
+			todo = s.state.todos[e.GetID()]
+		}
+		s.state.autocomplete.Apply(event, todo)
+	}
 }

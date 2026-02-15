@@ -801,21 +801,21 @@ func TestCommandToEvent_DeleteCategoryRejectedWhenNotEmpty(t *testing.T) {
 
 	now := time.Now().UTC()
 	catID := "cat-1"
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        catID,
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
-	server.state.Apply(TodoCreated{
+	}})
+	server.state.ApplyEvents([]Event{TodoCreated{
 		Type:       "TodoCreated",
 		ID:         "todo-1",
 		Name:       "Task",
 		CreatedAt:  now,
 		SortOrder:  1000,
 		CategoryID: &catID,
-	})
+	}})
 
 	_, err = server.commandToEvent(DeleteCategoryCommand{
 		BaseCommand: BaseCommand{Type: "DeleteCategory"},
@@ -832,13 +832,13 @@ func TestCommandToEvent_CategorizeRequiresExistingCategory(t *testing.T) {
 	server := NewServer(store)
 
 	now := time.Now().UTC()
-	server.state.Apply(TodoCreated{
+	server.state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Task",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	invalidCat := "missing"
 	_, err = server.commandToEvent(CategorizeTodoCommand{
@@ -856,19 +856,19 @@ func TestCommandToEvent_CreateCategory_ReuseDeletedCategory(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-original",
 		Name:      "Shopping",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Delete the category
-	server.state.Apply(CategoryDeleted{
+	server.state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-original",
-	})
+	}})
 
 	// Verify category is deleted
 	_, ok := server.state.GetCategory("cat-original")
@@ -900,18 +900,18 @@ func TestCommandToEvent_CreateCategory_ReuseDeletedCategoryCaseInsensitive(t *te
 	now := time.Now().UTC()
 
 	// Create and delete a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	server.state.Apply(CategoryDeleted{
+	server.state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// Try to create category with different case - should NOT reuse (case-sensitive)
 	event, err := server.commandToEvent(CreateCategoryCommand{
@@ -935,18 +935,18 @@ func TestCommandToEvent_CreateCategory_ReuseDeletedCategoryExactMatch(t *testing
 	now := time.Now().UTC()
 
 	// Create and delete a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	server.state.Apply(CategoryDeleted{
+	server.state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// Try to create category with exact same name (case-sensitive match)
 	event, err := server.commandToEvent(CreateCategoryCommand{
@@ -989,18 +989,18 @@ func TestCommandToEvent_CreateCategory_DeletedAndRecreatedMultipleTimes(t *testi
 	now := time.Now().UTC()
 
 	// Create, delete, recreate cycle
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Temporary",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	server.state.Apply(CategoryDeleted{
+	server.state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// First recreate
 	event, err := server.commandToEvent(CreateCategoryCommand{
@@ -1014,13 +1014,13 @@ func TestCommandToEvent_CreateCategory_DeletedAndRecreatedMultipleTimes(t *testi
 	assert.Equal(t, "cat-1", created.ID)
 
 	// Apply the recreate event
-	server.state.Apply(created)
+	server.state.ApplyEvents([]Event{created})
 
 	// Delete again
-	server.state.Apply(CategoryDeleted{
+	server.state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// Second recreate - should reuse cat-1 again
 	event, err = server.commandToEvent(CreateCategoryCommand{
@@ -1041,13 +1041,13 @@ func TestCommandToEvent_CreateCategory_RejectDuplicateName(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Try to create another category with the same name
 	_, err := server.commandToEvent(CreateCategoryCommand{
@@ -1067,13 +1067,13 @@ func TestCommandToEvent_CreateCategory_RejectDuplicateNameCaseSensitive(t *testi
 	now := time.Now().UTC()
 
 	// Create a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Try to create category with different case - should be allowed (case-sensitive)
 	event, err := server.commandToEvent(CreateCategoryCommand{
@@ -1096,13 +1096,13 @@ func TestCommandToEvent_CreateCategory_AllowAfterDeletion(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Try to create duplicate - should fail
 	_, err := server.commandToEvent(CreateCategoryCommand{
@@ -1114,10 +1114,10 @@ func TestCommandToEvent_CreateCategory_AllowAfterDeletion(t *testing.T) {
 	require.Error(t, err)
 
 	// Delete the category
-	server.state.Apply(CategoryDeleted{
+	server.state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// Now creating with same name should work (and reuse the ID)
 	event, err := server.commandToEvent(CreateCategoryCommand{
@@ -1140,21 +1140,21 @@ func TestCommandToEvent_RenameCategory_RejectDuplicateName(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create two categories
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-2",
 		Name:      "Personal",
 		CreatedAt: now,
 		SortOrder: 2000,
-	})
+	}})
 
 	// Try to rename cat-2 to "Work" (which already exists)
 	_, err := server.commandToEvent(RenameCategoryCommand{
@@ -1173,13 +1173,13 @@ func TestCommandToEvent_RenameCategory_AllowSameName(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Rename to the same name (should be allowed - no-op)
 	event, err := server.commandToEvent(RenameCategoryCommand{
@@ -1201,21 +1201,21 @@ func TestCommandToEvent_RenameCategory_CaseSensitive(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create two categories
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-2",
 		Name:      "Personal",
 		CreatedAt: now,
 		SortOrder: 2000,
-	})
+	}})
 
 	// Rename to "WORK" (different case) - should be allowed
 	event, err := server.commandToEvent(RenameCategoryCommand{
@@ -1237,13 +1237,13 @@ func TestServer_SendErrorMessageOnDuplicateCategory(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create a category
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Connect WebSocket client
 	conn := connectWS(t, wsURL)
@@ -1363,13 +1363,13 @@ func TestServer_TrimWhitespaceFromRenameTodo(t *testing.T) {
 
 	now := time.Now().UTC()
 	// Create a todo first
-	server.state.Apply(TodoCreated{
+	server.state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Original name",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Test trimming leading and trailing spaces
 	event, err := server.commandToEvent(RenameTodoCommand{
@@ -1399,13 +1399,13 @@ func TestServer_TrimWhitespaceFromRenameCategory(t *testing.T) {
 
 	now := time.Now().UTC()
 	// Create a category first
-	server.state.Apply(CategoryCreated{
+	server.state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Original name",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Test trimming leading and trailing spaces
 	event, err := server.commandToEvent(RenameCategoryCommand{
