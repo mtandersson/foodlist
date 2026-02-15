@@ -20,7 +20,7 @@ func TestState_ApplyTodoCreated(t *testing.T) {
 		SortOrder: 1000,
 	}
 
-	state.Apply(event)
+	state.ApplyEvents([]Event{event})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 1)
@@ -35,22 +35,21 @@ func TestState_ApplyTodoCompleted(t *testing.T) {
 	state := NewState()
 	now := time.Now().UTC()
 
-	// Create todo first
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Buy milk",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Complete it
 	completedAt := now.Add(time.Hour)
-	state.Apply(TodoCompleted{
+	state.ApplyEvents([]Event{TodoCompleted{
 		Type:        "TodoCompleted",
 		ID:          "todo-1",
 		CompletedAt: completedAt,
-	})
+	}})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 1)
@@ -63,24 +62,24 @@ func TestState_ApplyTodoUncompleted(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create and complete todo
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Buy milk",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
-	state.Apply(TodoCompleted{
+	}})
+	state.ApplyEvents([]Event{TodoCompleted{
 		Type:        "TodoCompleted",
 		ID:          "todo-1",
 		CompletedAt: now.Add(time.Hour),
-	})
+	}})
 
 	// Uncomplete it
-	state.Apply(TodoUncompleted{
+	state.ApplyEvents([]Event{TodoUncompleted{
 		Type: "TodoUncompleted",
 		ID:   "todo-1",
-	})
+	}})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 1)
@@ -92,27 +91,27 @@ func TestState_ApplyTodoStarred(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create two todos
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Task 1",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
-	state.Apply(TodoCreated{
+	}})
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-2",
 		Name:      "Task 2",
 		CreatedAt: now,
 		SortOrder: 2000,
-	})
+	}})
 
 	// Star the first one (should move to top with new sortOrder)
-	state.Apply(TodoStarred{
+	state.ApplyEvents([]Event{TodoStarred{
 		Type:      "TodoStarred",
 		ID:        "todo-1",
 		SortOrder: 3000,
-	})
+	}})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 2)
@@ -135,24 +134,24 @@ func TestState_ApplyTodoUnstarred(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create and star todo
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Task 1",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
-	state.Apply(TodoStarred{
+	}})
+	state.ApplyEvents([]Event{TodoStarred{
 		Type:      "TodoStarred",
 		ID:        "todo-1",
 		SortOrder: 5000,
-	})
+	}})
 
 	// Unstar it
-	state.Apply(TodoUnstarred{
+	state.ApplyEvents([]Event{TodoUnstarred{
 		Type: "TodoUnstarred",
 		ID:   "todo-1",
-	})
+	}})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 1)
@@ -165,19 +164,19 @@ func TestState_ApplyTodoReordered(t *testing.T) {
 	state := NewState()
 	now := time.Now().UTC()
 
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Task 1",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	state.Apply(TodoReordered{
+	state.ApplyEvents([]Event{TodoReordered{
 		Type:      "TodoReordered",
 		ID:        "todo-1",
 		SortOrder: 5000,
-	})
+	}})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 1)
@@ -188,19 +187,19 @@ func TestState_ApplyTodoRenamed(t *testing.T) {
 	state := NewState()
 	now := time.Now().UTC()
 
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Original name",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	state.Apply(TodoRenamed{
+	state.ApplyEvents([]Event{TodoRenamed{
 		Type: "TodoRenamed",
 		ID:   "todo-1",
 		Name: "New name",
-	})
+	}})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 1)
@@ -212,27 +211,27 @@ func TestState_GetTodosSortedBySortOrder(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create todos in random order
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Task 1",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
-	state.Apply(TodoCreated{
+	}})
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-3",
 		Name:      "Task 3",
 		CreatedAt: now,
 		SortOrder: 3000,
-	})
-	state.Apply(TodoCreated{
+	}})
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-2",
 		Name:      "Task 2",
 		CreatedAt: now,
 		SortOrder: 2000,
-	})
+	}})
 
 	todos := state.GetTodos()
 	require.Len(t, todos, 3)
@@ -250,22 +249,22 @@ func TestState_GetHighestSortOrder(t *testing.T) {
 	assert.Equal(t, 0, state.GetHighestSortOrder())
 
 	now := time.Now().UTC()
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Task 1",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 	assert.Equal(t, 1000, state.GetHighestSortOrder())
 
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-2",
 		Name:      "Task 2",
 		CreatedAt: now,
 		SortOrder: 3000,
-	})
+	}})
 	assert.Equal(t, 3000, state.GetHighestSortOrder())
 }
 
@@ -300,11 +299,11 @@ func TestState_IgnoreUnknownTodoID(t *testing.T) {
 	state := NewState()
 
 	// Should not panic when applying event for unknown todo
-	state.Apply(TodoCompleted{
+	state.ApplyEvents([]Event{TodoCompleted{
 		Type:        "TodoCompleted",
 		ID:          "nonexistent",
 		CompletedAt: time.Now().UTC(),
-	})
+	}})
 
 	todos := state.GetTodos()
 	assert.Len(t, todos, 0)
@@ -315,13 +314,13 @@ func TestState_GetTodo(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Add a todo
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "test-todo",
 		Name:      "Test Task",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Get existing todo
 	todo, exists := state.GetTodo("test-todo")
@@ -343,23 +342,23 @@ func TestState_TodoCount(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Add one todo
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-1",
 		Name:      "Task 1",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 	assert.Equal(t, 1, state.TodoCount())
 
 	// Add another todo
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:      "TodoCreated",
 		ID:        "todo-2",
 		Name:      "Task 2",
 		CreatedAt: now,
 		SortOrder: 2000,
-	})
+	}})
 	assert.Equal(t, 2, state.TodoCount())
 }
 
@@ -374,7 +373,7 @@ func TestState_ApplyListTitleChanged(t *testing.T) {
 		Type:  "ListTitleChanged",
 		Title: "Shopping List",
 	}
-	state.Apply(event)
+	state.ApplyEvents([]Event{event})
 
 	// Verify title was updated
 	assert.Equal(t, "Shopping List", state.GetListTitle())
@@ -384,7 +383,7 @@ func TestState_ApplyListTitleChanged(t *testing.T) {
 		Type:  "ListTitleChanged",
 		Title: "Work Tasks",
 	}
-	state.Apply(event2)
+	state.ApplyEvents([]Event{event2})
 
 	// Verify title was updated again
 	assert.Equal(t, "Work Tasks", state.GetListTitle())
@@ -402,42 +401,42 @@ func TestState_CategoryProjectionAndCategorization(t *testing.T) {
 	now := time.Now().UTC()
 	ptr := func(s string) *string { return &s }
 
-	state.Apply(CategoryCreated{
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Inbox",
 		CreatedAt: now,
 		SortOrder: 2000,
-	})
-	state.Apply(CategoryCreated{
+	}})
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-2",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	cats := state.GetCategories()
 	require.Len(t, cats, 2)
 	assert.Equal(t, "cat-1", cats[0].ID) // highest sortOrder first
 
 	// Create todo in cat-1
-	state.Apply(TodoCreated{
+	state.ApplyEvents([]Event{TodoCreated{
 		Type:       "TodoCreated",
 		ID:         "todo-1",
 		Name:       "Task",
 		CreatedAt:  now,
 		SortOrder:  100,
 		CategoryID: ptr("cat-1"),
-	})
+	}})
 	assert.True(t, state.CategoryHasTodos("cat-1"))
 
 	// Move to uncategorized
-	state.Apply(TodoCategorized{
+	state.ApplyEvents([]Event{TodoCategorized{
 		Type:       "TodoCategorized",
 		ID:         "todo-1",
 		CategoryID: nil,
-	})
+	}})
 	assert.False(t, state.CategoryHasTodos("cat-1"))
 }
 
@@ -446,13 +445,13 @@ func TestState_DeletedCategoryTracking(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create a category
-	state.Apply(CategoryCreated{
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Verify category exists
 	cat, ok := state.GetCategory("cat-1")
@@ -460,10 +459,10 @@ func TestState_DeletedCategoryTracking(t *testing.T) {
 	assert.Equal(t, "Work", cat.Name)
 
 	// Delete the category
-	state.Apply(CategoryDeleted{
+	state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// Verify category no longer exists
 	_, ok = state.GetCategory("cat-1")
@@ -490,31 +489,31 @@ func TestState_CategoryReuseAfterDeletion(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create and delete a category
-	state.Apply(CategoryCreated{
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Shopping",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	state.Apply(CategoryDeleted{
+	state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// Verify it's in deleted categories
 	deletedID := state.FindDeletedCategoryByName("Shopping")
 	assert.Equal(t, "cat-1", deletedID)
 
 	// Recreate the category with the same ID
-	state.Apply(CategoryCreated{
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Shopping",
 		CreatedAt: now.Add(time.Hour),
 		SortOrder: 2000,
-	})
+	}})
 
 	// Verify category is active again
 	cat, ok := state.GetCategory("cat-1")
@@ -531,31 +530,31 @@ func TestState_MultipleCategoriesWithSameNameDeleted(t *testing.T) {
 	now := time.Now().UTC()
 
 	// Create two categories with same name (different IDs) - this is edge case but should handle
-	state.Apply(CategoryCreated{
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
-	state.Apply(CategoryDeleted{
+	state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
-	state.Apply(CategoryCreated{
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-2",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 2000,
-	})
+	}})
 
-	state.Apply(CategoryDeleted{
+	state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-2",
-	})
+	}})
 
 	// Should find one of the deleted categories (whichever comes first in map iteration)
 	deletedID := state.FindDeletedCategoryByName("Work")
@@ -571,13 +570,13 @@ func TestState_CategoryNameExists(t *testing.T) {
 	assert.False(t, state.CategoryNameExists("Work"))
 
 	// Create a category
-	state.Apply(CategoryCreated{
+	state.ApplyEvents([]Event{CategoryCreated{
 		Type:      "CategoryCreated",
 		ID:        "cat-1",
 		Name:      "Work",
 		CreatedAt: now,
 		SortOrder: 1000,
-	})
+	}})
 
 	// Category exists (exact match)
 	assert.True(t, state.CategoryNameExists("Work"))
@@ -587,10 +586,10 @@ func TestState_CategoryNameExists(t *testing.T) {
 	assert.False(t, state.CategoryNameExists("WORK"))
 
 	// Delete the category
-	state.Apply(CategoryDeleted{
+	state.ApplyEvents([]Event{CategoryDeleted{
 		Type: "CategoryDeleted",
 		ID:   "cat-1",
-	})
+	}})
 
 	// After deletion, should not exist anymore
 	assert.False(t, state.CategoryNameExists("Work"))

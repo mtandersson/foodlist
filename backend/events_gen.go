@@ -268,6 +268,12 @@ type AutocompleteResponse struct {
 	RequestID   string                   `json:"requestId"`
 }
 
+// AutocompleteCategory holds the ID and name of a category for suggestions.
+type AutocompleteCategory struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 // AutocompleteSuggestion includes the name and optional category context
 type AutocompleteSuggestion struct {
 	Name         string  `json:"name"`

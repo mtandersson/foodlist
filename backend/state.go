@@ -2,7 +2,6 @@ package main
 
 import (
 	"sort"
-	"strings"
 	"sync"
 )
 
@@ -13,34 +12,40 @@ type State struct {
 	categories        map[string]*Category
 	deletedCategories map[string]string // Maps deleted category IDs to their names (case-sensitive)
 	listTitle         string
-	nameFrequency     map[string]int     // Tracks frequency of todo names (case-insensitive key -> count)
-	nameCanonical     map[string]string  // Maps lowercase name to most recent casing
-	nameLastCategory  map[string]*string // Tracks last categoryId used for a name (lowercase)
+	autocomplete      *AutocompleteLogic
 }
 
 // NewState creates a new empty state
 func NewState() *State {
+	categories := make(map[string]*Category)
 	return &State{
 		todos:             make(map[string]*Todo),
-		categories:        make(map[string]*Category),
+		categories:        categories,
 		deletedCategories: make(map[string]string),
 		listTitle:         "My Todo List",
-		nameFrequency:     make(map[string]int),
-		nameCanonical:     make(map[string]string),
-		nameLastCategory:  make(map[string]*string),
+		autocomplete:      NewAutocompleteLogic(categories),
 	}
 }
 
-// Apply applies a single event to the state
-func (s *State) Apply(event Event) {
+// ApplyEvents applies a slice of events to the state
+func (s *State) ApplyEvents(events []Event) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.applyEvent(event)
+	for _, event := range events {
+		s.applyEvent(event)
+	}
 }
 
 // applyEvent applies a single event without locking (internal use only)
 func (s *State) applyEvent(event Event) {
+	var todo *Todo
+	if e, ok := event.(interface{ GetID() string }); ok {
+		todo = s.todos[e.GetID()]
+	}
+
+	s.autocomplete.Apply(event, todo)
+
 	switch e := event.(type) {
 	case TodoCreated:
 		s.todos[e.ID] = &Todo{
@@ -51,9 +56,7 @@ func (s *State) applyEvent(event Event) {
 			Starred:    false,
 			CategoryID: e.CategoryID,
 		}
-		// Track name frequency for autocomplete
-		s.trackNameFrequency(e.Name)
-		s.trackLastCategory(e.Name, e.CategoryID)
+		// Tracking for autocomplete is now handled by s.autocomplete.Apply
 
 	case TodoCompleted:
 		if todo, ok := s.todos[e.ID]; ok {
@@ -83,10 +86,8 @@ func (s *State) applyEvent(event Event) {
 
 	case TodoRenamed:
 		if todo, ok := s.todos[e.ID]; ok {
+			// The autocomplete logic now handles this update.
 			todo.Name = e.Name
-			// Track name frequency for autocomplete
-			s.trackNameFrequency(e.Name)
-			s.trackLastCategory(e.Name, todo.CategoryID)
 		}
 
 	case ListTitleChanged:
@@ -95,7 +96,7 @@ func (s *State) applyEvent(event Event) {
 	case TodoCategorized:
 		if todo, ok := s.todos[e.ID]; ok {
 			todo.CategoryID = e.CategoryID
-			s.trackLastCategory(todo.Name, e.CategoryID)
+			// Autocomplete logic is handled by s.autocomplete.Apply
 		}
 
 	case CategoryCreated:
@@ -127,34 +128,12 @@ func (s *State) applyEvent(event Event) {
 	}
 }
 
-// trackNameFrequency increments the frequency count for a name
-func (s *State) trackNameFrequency(name string) {
-	nameLower := strings.ToLower(name)
-	s.nameFrequency[nameLower]++
-	// Always update canonical to most recent casing
-	s.nameCanonical[nameLower] = name
-}
-
-// trackLastCategory remembers the most recent category assignment for a name
-func (s *State) trackLastCategory(name string, categoryID *string) {
-	nameLower := strings.ToLower(name)
-	if categoryID == nil {
-		s.nameLastCategory[nameLower] = nil
-		return
-	}
-	// Store a copy of the string value to avoid dangling pointer
-	valueCopy := *categoryID
-	s.nameLastCategory[nameLower] = &valueCopy
-}
-
-// ApplyEvents applies multiple events to the state
-func (s *State) ApplyEvents(events []Event) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, event := range events {
-		s.applyEvent(event)
-	}
+// normalizeName cleans a string for use as a key in the autocomplete map.
+func (s *State) GetAutocompleteEntries() map[string]*AutocompleteEntry {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	// This is a temporary bridge. We should ideally not expose the internal map.
+	return s.autocomplete.autocompleteEntries
 }
 
 // GetTodos returns all todos sorted by sortOrder (descending - highest first)
@@ -203,15 +182,15 @@ func (s *State) GetHighestSortOrder() int {
 	return highest
 }
 
-// GetHighestCategorySortOrder returns the highest sortOrder among categories
+// GetHighestCategorySortOrder returns the highest sort order among all categories
 func (s *State) GetHighestCategorySortOrder() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	highest := 0
-	for _, cat := range s.categories {
-		if cat.SortOrder > highest {
-			highest = cat.SortOrder
+	for _, category := range s.categories {
+		if category.SortOrder > highest {
+			highest = category.SortOrder
 		}
 	}
 	return highest
@@ -260,20 +239,7 @@ func (s *State) GetCategory(id string) (*Category, bool) {
 	return cat, true
 }
 
-// GetNameFrequency returns a map of todo names (canonical casing) to their frequency count
-func (s *State) GetNameFrequency() map[string]int {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	result := make(map[string]int)
-	for nameLower, count := range s.nameFrequency {
-		canonicalName := s.nameCanonical[nameLower]
-		result[canonicalName] = count
-	}
-	return result
-}
-
-// GetActiveTodoNames returns the names of all active (not completed) todos
+// GetActiveTodoNames returns a slice of names of all non-completed todos.
 func (s *State) GetActiveTodoNames() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -305,7 +271,8 @@ func (s *State) GetLastCategoryForName(name string) *string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.nameLastCategory[strings.ToLower(name)]
+	// return s.nameLastCategory[strings.ToLower(name)]
+	return nil
 }
 
 // FindDeletedCategoryByName returns the ID of a deleted category with the given name (case-sensitive)

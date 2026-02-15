@@ -114,12 +114,13 @@
         />
       {:else}
         {#if onRename}
-          <button 
+          <div 
             class="section-title-button" 
             ondblclick={handleTitleDoubleClick}
             onkeydown={handleTitleKeydown}
-            type="button"
-          >{title}</button>
+            role="button"
+            tabindex="0"
+          >{title}</div>
         {:else}
           <span class="section-title">{title}</span>
         {/if}

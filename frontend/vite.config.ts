@@ -30,13 +30,14 @@ function getVersion(): string {
 // Append "-dev" suffix if not in CI
 // CI is detected by: RELEASE_VERSION env var (most reliable), CI=true, or GITHUB_ACTIONS=true
 function getVersionWithSuffix(): string {
-  const version = getVersion();
-  
+  const version = getVersion()
+
   // If RELEASE_VERSION is set, it's a CI build - don't append -dev
-  const isCI = !!process.env.RELEASE_VERSION || 
-               process.env.CI === "true" || 
-               process.env.GITHUB_ACTIONS === "true";
-  
+  const isCI =
+    !!process.env.RELEASE_VERSION ||
+    process.env.CI === "true" ||
+    process.env.GITHUB_ACTIONS === "true"
+
   if (!isCI && version !== "dev") {
     return `${version}-dev`
   }
@@ -152,7 +153,6 @@ export default defineConfig(({mode}) => ({
       "/ws": {
         target: process.env.VITE_BACKEND_URL || "ws://localhost:8080",
         ws: true,
-        changeOrigin: true,
       },
     },
   },

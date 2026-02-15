@@ -146,18 +146,146 @@
   let selectedAutocompleteIndex = $state(-1);
   let inputFocused = $state(false);
   let todoInputEl: HTMLInputElement | null = null;
+  let inlineSuggestion = $state('');
+
+  $effect(() => {
+    const suggestions = $autocompleteSuggestions;
+    const currentInput = newTodoName.toLowerCase();
+    
+    if (showAutocomplete && suggestions.length > 0 && currentInput) {
+      const topSuggestion = suggestions[0].name.toLowerCase();
+      if (topSuggestion.startsWith(currentInput)) {
+        inlineSuggestion = suggestions[0].name.substring(newTodoName.length);
+      } else {
+        inlineSuggestion = '';
+      }
+    } else {
+      inlineSuggestion = '';
+    }
+  });
+
+  // Function to predict which category will be used for the current input
+  function getPredictedCategory(): string | null {
+    if (pendingCategoryId) {
+      return getCategoryName(pendingCategoryId);
+    }
+    
+    const name = (newTodoName + inlineSuggestion).trim();
+    if (!name) return null;
+    
+    // Get the best category suggestion from autocomplete
+    const suggestions = $autocompleteSuggestions;
+    if (suggestions.length > 0) {
+      const lowerName = name.toLowerCase();
+      const similarSuggestions = suggestions.filter(s => 
+        s.name.toLowerCase().includes(lowerName) || 
+        lowerName.includes(s.name.toLowerCase()) ||
+        s.name.toLowerCase().startsWith(lowerName.substring(0, 3))
+      );
+      
+      if (similarSuggestions.length > 0) {
+        const bestMatch = similarSuggestions[0];
+        return getCategoryName(bestMatch.categoryId);
+      }
+    }
+    
+    // If still no category, try to find category from existing todos with similar names
+    const activeTodos = $activeTodosCollapsed;
+    const lowerName = name.toLowerCase();
+    const similarTodos = activeTodos.filter(entry => {
+      const todoName = entry.todo.name.toLowerCase();
+      return todoName.includes(lowerName.substring(0, Math.min(3, lowerName.length))) ||
+             lowerName.includes(todoName.substring(0, Math.min(3, todoName.length)));
+    });
+    
+    if (similarTodos.length > 0) {
+      const categoryCount = new Map<string | null, number>();
+      similarTodos.forEach(entry => {
+        const catId = entry.todo.categoryId ?? null;
+        categoryCount.set(catId, (categoryCount.get(catId) || 0) + 1);
+      });
+      
+      let maxCount = 0;
+      let mostCommonCategory: string | null = null;
+      categoryCount.forEach((count, catId) => {
+        if (count > maxCount) {
+          maxCount = count;
+          mostCommonCategory = catId;
+        }
+      });
+      
+      return getCategoryName(mostCommonCategory);
+    }
+    
+    return null;
+  }
 
   function handleAddTodo() {
-    const name = newTodoName.trim();
+    const name = (newTodoName + inlineSuggestion).trim();
     if (name) {
-      store.createTodo(name, pendingCategoryId);
+      let categoryId = pendingCategoryId;
+      
+      // If no pending category, try to intelligently detect it
+      if (!categoryId) {
+        // Get the best category suggestion from autocomplete
+        const suggestions = $autocompleteSuggestions;
+        if (suggestions.length > 0) {
+          // Find suggestions that match or are similar to our input
+          const lowerName = name.toLowerCase();
+          const similarSuggestions = suggestions.filter(s => 
+            s.name.toLowerCase().includes(lowerName) || 
+            lowerName.includes(s.name.toLowerCase()) ||
+            s.name.toLowerCase().startsWith(lowerName.substring(0, 3))
+          );
+          
+          if (similarSuggestions.length > 0) {
+            // Use category from the most similar suggestion
+            const bestMatch = similarSuggestions[0];
+            categoryId = bestMatch.categoryId;
+          }
+        }
+        
+        // If still no category, try to find category from existing todos with similar names
+        if (!categoryId) {
+          // Get all active todos and find ones with similar names
+          const activeTodos = $activeTodosCollapsed;
+          const lowerName = name.toLowerCase();
+          const similarTodos = activeTodos.filter(entry => {
+            const todoName = entry.todo.name.toLowerCase();
+            return todoName.includes(lowerName.substring(0, Math.min(3, lowerName.length))) ||
+                   lowerName.includes(todoName.substring(0, Math.min(3, todoName.length)));
+          });
+          
+          if (similarTodos.length > 0) {
+            // Find the most common category among similar todos
+            const categoryCount = new Map<string | null, number>();
+            similarTodos.forEach(entry => {
+              const catId = entry.todo.categoryId ?? null;
+              categoryCount.set(catId, (categoryCount.get(catId) || 0) + 1);
+            });
+            
+            // Get the most frequent category
+            let maxCount = 0;
+            let mostCommonCategory: string | null = null;
+            categoryCount.forEach((count, catId) => {
+              if (count > maxCount) {
+                maxCount = count;
+                mostCommonCategory = catId;
+              }
+            });
+            
+            categoryId = mostCommonCategory;
+          }
+        }
+      }
+      
+      store.createTodo(name, categoryId);
       newTodoName = '';
+      inlineSuggestion = '';
       pendingCategoryId = null;
       selectedAutocompleteIndex = -1;
 
       // Keep suggestions open for fast multi-add if the input is still focused.
-      // (Previously we always hid + cleared suggestions, which made the dropdown disappear
-      // even if more suggestions were available.)
       if (inputFocused) {
         store.requestAutocomplete(newTodoName);
         showAutocomplete = true;
@@ -175,21 +303,58 @@
       e.preventDefault();
       if (suggestions.length > 0) {
         selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, suggestions.length - 1);
+        updateScroll();
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (suggestions.length > 0) {
-        selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, -1);
+        selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, 0);
+        updateScroll();
       }
     } else if (e.key === 'Enter') {
-      if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < suggestions.length) {
         e.preventDefault();
-        selectSuggestion(suggestions[selectedAutocompleteIndex]);
-      } else {
-        handleAddTodo();
+        if (inlineSuggestion) {
+          const name = newTodoName + inlineSuggestion;
+          const suggestion = $autocompleteSuggestions.find(s => s.name.toLowerCase() === name.toLowerCase());
+          store.createTodo(name, suggestion?.categoryId ?? null);
+          newTodoName = '';
+          inlineSuggestion = '';
+          pendingCategoryId = null;
+          selectedAutocompleteIndex = -1;
+          if (inputFocused) {
+            store.requestAutocomplete(newTodoName);
+            showAutocomplete = true;
+            queueMicrotask(() => todoInputEl?.focus());
+          } else {
+            hideAutocomplete();
+          }
+        } else if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < suggestions.length) {
+          selectSuggestion(suggestions[selectedAutocompleteIndex]);
+        } else {
+          handleAddTodo();
+        }
+    } else if (e.key === 'Tab' || e.key === 'ArrowRight') {
+      if (inlineSuggestion && todoInputEl && todoInputEl.selectionStart === newTodoName.length) {
+        e.preventDefault();
+        newTodoName += inlineSuggestion;
+        inlineSuggestion = '';
       }
     } else if (e.key === 'Escape') {
       hideAutocomplete();
+    }
+  }
+
+  function updateScroll() {
+    const list = document.querySelector('.autocomplete-suggestions');
+    const item = document.querySelector('.suggestion-item.selected');
+    if (list && item) {
+      const listRect = list.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      if (itemRect.bottom > listRect.bottom) {
+        list.scrollTop += itemRect.bottom - listRect.bottom;
+      } else if (itemRect.top < listRect.top) {
+        list.scrollTop -= listRect.top - itemRect.top;
+      }
     }
   }
 
@@ -222,6 +387,7 @@
     // Immediately add the todo (without closing the dropdown)
     store.createTodo(suggestion.name, suggestion.categoryId ?? null);
     newTodoName = '';
+    inlineSuggestion = '';
     pendingCategoryId = null;
     selectedAutocompleteIndex = -1;
 
@@ -237,6 +403,7 @@
   function hideAutocomplete() {
     showAutocomplete = false;
     selectedAutocompleteIndex = -1;
+    inlineSuggestion = '';
     store.clearAutocomplete();
   }
 
@@ -935,9 +1102,9 @@
           >
             <div class="autocomplete-item-main">
               <span>{suggestion.name}</span>
-              {#if suggestion.categoryName || suggestion.categoryId}
+              {#if suggestion.categoryName}
                 <span class="autocomplete-badge">
-                  {suggestion.categoryName ?? getCategoryName(suggestion.categoryId)}
+                  {suggestion.categoryName}
                 </span>
               {/if}
             </div>
@@ -955,18 +1122,34 @@
           <CheckboxRing size="small" />
         </div>
       </div>
-      <input
-        type="text"
-        placeholder="Lägg till en uppgift"
-        bind:this={todoInputEl}
-        bind:value={newTodoName}
-        onkeydown={handleKeydown}
-        oninput={handleInput}
-        onfocus={handleInputFocus}
-        onblur={handleInputBlur}
-        aria-label="Ny uppgift"
-        autocomplete="off"
-      />
+      <div class="input-wrapper">
+        {#if newTodoName.trim()}
+          {@const predictedCategory = getPredictedCategory()}
+          {#if predictedCategory}
+            <div class="predicted-category">
+              <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span class="category-name">{predictedCategory}</span>
+            </div>
+          {/if}
+        {/if}
+        <input
+          type="text"
+          placeholder="Lägg till en uppgift"
+          bind:this={todoInputEl}
+          bind:value={newTodoName}
+          onkeydown={handleKeydown}
+          oninput={handleInput}
+          onfocus={handleInputFocus}
+          onblur={handleInputBlur}
+          aria-label="Ny uppgift"
+          autocomplete="off"
+        />
+        {#if inlineSuggestion}
+          <div class="inline-suggestion">{newTodoName}<span class="suggestion-text">{inlineSuggestion}</span></div>
+        {/if}
+      </div>
     </form>
   </div>
 </div>
@@ -1394,6 +1577,53 @@
 
   .add-todo-bottom:focus-within input::placeholder {
     color: var(--text-secondary);
+  }
+
+  .input-wrapper {
+    position: relative;
+    flex: 1;
+  }
+
+  .predicted-category {
+    position: absolute;
+    top: -32px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    z-index: 1;
+    pointer-events: none;
+    transition: all var(--duration-instant);
+  }
+
+  .predicted-category .category-icon {
+    width: 12px;
+    height: 12px;
+    opacity: 0.7;
+  }
+
+  .predicted-category .category-name {
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
+
+  .inline-suggestion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: var(--font-size-lg);
+    color: transparent;
+    pointer-events: none;
+  }
+
+  .suggestion-text {
+    color: var(--text-muted);
   }
 
   .todos-section {
