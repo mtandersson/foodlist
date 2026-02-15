@@ -1075,6 +1075,23 @@ describe('TodoStore', () => {
       store.destroy();
     });
 
+    it('should fallback to empty suggestions on malformed payload', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+
+      store.requestAutocomplete('mil');
+      const requestId = mockSendAutocomplete.mock.calls[0][0].requestId;
+
+      autocompleteHandler!({
+        type: 'AutocompleteResponse',
+        suggestions: null,
+        requestId,
+      } as unknown as AutocompleteResponse);
+
+      expect(get(store.autocompleteSuggestions)).toEqual([]);
+
+      store.destroy();
+    });
+
     it('should ignore response with wrong requestId', () => {
       const store = createTodoStore('ws://localhost:8080/ws');
       
