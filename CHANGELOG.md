@@ -1,3 +1,10 @@
+## [1.9.55](https://github.com/mtandersson/foodlist/compare/v1.9.54...v1.9.55) (2026-02-15)
+
+### Chores
+
+* **deps:** Pin gcr.io/distroless/static-debian13 Docker tag to 01e550f ([8175361](https://github.com/mtandersson/foodlist/commit/817536138146fa98ea4cd53505ea772e49975bb4))
+* **deps:** update jsdom to ^28.1.0 ([9c7553b](https://github.com/mtandersson/foodlist/commit/9c7553b5012d5842c767c64f2a29719604d5059e))
+
 ## [1.9.54](https://github.com/mtandersson/foodlist/compare/v1.9.53...v1.9.54) (2026-02-15)
 
 ### Chores
