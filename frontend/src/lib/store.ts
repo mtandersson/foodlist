@@ -260,7 +260,10 @@ export function createTodoStore(wsUrl: string): TodoStore {
   ws.onAutocomplete((response: AutocompleteResponse) => {
     // Only update if this is the response we're waiting for
     if (response.requestId === pendingRequestId) {
-      autocompleteSuggestions.set(response.suggestions)
+      // Guard against malformed payloads from older/invalid servers.
+      autocompleteSuggestions.set(
+        Array.isArray(response.suggestions) ? response.suggestions : []
+      )
     }
   })
 
