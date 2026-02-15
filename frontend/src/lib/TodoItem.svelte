@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Todo } from './types';
   import CheckboxRing from './CheckboxRing.svelte';
+  import CategoryBadge from './CategoryBadge.svelte';
 
   interface Props {
     todo: Todo;
@@ -115,7 +116,7 @@
   }
 </script>
 
-<div class="todo-item" class:completed={todo.completedAt !== null}>
+<div class="todo-item" class:completed={todo.completedAt !== null} class:editing={isEditing}>
   <button 
     class="checkbox" 
     bind:this={checkboxButton}
@@ -159,9 +160,7 @@
   {/if}
 
   {#if categoryName}
-    <span class="category-badge">
-      {categoryName}
-    </span>
+    <CategoryBadge name={categoryName!} />
   {/if}
 
   <button 
@@ -187,16 +186,63 @@
     border-radius: var(--radius-md);
     transition: all var(--transition-slow);
     box-shadow: var(--shadow-sm);
+    /* Ensure proper alignment and prevent text overlap */
+    min-height: 44px;
+    /* Ensure proper stacking context */
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* When editing, ensure item is above others and has solid background */
+  /* Updated: 2026-02-17 - Fixed iOS text input layout issues */
+  .todo-item.editing {
+    z-index: 5;
+    background: var(--card-bg);
+    box-shadow: var(--shadow-md);
   }
 
   @media (max-width: 768px) {
     .todo-item {
-      gap: var(--spacing-sm);
-      padding: var(--spacing-sm) var(--spacing-md);
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      /* Ensure proper alignment on iOS */
+      align-items: center;
+      min-height: 44px; /* iOS touch target minimum */
     }
 
-    .category-badge {
+    :global(.category-badge) {
       display: none;
+    }
+
+    /* Ensure proper spacing for edit input on mobile */
+    .edit-input {
+      margin: 0;
+      padding: 0;
+      /* Ensure text doesn't overlap with checkbox */
+      min-width: 0;
+      /* Ensure proper vertical alignment - center with checkbox */
+      height: auto;
+      line-height: 1.4;
+      /* Solid background to prevent content bleeding through */
+      background: var(--card-bg);
+      /* Ensure it's above other content */
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Ensure checkbox maintains proper size and spacing */
+    .checkbox {
+      flex-shrink: 0;
+      width: var(--checkbox-size);
+      height: var(--checkbox-size);
+      min-width: var(--checkbox-size);
+      min-height: var(--checkbox-size);
+    }
+
+    /* When editing on mobile, ensure item is elevated */
+    .todo-item.editing {
+      z-index: 10;
+      box-shadow: var(--shadow-lg);
     }
   }
 
@@ -213,6 +259,10 @@
     justify-content: center;
     padding: 0;
     outline: none;
+    /* Ensure checkbox doesn't shrink and maintains proper spacing */
+    flex-shrink: 0;
+    min-width: var(--checkbox-size);
+    height: var(--checkbox-size);
   }
 
   /* Prevent focus rings on mobile for checkbox buttons */
@@ -241,10 +291,19 @@
     text-align: left;
     font-family: inherit;
     width: 100%;
+    /* Ensure proper alignment */
+    display: flex;
+    align-items: center;
+    min-width: 0;
   }
 
   .todo-name {
     min-width: 0;
+    /* Ensure proper text display */
+    display: block;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .duplicate-badge {
@@ -281,17 +340,6 @@
     color: var(--text-muted);
   }
 
-  .category-badge {
-    padding: var(--spacing-xs) var(--spacing-md);
-    background: var(--primary-color);
-    color: white;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-normal);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
 
   .edit-input {
     flex: 1;
@@ -299,9 +347,26 @@
     color: var(--text-secondary);
     border: none;
     outline: none;
-    background: transparent;
+    /* Use solid background to prevent content bleeding through */
+    background: var(--card-bg);
     padding: 0;
     font-family: inherit;
+    /* Ensure proper alignment and prevent text overlap */
+    line-height: 1.4;
+    /* Prevent iOS zoom on focus */
+    font-size: max(var(--font-size-base), 16px);
+    /* Ensure proper appearance on iOS */
+    -webkit-appearance: none;
+    appearance: none;
+    /* Proper text alignment */
+    text-align: left;
+    width: 100%;
+    min-width: 0;
+    /* Ensure proper vertical alignment - inherit from parent flex container */
+    height: auto;
+    /* Ensure input is above other content */
+    position: relative;
+    z-index: 1;
   }
 
   .star-btn {

@@ -9,6 +9,7 @@
   import CategoriesView from './CategoriesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
   import CheckboxRing from './CheckboxRing.svelte';
+  import CategoryBadge from './CategoryBadge.svelte';
   import AboutModal from './AboutModal.svelte';
   import { getStoredTheme, setTheme, type ThemeMode } from './theme';
   import type { Todo, AutocompleteSuggestion } from './types';
@@ -1103,9 +1104,7 @@
             <div class="autocomplete-item-main">
               <span>{suggestion.name}</span>
               {#if suggestion.categoryName}
-                <span class="autocomplete-badge">
-                  {suggestion.categoryName}
-                </span>
+                <CategoryBadge name={suggestion.categoryName!} />
               {/if}
             </div>
           </button>
@@ -1123,17 +1122,6 @@
         </div>
       </div>
       <div class="input-wrapper">
-        {#if newTodoName.trim()}
-          {@const predictedCategory = getPredictedCategory()}
-          {#if predictedCategory}
-            <div class="predicted-category">
-              <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-              </svg>
-              <span class="category-name">{predictedCategory}</span>
-            </div>
-          {/if}
-        {/if}
         <input
           type="text"
           placeholder="Lägg till en uppgift"
@@ -1145,9 +1133,18 @@
           onblur={handleInputBlur}
           aria-label="Ny uppgift"
           autocomplete="off"
+          class:has-category={newTodoName.trim() && getPredictedCategory()}
         />
         {#if inlineSuggestion}
           <div class="inline-suggestion">{newTodoName}<span class="suggestion-text">{inlineSuggestion}</span></div>
+        {/if}
+        {#if newTodoName.trim()}
+          {@const predictedCategory = getPredictedCategory()}
+          {#if predictedCategory}
+            <div class="predicted-category">
+              <CategoryBadge name={predictedCategory!} showIcon={true} size="small" />
+            </div>
+          {/if}
         {/if}
       </div>
     </form>
@@ -1179,6 +1176,8 @@
       width: 100%;
       padding: env(safe-area-inset-top) var(--spacing-md) calc(var(--spacing-lg) + env(safe-area-inset-bottom));
       height: 100dvh;
+      /* Prevent layout shift when iOS keyboard appears */
+      position: relative;
     }
   }
 
@@ -1204,6 +1203,8 @@
     min-height: 0;
     /* Force scrollbar to always be visible for consistent layout */
     scrollbar-gutter: stable;
+    /* Prevent iOS bounce scrolling from interfering with layout */
+    -webkit-overflow-scrolling: touch;
   }
 
   .scrollable-content::-webkit-scrollbar {
@@ -1227,6 +1228,8 @@
     .scrollable-content {
       scrollbar-width: none; /* Firefox */
       -ms-overflow-style: none; /* IE and Edge */
+      /* Ensure content can scroll properly when keyboard appears */
+      padding-bottom: var(--spacing-md);
     }
 
     .scrollable-content::-webkit-scrollbar {
@@ -1498,6 +1501,8 @@
     box-shadow: var(--shadow-md);
     cursor: text;
     transition: all var(--transition-normal);
+    /* Ensure proper touch target size on iOS */
+    min-height: 44px;
   }
 
   .add-todo-bottom:hover {
@@ -1560,6 +1565,21 @@
     font-family: inherit;
     transition: color var(--transition-normal), opacity var(--transition-normal);
     opacity: 0.8;
+    /* Prevent iOS zoom on focus */
+    font-size: max(var(--font-size-lg), 16px);
+    /* Ensure proper appearance on iOS */
+    -webkit-appearance: none;
+    appearance: none;
+    /* Add padding-right when category is shown to prevent text overlap */
+    padding-right: 0;
+    width: 100%;
+    /* Ensure input takes full height of wrapper */
+    height: 100%;
+    line-height: 1.4;
+  }
+
+  .add-todo-bottom input.has-category {
+    padding-right: calc(var(--spacing-xl) + 80px); /* Space for category badge */
   }
 
   .add-todo-bottom input:focus {
@@ -1582,35 +1602,41 @@
   .input-wrapper {
     position: relative;
     flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0; /* Allow flex item to shrink */
+    overflow: visible; /* Allow category badge to be visible */
+    /* Ensure proper height matching input */
+    height: 100%;
   }
 
   .predicted-category {
     position: absolute;
-    top: -32px;
-    right: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: var(--surface-secondary);
-    border: 1px solid var(--border-muted);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    z-index: 1;
+    right: var(--spacing-md);
+    z-index: 3;
     pointer-events: none;
     transition: all var(--duration-instant);
+    /* Ensure it's vertically centered with input (input is ~23px tall) */
+    top: 50%;
+    transform: translateY(-50%);
+    /* Prevent it from overlapping with text */
+    max-width: 35%;
   }
 
-  .predicted-category .category-icon {
-    width: 12px;
-    height: 12px;
-    opacity: 0.7;
+  /* Higher z-index when focused */
+  .add-todo-bottom:focus-within .predicted-category {
+    z-index: 4;
   }
 
-  .predicted-category .category-name {
-    font-weight: var(--font-weight-medium);
-    white-space: nowrap;
+  @media (max-width: 768px) {
+    .predicted-category {
+      right: var(--spacing-sm);
+      max-width: 30%;
+    }
+
+    .add-todo-bottom input.has-category {
+      padding-right: calc(var(--spacing-md) + 70px); /* Space for category badge on mobile */
+    }
   }
 
   .inline-suggestion {
@@ -1712,6 +1738,44 @@
   @media (max-width: 768px) {
     .add-todo-wrapper {
       padding-right: 0;
+      /* Ensure input stays visible when keyboard appears on iOS */
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      background: var(--app-bg-color);
+      background-image: var(--app-bg-image);
+      padding-top: var(--spacing-sm);
+      margin-top: var(--spacing-sm);
+      /* Smooth transition when keyboard appears */
+      transition: transform var(--transition-normal);
+    }
+  }
+
+  /* iOS-specific fixes for keyboard appearance */
+  @supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+      .add-todo-wrapper {
+        /* Use sticky positioning to keep input visible */
+        position: -webkit-sticky;
+        position: sticky;
+        /* Add background to prevent content showing through */
+        background: var(--app-bg-color);
+        background-image: var(--app-bg-image);
+        /* Ensure it stays above content */
+        z-index: 10;
+      }
+
+      .add-todo-bottom {
+        /* Ensure proper spacing on iOS */
+        margin-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      /* Adjust container when input is focused to account for keyboard */
+      .todo-list-container {
+        /* Use visual viewport height when available for better keyboard handling */
+        height: 100vh;
+        height: 100dvh;
+      }
     }
   }
 
@@ -1754,14 +1818,6 @@
     gap: var(--spacing-md);
   }
 
-  .autocomplete-badge {
-    background: var(--surface-muted-strong);
-    color: var(--text-primary);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    white-space: nowrap;
-  }
 
   .autocomplete-item:first-child {
     border-radius: var(--radius-md) var(--radius-md) 0 0;
