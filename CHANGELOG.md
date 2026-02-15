@@ -1,3 +1,9 @@
+## [1.10.1](https://github.com/mtandersson/foodlist/compare/v1.10.0...v1.10.1) (2026-02-15)
+
+### Bug Fixes
+
+* handle Enter add flow when autocomplete payload is malformed ([5969f6e](https://github.com/mtandersson/foodlist/commit/5969f6e69fcb23027dfff69f14446beb7ae07216))
+
 ## [1.10.0](https://github.com/mtandersson/foodlist/compare/v1.9.55...v1.10.0) (2026-02-15)
 
 ### Features
