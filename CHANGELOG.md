@@ -1,3 +1,13 @@
+## [1.10.0](https://github.com/mtandersson/foodlist/compare/v1.9.55...v1.10.0) (2026-02-15)
+
+### Features
+
+* implement intelligent autofill with fuzzy matching and improve category handling ([f138cdb](https://github.com/mtandersson/foodlist/commit/f138cdb1100d672147f6a5b96853a1e9aa0ba247))
+
+### Chores
+
+* **deps:** update svelte to ^5.51.2 ([9ade9f6](https://github.com/mtandersson/foodlist/commit/9ade9f6c98c283f6fb32a6939452e6d4928028fc))
+
 ## [1.9.55](https://github.com/mtandersson/foodlist/compare/v1.9.54...v1.9.55) (2026-02-15)
 
 ### Chores
