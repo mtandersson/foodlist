@@ -666,12 +666,8 @@ func TestServer_WritePump_HandleClosedConnection(t *testing.T) {
 	conn2 := connectWS(t, wsURL)
 	defer conn2.Close()
 
-	// Should still work
-	_, msg, err := conn2.ReadMessage()
-	require.NoError(t, err)
-
-	var rollup StateRollup
-	json.Unmarshal(msg, &rollup)
+	// Should still work - read initial messages (order may vary)
+	rollup, _ := readInitialMessages(t, conn2)
 	assert.Equal(t, "StateRollup", rollup.Type)
 }
 
