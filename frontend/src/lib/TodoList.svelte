@@ -1174,7 +1174,7 @@
   @media (max-width: 768px) {
     .todo-list-container {
       width: 100%;
-      padding: env(safe-area-inset-top) var(--spacing-md) calc(var(--spacing-lg) + env(safe-area-inset-bottom));
+      padding: env(safe-area-inset-top) var(--spacing-md) var(--spacing-lg);
       height: 100dvh;
       /* Prevent layout shift when iOS keyboard appears */
       position: relative;
@@ -1766,8 +1766,7 @@
       }
 
       .add-todo-bottom {
-        /* Ensure proper spacing on iOS */
-        margin-bottom: env(safe-area-inset-bottom, 0px);
+        /* Removed safe-area-inset-bottom to eliminate unnecessary spacing */
       }
 
       /* Adjust container when input is focused to account for keyboard */
