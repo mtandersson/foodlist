@@ -213,6 +213,21 @@
   --checkbox-border: #48484a;
 }
 
+/* Remove gradient on mobile/iOS devices, use solid color matching icon */
+@media (hover: none) and (pointer: coarse), (max-width: 768px) {
+  :root {
+    --app-bg-image: none;
+  }
+  
+  :root:not([data-theme="light"]) {
+    --app-bg-image: none;
+  }
+  
+  :root[data-theme="dark"] {
+    --app-bg-image: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
