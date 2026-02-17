@@ -291,7 +291,7 @@
 
     .modal-footer {
       padding: var(--spacing-lg);
-      padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
+      padding-bottom: var(--spacing-lg);
       border-top: 1px solid var(--border-color);
     }
 
