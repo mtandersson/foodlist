@@ -12,14 +12,19 @@
    - Review `docs/README.md` for documentation index
    - Search `docs/` directory for relevant guides
 
-2. **For specific tasks, consult:**
+2. **Before answering questions about commit messages or project conventions:**
+   - **MUST read `CONTRIBUTING.md` completely first** - Never answer from memory
+   - Verify exact definitions, types, and examples from the documentation
+   - Check for any project-specific requirements or exceptions
+
+3. **For specific tasks, consult:**
    - Architecture changes → `docs/architecture/`
    - Feature implementation → `docs/features/`
    - Setup/configuration → `docs/setup/`
    - Development guides → `docs/guides/`
    - AI development → `docs/guides/AI_DEVELOPMENT_GUIDE.md`
 
-3. **When modifying code:**
+4. **When modifying code:**
    - Read existing code comments and documentation
    - Check related test files for usage examples
    - Review similar implementations in the codebase
@@ -218,6 +223,14 @@ Clients must be updated to handle the new structure.
 
 ### When Suggesting Commits
 
+**CRITICAL: Before answering ANY question about commit messages, commit types, or project conventions:**
+
+1. **MUST read `CONTRIBUTING.md` first** - Do not rely on memory or assumptions
+2. Verify the exact commit type definitions and examples from CONTRIBUTING.md
+3. Check for any project-specific conventions or requirements
+4. Only then provide your answer based on the actual documentation
+
+**Then proceed with:**
 1. Analyze the changed files to determine appropriate type and scope
 2. Generate a clear, specific subject line
 3. If changes are complex, include a body explaining WHY
