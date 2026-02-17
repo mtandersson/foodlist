@@ -1,3 +1,23 @@
+## [1.10.4](https://github.com/mtandersson/foodlist/compare/v1.10.3...v1.10.4) (2026-02-17)
+
+### Documentation
+
+* **rules:** require reading CONTRIBUTING.md before commit message questions ([41352a3](https://github.com/mtandersson/foodlist/commit/41352a3f39f26021eb66d858c77db0fbf572f302))
+
+### Styles
+
+* remove gradient background for mobile and iOS devices ([371d116](https://github.com/mtandersson/foodlist/commit/371d116159ff880e73cc58b6d5bf4e4590a1c7e7))
+* simplify padding in AboutModal and TodoList components ([3d4a688](https://github.com/mtandersson/foodlist/commit/3d4a6883a7f20ad4d04e813f1e925200732af248))
+
+### Tests
+
+* **server:** handle race condition in TestServer_WritePump_HandleClosedConnection ([aef9720](https://github.com/mtandersson/foodlist/commit/aef97207bed2cff1f2d55996ee06e22a2b14babf))
+
+### Chores
+
+* **release:** 1.10.0 [skip ci] ([d3bad5a](https://github.com/mtandersson/foodlist/commit/d3bad5ab40b1aa635f9c3997c21dfeda0ee55dab))
+* update revision hash for index.html in service worker ([9bca93d](https://github.com/mtandersson/foodlist/commit/9bca93d87c8a53d4906295ade353381a4c0631a3))
+
 ## [1.10.3](https://github.com/mtandersson/foodlist/compare/v1.10.2...v1.10.3) (2026-02-17)
 
 ### Chores
