@@ -11,13 +11,16 @@ import (
 
 // Todo item projected from events
 type Todo struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	CompletedAt *time.Time `json:"completedAt"`
-	SortOrder   int        `json:"sortOrder"`
-	Starred     bool       `json:"starred"`
-	CategoryID  *string    `json:"categoryId"`
+	ID            string     `json:"id"`
+	Name          string     `json:"name"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	CompletedAt   *time.Time `json:"completedAt"`
+	SortOrder     int        `json:"sortOrder"`
+	Starred       bool       `json:"starred"`
+	CategoryID    *string    `json:"categoryId"`
+	Count         *float64   `json:"count,omitempty"`
+	Unit          *string    `json:"unit,omitempty"`
+	OriginalInput string     `json:"originalInput,omitempty"`
 }
 
 // Category projected from events
@@ -30,12 +33,15 @@ type Category struct {
 
 // Event types
 type TodoCreated struct {
-	Type       string    `json:"type"`
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	CreatedAt  time.Time `json:"createdAt"`
-	SortOrder  int       `json:"sortOrder"`
-	CategoryID *string   `json:"categoryId"`
+	Type          string    `json:"type"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	CreatedAt     time.Time `json:"createdAt"`
+	SortOrder     int       `json:"sortOrder"`
+	CategoryID    *string   `json:"categoryId"`
+	Count         *float64  `json:"count,omitempty"`
+	Unit          *string   `json:"unit,omitempty"`
+	OriginalInput string    `json:"originalInput,omitempty"`
 }
 
 type TodoCompleted struct {
@@ -67,9 +73,12 @@ type TodoReordered struct {
 }
 
 type TodoRenamed struct {
-	Type string `json:"type"`
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	Type          string   `json:"type"`
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	Count         *float64 `json:"count,omitempty"`
+	Unit          *string  `json:"unit,omitempty"`
+	OriginalInput string   `json:"originalInput,omitempty"`
 }
 
 type TodoCategorized struct {

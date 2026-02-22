@@ -84,3 +84,6 @@ export function extractVoiceInput(text: string): string {
   // If no pattern matches, return the text as-is
   return trimmed
 }
+
+// Re-export for convenience - extractAutocompleteQuery lives in quantityParser
+export { extractAutocompleteQuery } from './quantityParser'

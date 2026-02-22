@@ -163,9 +163,16 @@ lint:
 
 test:
 	@echo "Running backend tests..."
-	cd backend && go test -v -cover ./...
+	cd backend && go test -v -cover -timeout=30s ./...
 	@echo "Running frontend tests..."
-	cd frontend && npm test
+	cd frontend && npm run test:run
+
+# Fast unit tests only (parser + quantity extraction) - no server/websocket
+test-unit:
+	@echo "Running backend unit parser tests..."
+	cd backend && go test -run TestParseIngredientInput -v -timeout=5s .
+	@echo "Running frontend quantityParser tests..."
+	cd frontend && npm run test:run -- src/lib/quantityParser.test.ts
 
 clean:
 	@echo "Cleaning build artifacts..."

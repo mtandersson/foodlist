@@ -47,13 +47,14 @@
   }
 
   function startEditing() {
-    editName = todo.name;
+    editName = todo.originalInput || todo.name;
     isEditing = true;
     isLongPressing = false;
   }
 
   function finishEditing() {
-    if (editName.trim() && editName !== todo.name) {
+    const displayName = todo.originalInput || todo.name;
+    if (editName.trim() && editName !== displayName) {
       onRename(todo.id, editName.trim());
     }
     isEditing = false;
@@ -63,7 +64,7 @@
     if (e.key === 'Enter') {
       finishEditing();
     } else if (e.key === 'Escape') {
-      editName = todo.name;
+      editName = todo.originalInput || todo.name;
       isEditing = false;
     }
   }
@@ -148,7 +149,7 @@
       aria-label="Double-click or long-press to edit"
     >
       <span class="todo-name">
-        {todo.name}
+        {todo.originalInput || todo.name}
       </span>
     </button>
   {/if}

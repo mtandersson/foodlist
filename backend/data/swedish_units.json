@@ -1,0 +1,46 @@
+{
+  "modifiers": {
+    "approximate": ["ca", "cirka", "typ", "ungefär"],
+    "quantity_words": {"halv": 0.5, "en": 1, "ett": 1, "lite": null}
+  },
+  "volume": [
+    "liter",
+    "deciliter",
+    "centiliter",
+    "milliliter",
+    "matskedar",
+    "matsked",
+    "teskedar",
+    "tesked",
+    "kryddmått",
+    "l",
+    "dl",
+    "cl",
+    "ml",
+    "msk",
+    "tsk",
+    "krm"
+  ],
+  "weight": ["kilogram", "kilo", "gram", "hektogram", "hekto", "kg", "g", "hg"],
+  "packaging": [
+    "burkar",
+    "burka",
+    "burk",
+    "paket",
+    "förpackningar",
+    "förpackning",
+    "flaskor",
+    "flaska",
+    "kartonger",
+    "kartong",
+    "påsar",
+    "påse",
+    "rullar",
+    "rulle",
+    "stycken",
+    "styck",
+    "st",
+    "förp",
+    "förpk"
+  ]
+}

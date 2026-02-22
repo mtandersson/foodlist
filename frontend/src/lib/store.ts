@@ -65,7 +65,9 @@ export interface TodoStore {
       Map<string | null, Todo[]>
     >
   >
-  activeTodosByCategoryCollapsed: ReturnType<typeof derived<any, Map<string | null, CollapsedTodo[]>>>
+  activeTodosByCategoryCollapsed: ReturnType<
+    typeof derived<any, Map<string | null, CollapsedTodo[]>>
+  >
   connectionState: ReturnType<typeof writable<ConnectionState>>
   userCount: ReturnType<typeof writable<number>>
   listTitle: ReturnType<typeof writable<string>>
@@ -100,7 +102,10 @@ function categoryKey(categoryId: string | null | undefined): string {
 }
 
 function duplicateKey(todo: Todo): string {
-  return `${todo.name}||${categoryKey(todo.categoryId)}||${todo.starred ? "1" : "0"}`
+  const count = todo.count ?? ""
+  const unit = todo.unit ?? ""
+  const displayText = todo.originalInput || todo.name
+  return `${todo.name}||${count}||${unit}||${displayText}||${categoryKey(todo.categoryId)}||${todo.starred ? "1" : "0"}`
 }
 
 function collapseTodos(todos: Todo[]): CollapsedTodo[] {
@@ -350,6 +355,9 @@ export function createTodoStore(wsUrl: string): TodoStore {
             sortOrder: e.sortOrder,
             starred: false,
             categoryId: e.categoryId ?? null,
+            count: e.count ?? null,
+            unit: e.unit ?? null,
+            originalInput: e.originalInput ?? "",
           })
           break
         }
@@ -403,7 +411,13 @@ export function createTodoStore(wsUrl: string): TodoStore {
           const e = event as TodoRenamed
           const todo = newMap.get(e.id)
           if (todo) {
-            newMap.set(e.id, {...todo, name: e.name})
+            newMap.set(e.id, {
+              ...todo,
+              name: e.name,
+              count: e.count ?? todo.count,
+              unit: e.unit ?? todo.unit,
+              originalInput: e.originalInput ?? todo.originalInput ?? "",
+            })
           }
           break
         }
@@ -559,7 +573,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
     // Trim whitespace from name
     const trimmedName = name.trim()
     if (!trimmedName) return
-    
+
     const commandId = uuidv4()
     const id = uuidv4()
     const command: CreateTodo = {
@@ -577,6 +591,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
       createdAt: new Date().toISOString(),
       sortOrder: command.sortOrder ?? getHighestSortOrder() + 1000,
       categoryId,
+      originalInput: trimmedName,
     }
     sendCommand(command, optimistic)
   }
@@ -587,7 +602,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
     if (!trimmedName) {
       return Promise.reject("Category name cannot be empty")
     }
-    
+
     const commandId = uuidv4()
     const newId = id || uuidv4()
     const command: CreateCategory = {
@@ -613,7 +628,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
     if (!trimmedName) {
       return Promise.reject("Category name cannot be empty")
     }
-    
+
     const commandId = uuidv4()
     const command: RenameCategory = {
       type: "RenameCategory",
@@ -695,7 +710,11 @@ export function createTodoStore(wsUrl: string): TodoStore {
 
     const commandId = uuidv4()
     if (targetTodo.completedAt === null) {
-      const command: CompleteTodo = {type: "CompleteTodo", commandId, id: targetId}
+      const command: CompleteTodo = {
+        type: "CompleteTodo",
+        commandId,
+        id: targetId,
+      }
       const optimistic: TodoCompleted = {
         type: "TodoCompleted",
         id: targetId,
@@ -703,8 +722,15 @@ export function createTodoStore(wsUrl: string): TodoStore {
       }
       sendCommand(command, optimistic)
     } else {
-      const command: UncompleteTodo = {type: "UncompleteTodo", commandId, id: targetId}
-      const optimistic: TodoUncompleted = {type: "TodoUncompleted", id: targetId}
+      const command: UncompleteTodo = {
+        type: "UncompleteTodo",
+        commandId,
+        id: targetId,
+      }
+      const optimistic: TodoUncompleted = {
+        type: "TodoUncompleted",
+        id: targetId,
+      }
       sendCommand(command, optimistic)
     }
   }
@@ -773,9 +799,14 @@ export function createTodoStore(wsUrl: string): TodoStore {
     // Trim whitespace from name
     const trimmedName = name.trim()
     if (!trimmedName) return
-    
+
     const commandId = uuidv4()
-    const command: RenameTodo = {type: "RenameTodo", commandId, id, name: trimmedName}
+    const command: RenameTodo = {
+      type: "RenameTodo",
+      commandId,
+      id,
+      name: trimmedName,
+    }
     const optimistic: TodoRenamed = {type: "TodoRenamed", id, name: trimmedName}
     sendCommand(command, optimistic)
   }
@@ -783,10 +814,17 @@ export function createTodoStore(wsUrl: string): TodoStore {
   function setListTitle(title: string) {
     // Trim whitespace from title
     const trimmedTitle = title.trim()
-    
+
     const commandId = uuidv4()
-    const command: SetListTitle = {type: "SetListTitle", commandId, title: trimmedTitle}
-    const optimistic: ListTitleChanged = {type: "ListTitleChanged", title: trimmedTitle}
+    const command: SetListTitle = {
+      type: "SetListTitle",
+      commandId,
+      title: trimmedTitle,
+    }
+    const optimistic: ListTitleChanged = {
+      type: "ListTitleChanged",
+      title: trimmedTitle,
+    }
     sendCommand(command, optimistic)
   }
 

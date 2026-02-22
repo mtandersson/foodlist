@@ -39,3 +39,4 @@ frontend/coverage/
 # backend/events.jsonl
 
 backend/events.jsonl
+backend/foodlist
