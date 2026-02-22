@@ -146,6 +146,7 @@ export default defineConfig(({mode}) => ({
     environment: "jsdom",
     setupFiles: ["./src/setupTests.ts"],
     include: ["src/**/*.{test,spec}.{js,ts}"],
+    testTimeout: 5000,
   },
   server: {
     host: "0.0.0.0", // Allow external connections

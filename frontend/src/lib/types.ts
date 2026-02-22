@@ -10,6 +10,9 @@ export interface Todo {
   sortOrder: number
   starred: boolean
   categoryId?: string | null
+  count?: number | null
+  unit?: string | null
+  originalInput?: string
 }
 
 export interface Category {
@@ -27,6 +30,9 @@ export interface TodoCreated {
   createdAt: string
   sortOrder: number
   categoryId?: string | null
+  count?: number | null
+  unit?: string | null
+  originalInput?: string
 }
 
 export interface TodoCompleted {
@@ -61,6 +67,9 @@ export interface TodoRenamed {
   type: "TodoRenamed"
   id: string
   name: string
+  count?: number | null
+  unit?: string | null
+  originalInput?: string
 }
 
 export interface TodoCategorized {

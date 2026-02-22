@@ -13,7 +13,7 @@
   import AboutModal from './AboutModal.svelte';
   import { getStoredTheme, setTheme, type ThemeMode } from './theme';
   import type { Todo, AutocompleteSuggestion } from './types';
-  import { smartSplit as smartSplitUtil, extractVoiceInput } from './voiceInputParser';
+  import { smartSplit as smartSplitUtil, extractVoiceInput, extractAutocompleteQuery } from './voiceInputParser';
 
   // Determine WebSocket URL
   // Check for VITE_BACKEND_URL environment variable first (for testing remote servers)
@@ -151,12 +151,13 @@
 
   $effect(() => {
     const suggestions = $autocompleteSuggestions;
-    const currentInput = newTodoName.toLowerCase();
+    const extractedQuery = extractAutocompleteQuery(newTodoName);
+    const currentInput = extractedQuery.toLowerCase();
     
     if (showAutocomplete && suggestions.length > 0 && currentInput) {
       const topSuggestion = suggestions[0].name.toLowerCase();
       if (topSuggestion.startsWith(currentInput)) {
-        inlineSuggestion = suggestions[0].name.substring(newTodoName.length);
+        inlineSuggestion = suggestions[0].name.substring(extractedQuery.length);
       } else {
         inlineSuggestion = '';
       }
@@ -288,7 +289,7 @@
 
       // Keep suggestions open for fast multi-add if the input is still focused.
       if (inputFocused) {
-        store.requestAutocomplete(newTodoName);
+        store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
         showAutocomplete = true;
         queueMicrotask(() => todoInputEl?.focus());
       } else {
@@ -316,14 +317,15 @@
         e.preventDefault();
         if (inlineSuggestion) {
           const name = newTodoName + inlineSuggestion;
-          const suggestion = $autocompleteSuggestions.find(s => s.name.toLowerCase() === name.toLowerCase());
+          // Use first suggestion's category (best match for our stripped query)
+          const suggestion = $autocompleteSuggestions[0];
           store.createTodo(name, suggestion?.categoryId ?? null);
           newTodoName = '';
           inlineSuggestion = '';
           pendingCategoryId = null;
           selectedAutocompleteIndex = -1;
           if (inputFocused) {
-            store.requestAutocomplete(newTodoName);
+            store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
             showAutocomplete = true;
             queueMicrotask(() => todoInputEl?.focus());
           } else {
@@ -360,8 +362,8 @@
   }
 
   function handleInput() {
-    // Request autocomplete on every keystroke
-    store.requestAutocomplete(newTodoName);
+    // Request autocomplete on every keystroke (strip quantity+unit for query)
+    store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
     showAutocomplete = true;
     selectedAutocompleteIndex = -1;
     pendingCategoryId = null;
@@ -370,7 +372,7 @@
   function handleInputFocus() {
     inputFocused = true;
     // Request autocomplete when focusing even if empty
-    store.requestAutocomplete(newTodoName);
+    store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
     showAutocomplete = true;
   }
 
@@ -393,7 +395,7 @@
     selectedAutocompleteIndex = -1;
 
     if (inputFocused) {
-      store.requestAutocomplete(newTodoName);
+      store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
       showAutocomplete = true;
       queueMicrotask(() => todoInputEl?.focus());
     } else {
@@ -794,8 +796,8 @@
           }
         });
         
-        // Request autocomplete after subscription is set up
-        store.requestAutocomplete(query);
+        // Request autocomplete after subscription is set up (strip quantity+unit)
+        store.requestAutocomplete(extractAutocompleteQuery(query));
       });
       
       // Timeout after 2 seconds - if no response, use the query as-is

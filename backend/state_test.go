@@ -206,6 +206,87 @@ func TestState_ApplyTodoRenamed(t *testing.T) {
 	assert.Equal(t, "New name", todos[0].Name)
 }
 
+func TestState_ApplyTodoCreated_WithCountUnitOriginalInput(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+	cnt := 2.0
+	unit := "liter"
+
+	state.ApplyEvents([]Event{TodoCreated{
+		Type:          "TodoCreated",
+		ID:            "todo-1",
+		Name:          "mjölk",
+		CreatedAt:     now,
+		SortOrder:     1000,
+		Count:         &cnt,
+		Unit:          &unit,
+		OriginalInput: "2l mjölk",
+	}})
+
+	todos := state.GetTodos()
+	require.Len(t, todos, 1)
+	assert.Equal(t, "mjölk", todos[0].Name)
+	require.NotNil(t, todos[0].Count)
+	assert.InDelta(t, 2.0, *todos[0].Count, 0.001)
+	require.NotNil(t, todos[0].Unit)
+	assert.Equal(t, "liter", *todos[0].Unit)
+	assert.Equal(t, "2l mjölk", todos[0].OriginalInput)
+}
+
+func TestState_ApplyTodoRenamed_WithCountUnitOriginalInput(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+
+	state.ApplyEvents([]Event{TodoCreated{
+		Type:      "TodoCreated",
+		ID:        "todo-1",
+		Name:      "mjölk",
+		CreatedAt: now,
+		SortOrder: 1000,
+	}})
+
+	cnt := 1.5
+	unit := "deciliter"
+	state.ApplyEvents([]Event{TodoRenamed{
+		Type:          "TodoRenamed",
+		ID:            "todo-1",
+		Name:          "mjölk",
+		Count:         &cnt,
+		Unit:          &unit,
+		OriginalInput: "1,5 dl mjölk",
+	}})
+
+	todos := state.GetTodos()
+	require.Len(t, todos, 1)
+	assert.Equal(t, "mjölk", todos[0].Name)
+	require.NotNil(t, todos[0].Count)
+	assert.InDelta(t, 1.5, *todos[0].Count, 0.001)
+	require.NotNil(t, todos[0].Unit)
+	assert.Equal(t, "deciliter", *todos[0].Unit)
+	assert.Equal(t, "1,5 dl mjölk", todos[0].OriginalInput)
+}
+
+func TestState_BackwardCompat_OldEventsWithoutCountUnit(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+
+	// Old TodoCreated without Count, Unit, OriginalInput
+	state.ApplyEvents([]Event{TodoCreated{
+		Type:      "TodoCreated",
+		ID:        "todo-1",
+		Name:      "Buy milk",
+		CreatedAt: now,
+		SortOrder: 1000,
+	}})
+
+	todos := state.GetTodos()
+	require.Len(t, todos, 1)
+	assert.Equal(t, "Buy milk", todos[0].Name)
+	assert.Nil(t, todos[0].Count)
+	assert.Nil(t, todos[0].Unit)
+	assert.Empty(t, todos[0].OriginalInput)
+}
+
 func TestState_GetTodosSortedBySortOrder(t *testing.T) {
 	state := NewState()
 	now := time.Now().UTC()

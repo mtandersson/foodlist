@@ -502,6 +502,11 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		if trimmedName == "" {
 			return nil, fmt.Errorf("todo name cannot be empty")
 		}
+		parsed := ParseIngredientInput(trimmedName)
+		name := parsed.Name
+		if name == "" {
+			name = trimmedName
+		}
 		var categoryID *string
 		if c.CategoryID != nil {
 			categoryID = c.CategoryID
@@ -511,12 +516,15 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 			sortOrder = int(c.SortOrder)
 		}
 		return TodoCreated{
-			Type:       "TodoCreated",
-			ID:         c.ID,
-			Name:       trimmedName,
-			CreatedAt:  time.Now().UTC(),
-			SortOrder:  sortOrder,
-			CategoryID: categoryID,
+			Type:          "TodoCreated",
+			ID:            c.ID,
+			Name:          name,
+			CreatedAt:     time.Now().UTC(),
+			SortOrder:     sortOrder,
+			CategoryID:    categoryID,
+			Count:         parsed.Count,
+			Unit:          parsed.Unit,
+			OriginalInput: parsed.OriginalInput,
 		}, nil
 	case CategorizeTodoCommand:
 		// Validate category exists if provided
@@ -648,10 +656,18 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		if trimmedName == "" {
 			return nil, fmt.Errorf("todo name cannot be empty")
 		}
+		parsed := ParseIngredientInput(trimmedName)
+		name := parsed.Name
+		if name == "" {
+			name = trimmedName
+		}
 		return TodoRenamed{
-			Type: "TodoRenamed",
-			ID:   c.ID,
-			Name: trimmedName,
+			Type:          "TodoRenamed",
+			ID:            c.ID,
+			Name:          name,
+			Count:         parsed.Count,
+			Unit:          parsed.Unit,
+			OriginalInput: parsed.OriginalInput,
 		}, nil
 	case SetListTitleCommand:
 		// Trim whitespace from title

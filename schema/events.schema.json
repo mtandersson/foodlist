@@ -147,7 +147,11 @@
         "id": {"type": "string", "format": "uuid"},
         "name": {"type": "string"},
         "createdAt": {"type": "string", "format": "date-time"},
-        "sortOrder": {"type": "integer"}
+        "sortOrder": {"type": "integer"},
+        "categoryId": {"type": ["string", "null"], "format": "uuid"},
+        "count": {"type": ["number", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "originalInput": {"type": "string"}
       },
       "required": ["type", "id", "name", "createdAt", "sortOrder"],
       "additionalProperties": false
@@ -205,7 +209,10 @@
       "properties": {
         "type": {"const": "TodoRenamed"},
         "id": {"type": "string", "format": "uuid"},
-        "name": {"type": "string"}
+        "name": {"type": "string"},
+        "count": {"type": ["number", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "originalInput": {"type": "string"}
       },
       "required": ["type", "id", "name"],
       "additionalProperties": false
@@ -335,7 +342,10 @@
         "completedAt": {"type": ["string", "null"], "format": "date-time"},
         "sortOrder": {"type": "integer"},
         "starred": {"type": "boolean"},
-        "categoryId": {"type": ["string", "null"], "format": "uuid"}
+        "categoryId": {"type": ["string", "null"], "format": "uuid"},
+        "count": {"type": ["number", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "originalInput": {"type": "string"}
       },
       "required": ["id", "name", "createdAt", "sortOrder", "starred"],
       "additionalProperties": false

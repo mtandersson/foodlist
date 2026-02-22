@@ -49,12 +49,15 @@ func (s *State) applyEvent(event Event) {
 	switch e := event.(type) {
 	case TodoCreated:
 		s.todos[e.ID] = &Todo{
-			ID:         e.ID,
-			Name:       e.Name,
-			CreatedAt:  e.CreatedAt,
-			SortOrder:  e.SortOrder,
-			Starred:    false,
-			CategoryID: e.CategoryID,
+			ID:            e.ID,
+			Name:          e.Name,
+			CreatedAt:     e.CreatedAt,
+			SortOrder:     e.SortOrder,
+			Starred:       false,
+			CategoryID:    e.CategoryID,
+			Count:         e.Count,
+			Unit:          e.Unit,
+			OriginalInput: e.OriginalInput,
 		}
 		// Tracking for autocomplete is now handled by s.autocomplete.Apply
 
@@ -86,8 +89,10 @@ func (s *State) applyEvent(event Event) {
 
 	case TodoRenamed:
 		if todo, ok := s.todos[e.ID]; ok {
-			// The autocomplete logic now handles this update.
 			todo.Name = e.Name
+			todo.Count = e.Count
+			todo.Unit = e.Unit
+			todo.OriginalInput = e.OriginalInput
 		}
 
 	case ListTitleChanged:
