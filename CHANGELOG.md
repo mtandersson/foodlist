@@ -1,3 +1,15 @@
+## [1.11.0](https://github.com/mtandersson/foodlist/compare/v1.10.7...v1.11.0) (2026-02-22)
+
+### Features
+
+* **todos:** add count, unit, and originalInput for ingredient parsing ([b204b8e](https://github.com/mtandersson/foodlist/commit/b204b8ebfbc88e44d662190d07f8b7b2c9017738))
+
+### Chores
+
+* **deps:** update svelte to ^5.53.1 ([254e7e3](https://github.com/mtandersson/foodlist/commit/254e7e37eed5c5d0718b49a388b7c83baccbf021))
+* **deps:** update svelte to ^5.53.2 ([b95d9ca](https://github.com/mtandersson/foodlist/commit/b95d9cacfabd0452048b54f420546022b197c848))
+* **deps:** update svelte-check to ^4.4.3 ([fb21ccf](https://github.com/mtandersson/foodlist/commit/fb21ccfee071407b2b066167651ecde8e2e0b355))
+
 ## [1.10.7](https://github.com/mtandersson/foodlist/compare/v1.10.6...v1.10.7) (2026-02-19)
 
 ### Chores
