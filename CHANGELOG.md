@@ -1,3 +1,9 @@
+## [1.11.1](https://github.com/mtandersson/foodlist/compare/v1.11.0...v1.11.1) (2026-02-23)
+
+### Chores
+
+* **deps:** update module github.com/caarlos0/env/v11 to v11.4.0 ([0316002](https://github.com/mtandersson/foodlist/commit/03160026cebdf916d5cba3c26322a7bb09d1a584))
+
 ## [1.11.0](https://github.com/mtandersson/foodlist/compare/v1.10.7...v1.11.0) (2026-02-22)
 
 ### Features
