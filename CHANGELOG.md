@@ -1,3 +1,9 @@
+## [1.11.8](https://github.com/mtandersson/foodlist/compare/v1.11.7...v1.11.8) (2026-02-27)
+
+### Chores
+
+* **deps:** update @types/node to ^24.10.15 ([84e3350](https://github.com/mtandersson/foodlist/commit/84e335078f7674625a63aab73ad9bc62d5684b88))
+
 ## [1.11.7](https://github.com/mtandersson/foodlist/compare/v1.11.6...v1.11.7) (2026-02-26)
 
 ### Chores
