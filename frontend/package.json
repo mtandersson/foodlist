@@ -19,7 +19,7 @@
     "@types/node": "^24.10.15",
     "@vitest/coverage-v8": "^4.0.18",
     "jsdom": "^28.1.0",
-    "svelte": "^5.53.5",
+    "svelte": "^5.53.6",
     "svelte-check": "^4.4.4",
     "typescript": "~5.9.3",
     "uuid": "^13.0.0",
