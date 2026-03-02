@@ -1,3 +1,9 @@
+## [1.11.11](https://github.com/mtandersson/foodlist/compare/v1.11.10...v1.11.11) (2026-03-02)
+
+### Chores
+
+* **deps:** update conventional-changelog-conventionalcommits to ^9.2.0 ([110bf8e](https://github.com/mtandersson/foodlist/commit/110bf8e6823ac3252ae03d8bb09951a8ab612d4e))
+
 ## [1.11.10](https://github.com/mtandersson/foodlist/compare/v1.11.9...v1.11.10) (2026-02-28)
 
 ### Chores
