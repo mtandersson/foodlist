@@ -1,3 +1,9 @@
+## [1.11.16](https://github.com/mtandersson/foodlist/compare/v1.11.15...v1.11.16) (2026-03-05)
+
+### Chores
+
+* **deps:** update docker/setup-buildx-action action to v4 ([37dee38](https://github.com/mtandersson/foodlist/commit/37dee38ab0e8c3b27fcba86bab852d34dc783cf5))
+
 ## [1.11.15](https://github.com/mtandersson/foodlist/compare/v1.11.14...v1.11.15) (2026-03-05)
 
 ### Chores
