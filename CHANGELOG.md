@@ -1,3 +1,9 @@
+## [1.11.15](https://github.com/mtandersson/foodlist/compare/v1.11.14...v1.11.15) (2026-03-05)
+
+### Chores
+
+* **deps:** update docker/login-action action to v4 ([7d8929e](https://github.com/mtandersson/foodlist/commit/7d8929ee1d6dd6d5a6cb3cc89eb11ae91290aeb6))
+
 ## [1.11.14](https://github.com/mtandersson/foodlist/compare/v1.11.13...v1.11.14) (2026-03-05)
 
 ### Chores
