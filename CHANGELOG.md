@@ -1,3 +1,9 @@
+## [1.11.21](https://github.com/mtandersson/foodlist/compare/v1.11.20...v1.11.21) (2026-03-07)
+
+### Chores
+
+* **deps:** update docker/build-push-action action to v7 ([49a1188](https://github.com/mtandersson/foodlist/commit/49a1188cdae8fdeb6ad225cc1e925abbe38f4b81))
+
 ## [1.11.20](https://github.com/mtandersson/foodlist/compare/v1.11.19...v1.11.20) (2026-03-07)
 
 ### Chores
