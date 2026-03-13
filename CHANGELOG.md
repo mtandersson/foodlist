@@ -1,3 +1,9 @@
+## [1.11.28](https://github.com/mtandersson/foodlist/compare/v1.11.27...v1.11.28) (2026-03-13)
+
+### Chores
+
+* **deps:** update vitest monorepo to ^4.1.0 ([fa3ad41](https://github.com/mtandersson/foodlist/commit/fa3ad4194f3264b284b342ca314c6ad90342bdf9))
+
 ## [1.11.27](https://github.com/mtandersson/foodlist/compare/v1.11.26...v1.11.27) (2026-03-12)
 
 ### Chores
