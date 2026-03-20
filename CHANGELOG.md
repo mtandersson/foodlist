@@ -1,3 +1,9 @@
+## [1.11.34](https://github.com/mtandersson/foodlist/compare/v1.11.33...v1.11.34) (2026-03-20)
+
+### Chores
+
+* **deps:** update jsdom to ^29.0.1 ([27da2f9](https://github.com/mtandersson/foodlist/commit/27da2f9eae3e89d221fca031aa02bd9a01e354c7))
+
 ## [1.11.33](https://github.com/mtandersson/foodlist/compare/v1.11.32...v1.11.33) (2026-03-18)
 
 ### Chores
