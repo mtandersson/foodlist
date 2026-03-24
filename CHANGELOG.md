@@ -1,3 +1,9 @@
+## [1.11.39](https://github.com/mtandersson/foodlist/compare/v1.11.38...v1.11.39) (2026-03-24)
+
+### Chores
+
+* **deps:** update typescript to v6 ([0911689](https://github.com/mtandersson/foodlist/commit/09116894bc5ea16c220b5c34d6d2358c2f80c29d))
+
 ## [1.11.38](https://github.com/mtandersson/foodlist/compare/v1.11.37...v1.11.38) (2026-03-24)
 
 ### Chores
