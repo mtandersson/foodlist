@@ -1,3 +1,9 @@
+## [1.11.38](https://github.com/mtandersson/foodlist/compare/v1.11.37...v1.11.38) (2026-03-24)
+
+### Chores
+
+* **deps:** update svelte to ^5.55.0 ([cd7ebb2](https://github.com/mtandersson/foodlist/commit/cd7ebb2e7e077a88b71706440697e15d8575adfb))
+
 ## [1.11.37](https://github.com/mtandersson/foodlist/compare/v1.11.36...v1.11.37) (2026-03-23)
 
 ### Chores
