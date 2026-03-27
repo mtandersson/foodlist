@@ -1,3 +1,9 @@
+## [1.11.42](https://github.com/mtandersson/foodlist/compare/v1.11.41...v1.11.42) (2026-03-27)
+
+### Chores
+
+* **deps:** update codecov/codecov-action action to v6 ([60423b1](https://github.com/mtandersson/foodlist/commit/60423b1bf17f26124682b8312ccaa1a847baad2a))
+
 ## [1.11.41](https://github.com/mtandersson/foodlist/compare/v1.11.40...v1.11.41) (2026-03-27)
 
 ### Chores
