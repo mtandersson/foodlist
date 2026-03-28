@@ -1,3 +1,13 @@
+## [1.12.0](https://github.com/mtandersson/foodlist/compare/v1.11.42...v1.12.0) (2026-03-28)
+
+### Features
+
+* **backend:** add MCP streamable HTTP at /mcp ([1ab263d](https://github.com/mtandersson/foodlist/commit/1ab263d2e05b87b2af8511d161aceb16f6888357))
+
+### Chores
+
+* **frontend:** sync lockfile and dev-dist service worker ([15a378e](https://github.com/mtandersson/foodlist/commit/15a378e5b41b1614013473a6c23c6cac085f04ec))
+
 ## [1.11.42](https://github.com/mtandersson/foodlist/compare/v1.11.41...v1.11.42) (2026-03-27)
 
 ### Chores
