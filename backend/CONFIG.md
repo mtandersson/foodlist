@@ -18,6 +18,8 @@ All configuration is done via environment variables. The backend will automatica
 | `DATA_DIR` | `.` | Directory where `events.jsonl` will be stored |
 | `LOG_FORMAT` | `logfmt` | Log format: `logfmt` (human-readable) or `json` (structured) |
 
+MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when the backend runs. It is not behind `SHARED_SECRET`; with `CIDR_WHITELIST` set, `/mcp` is still reachable for whitelisted clients (same idea as public PWA assets). Protect access at the network or reverse-proxy layer if the server is exposed.
+
 ## Usage
 
 ### With .env file (recommended for local development)

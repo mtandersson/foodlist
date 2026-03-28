@@ -128,6 +128,11 @@ func main() {
 	}
 	mux.Handle(staticPath, fileServer)
 
+	mcpHandler := foodlistMCPHandler(server)
+	mux.Handle(mcpHTTPPath, mcpHandler)
+	mux.Handle(mcpHTTPPath+"/", mcpHandler)
+	slog.Info("MCP streamable HTTP", "path", mcpHTTPPath)
+
 	// Build middleware chain
 	var handler http.Handler = mux
 

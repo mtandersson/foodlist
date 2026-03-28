@@ -295,11 +295,9 @@ func (s *Server) readPump(client *Client) {
 		// Log received command
 		slog.Info("command received", "type", cmd.GetType(), "commandId", cmd.GetCommandID(), "message", string(message))
 
-		// Convert command to event
-		event, err := s.commandToEvent(cmd)
+		eventData, err := s.applyCommand(cmd)
 		if err != nil {
-			slog.Error("failed to convert command", "error", err, "command_type", cmd.GetType(), "commandId", cmd.GetCommandID())
-			// Send error response back to the client
+			slog.Error("command failed", "error", err, "command_type", cmd.GetType(), "commandId", cmd.GetCommandID())
 			response := CommandResponse{
 				Type:      "CommandResponse",
 				CommandID: cmd.GetCommandID(),
@@ -312,26 +310,8 @@ func (s *Server) readPump(client *Client) {
 			continue
 		}
 
-		// Persist event to store
-		if err := s.store.Append(event); err != nil {
-			slog.Error("failed to persist event", "error", err, "event_type", event.EventType())
-			// Send error response
-			response := CommandResponse{
-				Type:      "CommandResponse",
-				CommandID: cmd.GetCommandID(),
-				Success:   false,
-				Error:     "failed to persist event",
-			}
-			if responseData, marshalErr := json.Marshal(response); marshalErr == nil {
-				client.sendCh <- responseData
-			}
-			continue
-		}
-
-		// Apply event to state
-		s.state.ApplyEvents([]Event{event})
-
-		// Send success response to the client
+		// Match historical ordering: acknowledge the sender before broadcasting the event
+		// to all clients (including the sender), so integration tests and UIs see CommandResponse first.
 		response := CommandResponse{
 			Type:      "CommandResponse",
 			CommandID: cmd.GetCommandID(),
@@ -340,15 +320,43 @@ func (s *Server) readPump(client *Client) {
 		if responseData, err := json.Marshal(response); err == nil {
 			client.sendCh <- responseData
 		}
-
-		// Broadcast resulting event to all clients (including sender for confirmation)
-		eventData, err := MarshalEvent(event)
-		if err != nil {
-			slog.Error("failed to marshal event", "error", err, "event_type", event.EventType())
-			continue
-		}
 		s.broadcast <- eventData
 	}
+}
+
+// applyCommand converts cmd to an event, persists it, applies it to state, and returns the
+// wire-format bytes for broadcasting. It does not broadcast or send CommandResponse.
+func (s *Server) applyCommand(cmd Command) ([]byte, error) {
+	if cmd == nil {
+		return nil, fmt.Errorf("nil command")
+	}
+	event, err := s.commandToEvent(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, fmt.Errorf("invalid command")
+	}
+	if err := s.store.Append(event); err != nil {
+		return nil, fmt.Errorf("failed to persist event: %w", err)
+	}
+	s.state.ApplyEvents([]Event{event})
+	eventData, err := MarshalEvent(event)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal event: %w", err)
+	}
+	return eventData, nil
+}
+
+// ExecuteCommand validates the command, persists the resulting event, updates in-memory state,
+// and broadcasts the event to all WebSocket clients.
+func (s *Server) ExecuteCommand(cmd Command) error {
+	eventData, err := s.applyCommand(cmd)
+	if err != nil {
+		return err
+	}
+	s.broadcast <- eventData
+	return nil
 }
 
 // handleAutocompleteRequest checks if the message is an autocomplete request and handles it
@@ -485,7 +493,7 @@ func ParseCommand(data []byte) (Command, error) {
 		}
 		return cmd, nil
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("unknown command type: %q", base.Type)
 	}
 }
 
@@ -493,9 +501,8 @@ func ParseCommand(data []byte) (Command, error) {
 func (s *Server) commandToEvent(cmd Command) (Event, error) {
 	switch c := cmd.(type) {
 	case CreateTodoCommand:
-		// If no ID provided, reject (client should send), but we keep as-is
 		if c.ID == "" {
-			return nil, nil
+			return nil, fmt.Errorf("missing todo id")
 		}
 		// Trim whitespace from name
 		trimmedName := strings.TrimSpace(c.Name)
@@ -677,7 +684,7 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 			Title: trimmedTitle,
 		}, nil
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("unsupported command")
 	}
 }
 

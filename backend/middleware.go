@@ -51,6 +51,12 @@ func IPWhitelistMiddleware(whitelistCIDRs []string, sharedSecret string, proxyTr
 			return
 		}
 
+		// MCP is mounted at /mcp; allow through whitelist like PWA paths.
+		if isMCPPublicPath(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Check if accessing secret path
 		secretPrefix := "/" + sharedSecret + "/"
 		secretRoot := strings.TrimSuffix(secretPrefix, "/") // e.g. "/dev"
@@ -259,6 +265,10 @@ func isPWAFile(path string) bool {
 	}
 
 	return false
+}
+
+func isMCPPublicPath(path string) bool {
+	return path == mcpHTTPPath || strings.HasPrefix(path, mcpHTTPPath+"/")
 }
 
 // responseWriter wraps http.ResponseWriter to track status code
