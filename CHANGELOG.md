@@ -1,3 +1,13 @@
+## [1.13.0](https://github.com/mtandersson/foodlist/compare/v1.12.1...v1.13.0) (2026-03-28)
+
+### Features
+
+* **backend:** enhance MCP with foodlist_categories tool and update documentation ([b5401b6](https://github.com/mtandersson/foodlist/commit/b5401b6f62c6138e062a15468a28ae370986ab50))
+
+### Bug Fixes
+
+* **backend:** repair PR branch for CI after merging main ([a22a1eb](https://github.com/mtandersson/foodlist/commit/a22a1ebf6bc7994ecd98d560904a25cd18c6bb6b))
+
 ## [1.12.1](https://github.com/mtandersson/foodlist/compare/v1.12.0...v1.12.1) (2026-03-28)
 
 ### Chores
