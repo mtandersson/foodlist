@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -11,6 +11,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var rootCmd = &cobra.Command{
+	Use:   "foodlist",
+	Short: "Foodlist backend server and CLI",
+	Long:  `Foodlist is a collaborative todo list application with real-time updates.`,
+}
+
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Log in to Microsoft Todo to get a refresh token",
@@ -21,7 +27,7 @@ var loginCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		port := "3000" // Default port as requested
+		port := "3000"
 
 		if err := mstodo.Login(clientID, port); err != nil {
 			fmt.Printf("Login failed: %v\n", err)
@@ -34,7 +40,6 @@ var mstodoCmd = &cobra.Command{
 	Use:   "mstodo",
 	Short: "Microsoft Todo integration",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// Load .env file if it exists (ignore error if file doesn't exist)
 		_ = godotenv.Load()
 	},
 }
@@ -101,19 +106,13 @@ var tasksCmd = &cobra.Command{
 		fmt.Println("------------------------------------------------")
 		for _, task := range tasks {
 			if task.Status == "completed" {
-				// Use completed date if available
 				dateStr := task.CreatedDateTime
 				if task.CompletedDateTime != nil {
-					// Format: "2022-01-01T00:00:00.0000000"
-					// We might need to handle timezone, but basic display is ok
 					dateStr = task.CompletedDateTime.DateTime
 				}
 
-				// Try parsing standard RFC3339 first
 				date, err := time.Parse(time.RFC3339, dateStr)
 				if err != nil {
-					// Fallback: MS Graph sometimes returns dates without Z or offset, e.g. "2024-01-01T12:00:00.0000000"
-					// We can try to just take first 10 chars
 					if len(dateStr) >= 10 {
 						dateStr = dateStr[:10]
 						date, _ = time.Parse("2006-01-02", dateStr)
@@ -131,4 +130,10 @@ func init() {
 	mstodoCmd.AddCommand(listsCmd)
 	mstodoCmd.AddCommand(tasksCmd)
 	mstodoCmd.AddCommand(loginCmd)
+}
+
+func runCLI() {
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }

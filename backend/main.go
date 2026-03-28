@@ -31,9 +31,20 @@ type Config struct {
 	SharedSecret    string   `env:"SHARED_SECRET" envDefault:""`
 	CIDRWhitelist   []string `env:"CIDR_WHITELIST" envSeparator:","`
 	ProxyTrustCount int      `env:"PROXY_TRUST_COUNT" envDefault:"0"`
+
+	// Optional bearer-token HTTP API (see api.go)
+	APIToken string `env:"FOODLIST_API_TOKEN" envDefault:""`
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		runCLI()
+		return
+	}
+	runHTTPServer()
+}
+
+func runHTTPServer() {
 	// Load .env file if it exists (ignore error if file doesn't exist)
 	_ = godotenv.Load()
 
@@ -132,6 +143,12 @@ func main() {
 	mux.Handle(mcpHTTPPath, mcpHandler)
 	mux.Handle(mcpHTTPPath+"/", mcpHandler)
 	slog.Info("MCP streamable HTTP", "path", mcpHTTPPath)
+
+	mux.Handle("/api/v1/state", apiBearerAuth(cfg.APIToken, http.HandlerFunc(server.handleAPIState)))
+	mux.Handle("/api/v1/command", apiBearerAuth(cfg.APIToken, http.HandlerFunc(server.handleAPICommand)))
+	if cfg.APIToken != "" {
+		slog.Info("HTTP API enabled", "get_state", "/api/v1/state", "post_command", "/api/v1/command")
+	}
 
 	// Build middleware chain
 	var handler http.Handler = mux
