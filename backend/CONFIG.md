@@ -20,6 +20,12 @@ All configuration is done via environment variables. The backend will automatica
 
 MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when the backend runs. It is not behind `SHARED_SECRET`; with `CIDR_WHITELIST` set, `/mcp` is still reachable for whitelisted clients (same idea as public PWA assets). Protect access at the network or reverse-proxy layer if the server is exposed.
 
+### MCP: resources vs tools (protocol)
+
+- **Resources** are read with JSON-RPC method **`resources/read`** and a **`uri`** (e.g. `foodlist://categories`). Discover URIs with **`resources/list`**. There is no standard **`resources/call`** in MCP; invoking by name is done with **`tools/call`** (parameter **`name`**).
+- **Tools** are listed with **`tools/list`** and invoked with **`tools/call`** — this is what the MCP spec defines (plural `tools/...`, not `tool/list`).
+- To fetch every defined category (including unused ones), use the **`foodlist_categories`** tool or **`resources/read`** with `uri: "foodlist://categories"`. **`foodlist_list`** only reflects categories that appear on todos in that markdown view.
+
 ## Usage
 
 ### With .env file (recommended for local development)
