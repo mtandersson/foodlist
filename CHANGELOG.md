@@ -1,3 +1,9 @@
+## [1.13.2](https://github.com/mtandersson/foodlist/compare/v1.13.1...v1.13.2) (2026-03-28)
+
+### Chores
+
+* **deps:** update module github.com/microsoft/kiota-serialization-form-go to v1.1.3 ([82690e1](https://github.com/mtandersson/foodlist/commit/82690e100021843210c62f54e96011bb3cf907ac))
+
 ## [1.13.1](https://github.com/mtandersson/foodlist/compare/v1.13.0...v1.13.1) (2026-03-28)
 
 ### Bug Fixes
