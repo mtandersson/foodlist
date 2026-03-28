@@ -48,7 +48,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_list",
-		Description: "List todos as markdown, grouped by category. Optionally hide completed items.",
+		Description: "List todos as markdown, grouped by category (only categories that appear on at least one shown todo). For every defined category ID, use foodlist_categories or the foodlist://categories resource.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistListIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -92,6 +92,25 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 		}
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
+		}, nil, nil
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "foodlist_categories",
+		Description: "Return all defined categories as a JSON array (id, name, sortOrder, etc.), including categories not used by any todo. Same data as the foodlist://categories resource.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in struct{}) (*mcp.CallToolResult, any, error) {
+		_ = ctx
+		_ = req
+		_ = in
+		b, err := json.MarshalIndent(app.state.GetCategories(), "", "  ")
+		if err != nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}},
+				IsError: true,
+			}, nil, nil
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: string(b)}},
 		}, nil, nil
 	})
 

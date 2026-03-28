@@ -88,11 +88,22 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 	slices.Sort(names)
 	require.Equal(t, []string{
 		"foodlist_add",
+		"foodlist_categories",
 		"foodlist_categorize",
 		"foodlist_list",
 		"foodlist_mark_done",
 		"foodlist_mark_starred",
 	}, names)
+
+	// --- foodlist_categories (JSON matches resource + schema shape) ---
+	catToolOut := toolCall(t, base, 4, "foodlist_categories", map[string]any{})
+	catToolTxt := firstTextContent(t, catToolOut)
+	var catsFromTool []any
+	require.NoError(t, json.Unmarshal([]byte(catToolTxt), &catsFromTool))
+	require.NotEmpty(t, catsFromTool)
+	for _, c := range catsFromTool {
+		assertCategoryLikeSchema(t, c.(map[string]any))
+	}
 
 	// --- foodlist_add (empty name -> error tool result) ---
 	addErr := toolCall(t, base, 20, "foodlist_add", map[string]any{"name": "   "})
