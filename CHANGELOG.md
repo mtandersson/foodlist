@@ -1,3 +1,9 @@
+## [1.13.1](https://github.com/mtandersson/foodlist/compare/v1.13.0...v1.13.1) (2026-03-28)
+
+### Bug Fixes
+
+* **docker:** copy frontend .npmrc before npm ci ([4843af2](https://github.com/mtandersson/foodlist/commit/4843af2815f717422d5745b50bd531e290c5307a))
+
 ## [1.13.0](https://github.com/mtandersson/foodlist/compare/v1.12.1...v1.13.0) (2026-03-28)
 
 ### Features
