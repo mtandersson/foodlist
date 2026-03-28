@@ -155,6 +155,11 @@ export default defineConfig(({mode}) => ({
         target: process.env.VITE_BACKEND_URL || "ws://localhost:8080",
         ws: true,
       },
+      // MCP streamable HTTP (same origin as dev UI; backend serves /mcp)
+      "/mcp": {
+        target: process.env.VITE_BACKEND_HTTP_URL || "http://localhost:8080",
+        changeOrigin: true,
+      },
     },
   },
 }))
