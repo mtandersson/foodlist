@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/mtandersson/foodlist/compare/v1.12.0...v1.12.1) (2026-03-28)
+
+### Chores
+
+* **deps:** update @sveltejs/vite-plugin-svelte to ^7.0.0 and vite to ^8.0.3 ([a786a87](https://github.com/mtandersson/foodlist/commit/a786a872ac7b66184d3d0cffbb973c492884b365))
+* **deps:** update module github.com/segmentio/asm to v1.2.1 ([2940b81](https://github.com/mtandersson/foodlist/commit/2940b818e27f4a30ee420fa544c3476143b29215))
+
 ## [1.12.0](https://github.com/mtandersson/foodlist/compare/v1.11.42...v1.12.0) (2026-03-28)
 
 ### Features
