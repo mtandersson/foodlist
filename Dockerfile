@@ -6,8 +6,8 @@ ARG VERSION
 
 WORKDIR /app/frontend
 
-# Copy frontend package files
-COPY frontend/package*.json ./
+# Copy frontend package files and npm config (legacy-peer-deps for vite-plugin-pwa vs vite 8)
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 
 # Install dependencies
 RUN npm ci
