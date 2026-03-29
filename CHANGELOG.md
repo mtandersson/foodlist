@@ -1,3 +1,9 @@
+## [1.13.4](https://github.com/mtandersson/foodlist/compare/v1.13.3...v1.13.4) (2026-03-29)
+
+### Chores
+
+* **deps:** update module github.com/std-uritemplate/std-uritemplate/go/v2 to v2.0.8 ([d276f1f](https://github.com/mtandersson/foodlist/commit/d276f1f8935d8942590ac1ee2ac451921e81a398))
+
 ## [1.13.3](https://github.com/mtandersson/foodlist/compare/v1.13.2...v1.13.3) (2026-03-29)
 
 ### Chores
