@@ -211,6 +211,13 @@
       min-height: 44px; /* iOS touch target minimum */
     }
 
+    /* iOS Safari: slightly tighter rows (~2px less vertical padding) */
+    @supports (-webkit-touch-callout: none) {
+      .todo-item {
+        padding: calc(var(--spacing-md) - 1px) var(--spacing-lg);
+      }
+    }
+
     :global(.category-badge) {
       display: none;
     }
