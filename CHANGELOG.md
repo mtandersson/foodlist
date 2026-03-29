@@ -1,3 +1,10 @@
+## [1.13.6](https://github.com/mtandersson/foodlist/compare/v1.13.5...v1.13.6) (2026-03-29)
+
+### Bug Fixes
+
+* **frontend:** a11y for category modal backdrop, remove empty CSS ruleset ([39b9cbc](https://github.com/mtandersson/foodlist/commit/39b9cbc376fe13ea352234bbb324bb46d15a308d))
+* **frontend:** modal a11y + TodoList CSS (AND-4) ([#204](https://github.com/mtandersson/foodlist/issues/204)) ([234eaa8](https://github.com/mtandersson/foodlist/commit/234eaa8534ad039b07b16eb444dfd284d10e4062))
+
 ## [1.13.5](https://github.com/mtandersson/foodlist/compare/v1.13.4...v1.13.5) (2026-03-29)
 
 ### Bug Fixes
