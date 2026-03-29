@@ -1,3 +1,9 @@
+## [1.13.3](https://github.com/mtandersson/foodlist/compare/v1.13.2...v1.13.3) (2026-03-29)
+
+### Chores
+
+* **deps:** update module github.com/spf13/pflag to v1.0.10 ([f68e8b3](https://github.com/mtandersson/foodlist/commit/f68e8b340a2f66ebd6f1fe740be649c32357adcd))
+
 ## [1.13.2](https://github.com/mtandersson/foodlist/compare/v1.13.1...v1.13.2) (2026-03-28)
 
 ### Chores
