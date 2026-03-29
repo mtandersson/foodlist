@@ -1,3 +1,9 @@
+## [1.13.5](https://github.com/mtandersson/foodlist/compare/v1.13.4...v1.13.5) (2026-03-29)
+
+### Bug Fixes
+
+* **ios:** tighten todo row vertical padding on iPhone ([af6db1c](https://github.com/mtandersson/foodlist/commit/af6db1ce2608096fd9d28a36c511561655f53840))
+
 ## [1.13.4](https://github.com/mtandersson/foodlist/compare/v1.13.3...v1.13.4) (2026-03-29)
 
 ### Chores
