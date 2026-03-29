@@ -1767,10 +1767,6 @@
         z-index: 10;
       }
 
-      .add-todo-bottom {
-        /* Removed safe-area-inset-bottom to eliminate unnecessary spacing */
-      }
-
       /* Adjust container when input is focused to account for keyboard */
       .todo-list-container {
         /* Use visual viewport height when available for better keyboard handling */
