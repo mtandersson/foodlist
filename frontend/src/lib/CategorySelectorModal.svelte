@@ -16,6 +16,14 @@
     }
   }
 
+  function handleBackdropKeydown(e: KeyboardEvent) {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onCancel();
+    }
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       onCancel();
@@ -28,6 +36,7 @@
 <div 
   class="modal-backdrop" 
   onclick={handleBackdropClick}
+  onkeydown={handleBackdropKeydown}
   role="dialog"
   aria-modal="true"
   aria-labelledby="modal-title"
