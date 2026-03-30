@@ -1,3 +1,9 @@
+## [1.13.7](https://github.com/mtandersson/foodlist/compare/v1.13.6...v1.13.7) (2026-03-30)
+
+### Chores
+
+* **deps:** update conventional-changelog-conventionalcommits to ^9.3.1 ([cb091fd](https://github.com/mtandersson/foodlist/commit/cb091fde69b00d39dedb60616de0921c75e29541))
+
 ## [1.13.6](https://github.com/mtandersson/foodlist/compare/v1.13.5...v1.13.6) (2026-03-29)
 
 ### Bug Fixes
