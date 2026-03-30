@@ -1,3 +1,9 @@
+## [1.13.10](https://github.com/mtandersson/foodlist/compare/v1.13.9...v1.13.10) (2026-03-30)
+
+### Chores
+
+* **deps:** update module go.opentelemetry.io/auto/sdk to v1.2.1 ([5446f7d](https://github.com/mtandersson/foodlist/commit/5446f7dd8289811023c7888fd4330a36c1855e48))
+
 ## [1.13.9](https://github.com/mtandersson/foodlist/compare/v1.13.8...v1.13.9) (2026-03-30)
 
 ### Chores
