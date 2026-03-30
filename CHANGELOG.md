@@ -1,3 +1,9 @@
+## [1.13.8](https://github.com/mtandersson/foodlist/compare/v1.13.7...v1.13.8) (2026-03-30)
+
+### Chores
+
+* **deps:** update renovatebot/github-action action to v46.1.7 ([cce7b45](https://github.com/mtandersson/foodlist/commit/cce7b45cf2ee04c42071049a3c6eca175f367f55))
+
 ## [1.13.7](https://github.com/mtandersson/foodlist/compare/v1.13.6...v1.13.7) (2026-03-30)
 
 ### Chores
