@@ -1,3 +1,9 @@
+## [1.13.11](https://github.com/mtandersson/foodlist/compare/v1.13.10...v1.13.11) (2026-03-31)
+
+### Chores
+
+* **deps:** update module golang.org/x/net to v0.52.0 ([0581d7a](https://github.com/mtandersson/foodlist/commit/0581d7a55e0ddbde96a496ba2b3c0228d77846dc))
+
 ## [1.13.10](https://github.com/mtandersson/foodlist/compare/v1.13.9...v1.13.10) (2026-03-30)
 
 ### Chores
