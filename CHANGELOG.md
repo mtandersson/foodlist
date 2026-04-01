@@ -1,3 +1,9 @@
+## [1.13.13](https://github.com/mtandersson/foodlist/compare/v1.13.12...v1.13.13) (2026-04-01)
+
+### Chores
+
+* **deps:** update module golang.org/x/oauth2 to v0.36.0 ([1884e84](https://github.com/mtandersson/foodlist/commit/1884e8475b2b5c0a8720c662d7d230b47295ee9a))
+
 ## [1.13.12](https://github.com/mtandersson/foodlist/compare/v1.13.11...v1.13.12) (2026-03-31)
 
 ### Chores
