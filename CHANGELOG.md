@@ -1,3 +1,9 @@
+## [1.13.15](https://github.com/mtandersson/foodlist/compare/v1.13.14...v1.13.15) (2026-04-02)
+
+### Chores
+
+* **deps:** update opentelemetry-go monorepo to v1.42.0 ([725a095](https://github.com/mtandersson/foodlist/commit/725a095b7de9831f1e97916d2015f9368efbc99a))
+
 ## [1.13.14](https://github.com/mtandersson/foodlist/compare/v1.13.13...v1.13.14) (2026-04-02)
 
 ### Chores
