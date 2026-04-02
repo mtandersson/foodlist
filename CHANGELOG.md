@@ -1,3 +1,9 @@
+## [1.13.14](https://github.com/mtandersson/foodlist/compare/v1.13.13...v1.13.14) (2026-04-02)
+
+### Chores
+
+* **deps:** update module github.com/Azure/azure-sdk-for-go/sdk/internal to v1.12.0 ([af23e89](https://github.com/mtandersson/foodlist/commit/af23e89fe2ec1131168254528a27cbb213863055))
+
 ## [1.13.13](https://github.com/mtandersson/foodlist/compare/v1.13.12...v1.13.13) (2026-04-01)
 
 ### Chores
