@@ -1,3 +1,9 @@
+## [1.13.19](https://github.com/mtandersson/foodlist/compare/v1.13.18...v1.13.19) (2026-04-06)
+
+### Chores
+
+* **deps:** update vite to ^8.0.5 ([7beec25](https://github.com/mtandersson/foodlist/commit/7beec25e2fe0c127ab77bf3d8a0a1c02f615dd6e))
+
 ## [1.13.18](https://github.com/mtandersson/foodlist/compare/v1.13.17...v1.13.18) (2026-04-06)
 
 ### Chores
