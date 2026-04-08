@@ -1,3 +1,9 @@
+## [1.13.23](https://github.com/mtandersson/foodlist/compare/v1.13.22...v1.13.23) (2026-04-08)
+
+### Chores
+
+* **deps:** update golang Docker tag to v1.26.2 ([0cffc14](https://github.com/mtandersson/foodlist/commit/0cffc14e5bba7a2a2da243d91f21d0f894c6cfb4))
+
 ## [1.13.22](https://github.com/mtandersson/foodlist/compare/v1.13.21...v1.13.22) (2026-04-08)
 
 ### Chores
