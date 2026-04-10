@@ -1,3 +1,9 @@
+## [1.13.28](https://github.com/mtandersson/foodlist/compare/v1.13.27...v1.13.28) (2026-04-10)
+
+### Chores
+
+* **deps:** update module github.com/modelcontextprotocol/go-sdk to v1.5.0 ([f608725](https://github.com/mtandersson/foodlist/commit/f608725c634a5e4b65b1b5c87b4ddf32e7d2a81d))
+
 ## [1.13.27](https://github.com/mtandersson/foodlist/compare/v1.13.26...v1.13.27) (2026-04-09)
 
 ### Chores
