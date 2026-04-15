@@ -168,7 +168,7 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 	require.NotEqual(t, true, done["isError"])
 
 	openOnly := firstTextContent(t, toolCall(t, base, 30, "foodlist_list", map[string]any{"include_completed": false}))
-	require.Contains(t, openOnly, "No matching todos")
+	require.Contains(t, openOnly, "No matching grocery items")
 
 	undo := toolCall(t, base, 31, "foodlist_mark_done", map[string]any{"todo_id": todoID, "done": false})
 	require.NotEqual(t, true, undo["isError"])
@@ -268,7 +268,7 @@ func firstTextContent(t *testing.T, result map[string]any) string {
 	return c0["text"].(string)
 }
 
-var createdTodoRE = regexp.MustCompile(`Created todo ([0-9a-f-]{36})`)
+var createdTodoRE = regexp.MustCompile(`Created grocery item ([0-9a-f-]{36})`)
 
 func parseCreatedTodoID(t *testing.T, s string) string {
 	t.Helper()
