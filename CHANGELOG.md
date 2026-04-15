@@ -1,3 +1,9 @@
+## [1.14.0](https://github.com/mtandersson/foodlist/compare/v1.13.32...v1.14.0) (2026-04-15)
+
+### Features
+
+* **mcp:** align MCP language with grocery items ([f2f9cfb](https://github.com/mtandersson/foodlist/commit/f2f9cfb4b4c247321b8c72b2555fce4d1e88ff76))
+
 ## [1.13.32](https://github.com/mtandersson/foodlist/compare/v1.13.31...v1.13.32) (2026-04-14)
 
 ### Chores
