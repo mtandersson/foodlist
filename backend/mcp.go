@@ -16,7 +16,8 @@ const (
 
 	mcpResourceState      = "foodlist://state"
 	mcpResourceCategories = "foodlist://categories"
-	mcpResourceTodos      = "foodlist://todos"
+	// Legacy URI kept for compatibility with existing MCP clients.
+	mcpResourceTodos = "foodlist://todos"
 )
 
 type foodlistListIn struct {
@@ -48,7 +49,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_list",
-		Description: "List todos as markdown, grouped by category (only categories that appear on at least one shown todo). For every defined category ID, use foodlist_categories or the foodlist://categories resource.",
+		Description: "List grocery items as markdown, grouped by category (only categories that appear on at least one shown item). For every defined category ID, use foodlist_categories or the foodlist://categories resource.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistListIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -88,7 +89,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 			_, _ = fmt.Fprintf(&b, "- **%s** `%s` — %s%s (%s)\n", t.Name, t.ID, catLabel, star, status)
 		}
 		if n == 0 {
-			b.WriteString("_No matching todos._\n")
+			b.WriteString("_No matching grocery items._\n")
 		}
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
@@ -97,7 +98,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_categories",
-		Description: "Return all defined categories as a JSON array (id, name, sortOrder, etc.), including categories not used by any todo. Same data as the foodlist://categories resource.",
+		Description: "Return all defined categories as a JSON array (id, name, sortOrder, etc.), including categories not used by any grocery item. Same data as the foodlist://categories resource.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in struct{}) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -116,7 +117,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_add",
-		Description: "Create a new todo. IDs are generated server-side.",
+		Description: "Create a new grocery item. IDs are generated server-side.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistAddIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -133,13 +134,13 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 			}, nil, nil
 		}
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Created todo %s (%s).", cmd.ID, strings.TrimSpace(in.Name))}},
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Created grocery item %s (%s).", cmd.ID, strings.TrimSpace(in.Name))}},
 		}, nil, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_categorize",
-		Description: "Assign a todo to a category, or clear its category.",
+		Description: "Assign a grocery item to a category, or clear its category.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistCategorizeIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -155,13 +156,13 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 			}, nil, nil
 		}
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Updated category for todo %s.", in.TodoID)}},
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Updated category for grocery item %s.", in.TodoID)}},
 		}, nil, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_mark_done",
-		Description: "Mark a todo completed or reopen it.",
+		Description: "Mark a grocery item completed or reopen it.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistMarkDoneIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -184,13 +185,13 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 			}, nil, nil
 		}
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Todo %s done=%v.", in.TodoID, in.Done)}},
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Grocery item %s done=%v.", in.TodoID, in.Done)}},
 		}, nil, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_mark_starred",
-		Description: "Star or unstar a todo.",
+		Description: "Star or unstar a grocery item.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistMarkStarredIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -213,7 +214,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 			}, nil, nil
 		}
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Todo %s starred=%v.", in.TodoID, in.Starred)}},
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Grocery item %s starred=%v.", in.TodoID, in.Starred)}},
 		}, nil, nil
 	})
 
@@ -234,7 +235,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 	s.AddResource(&mcp.Resource{
 		URI:         mcpResourceState,
 		Name:        "state",
-		Description: "Full projected state (StateRollup JSON): todos, categories, list title.",
+		Description: "Full projected state (StateRollup JSON): grocery items, categories, list title.",
 		MIMEType:    "application/json",
 	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		if req.Params.URI != mcpResourceState {
@@ -264,8 +265,8 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 
 	s.AddResource(&mcp.Resource{
 		URI:         mcpResourceTodos,
-		Name:        "todos",
-		Description: "All todos sorted by sort order (JSON array).",
+		Name:        "grocery_items",
+		Description: "All grocery items sorted by sort order (JSON array). Legacy URI remains foodlist://todos for compatibility.",
 		MIMEType:    "application/json",
 	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		if req.Params.URI != mcpResourceTodos {
