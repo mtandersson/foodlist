@@ -1,3 +1,9 @@
+## [1.14.1](https://github.com/mtandersson/foodlist/compare/v1.14.0...v1.14.1) (2026-04-17)
+
+### Chores
+
+* **deps:** update module github.com/Azure/azure-sdk-for-go/sdk/azcore to v1.21.1 ([6083551](https://github.com/mtandersson/foodlist/commit/6083551e68736393df5ceb0e836a094fce1c1626))
+
 ## [1.14.0](https://github.com/mtandersson/foodlist/compare/v1.13.32...v1.14.0) (2026-04-15)
 
 ### Features
