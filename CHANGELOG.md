@@ -1,3 +1,9 @@
+## [1.14.5](https://github.com/mtandersson/foodlist/compare/v1.14.4...v1.14.5) (2026-04-19)
+
+### Chores
+
+* **deps:** update uuid to v14 ([03e24f2](https://github.com/mtandersson/foodlist/commit/03e24f2a97d87f85307384f9f6ef88938d84a451))
+
 ## [1.14.4](https://github.com/mtandersson/foodlist/compare/v1.14.3...v1.14.4) (2026-04-18)
 
 ### Chores
