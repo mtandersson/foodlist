@@ -155,7 +155,7 @@ jobs:
 
       - name: Create release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@v6.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }} # Use PAT instead of default token for bypassing write permissions to branch
           GIT_AUTHOR_NAME: github-actions[bot]
