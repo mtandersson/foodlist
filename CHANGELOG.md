@@ -1,3 +1,9 @@
+## [1.14.9](https://github.com/mtandersson/foodlist/compare/v1.14.8...v1.14.9) (2026-04-22)
+
+### Chores
+
+* **deps:** update cycjimmy/semantic-release-action action to v6 ([bc5cb84](https://github.com/mtandersson/foodlist/commit/bc5cb84edf1d6f5dcc325d7d91ed80c80af2567c))
+
 ## [1.14.8](https://github.com/mtandersson/foodlist/compare/v1.14.7...v1.14.8) (2026-04-21)
 
 ### Chores
