@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/microsoft/kiota-abstractions-go v1.9.4
-	github.com/microsoft/kiota-http-go v1.5.5
+	github.com/microsoft/kiota-http-go v1.5.6
 	github.com/microsoftgraph/msgraph-sdk-go v1.97.0
 	github.com/modelcontextprotocol/go-sdk v1.5.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
