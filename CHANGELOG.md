@@ -1,3 +1,9 @@
+## [1.14.12](https://github.com/mtandersson/foodlist/compare/v1.14.11...v1.14.12) (2026-04-24)
+
+### Chores
+
+* **deps:** update module github.com/microsoft/kiota-http-go to v1.5.6 ([e4e9a73](https://github.com/mtandersson/foodlist/commit/e4e9a7395680c86d5ae219c338e301997d10fcda))
+
 ## [1.14.11](https://github.com/mtandersson/foodlist/compare/v1.14.10...v1.14.11) (2026-04-24)
 
 ### Chores
