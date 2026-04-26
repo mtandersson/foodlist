@@ -182,7 +182,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    padding: var(--spacing-lg) var(--spacing-xl);
+    padding: var(--spacing-md) var(--spacing-xl);
     background: var(--card-bg);
     border-radius: var(--radius-md);
     transition: all var(--transition-slow);
@@ -204,17 +204,17 @@
 
   @media (max-width: 768px) {
     .todo-item {
-      gap: var(--spacing-md);
-      padding: var(--spacing-md) var(--spacing-lg);
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-lg);
       /* Ensure proper alignment on iOS */
       align-items: center;
       min-height: 44px; /* iOS touch target minimum */
     }
 
-    /* iOS Safari: slightly tighter rows (~2px less vertical padding) */
+    /* iOS Safari: slightly tighter rows */
     @supports (-webkit-touch-callout: none) {
       .todo-item {
-        padding: calc(var(--spacing-md) - 1px) var(--spacing-lg);
+        padding: var(--spacing-sm) var(--spacing-lg);
       }
     }
 
@@ -309,7 +309,7 @@
     min-width: 0;
     /* Ensure proper text display */
     display: block;
-    line-height: 1.4;
+    line-height: 1.3;
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
@@ -360,7 +360,7 @@
     padding: 0;
     font-family: inherit;
     /* Ensure proper alignment and prevent text overlap */
-    line-height: 1.4;
+    line-height: 1.3;
     /* Prevent iOS zoom on focus */
     font-size: max(var(--font-size-base), 16px);
     /* Ensure proper appearance on iOS */

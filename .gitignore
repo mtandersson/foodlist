@@ -40,3 +40,6 @@ frontend/coverage/
 
 backend/events.jsonl
 backend/foodlist
+
+# Screenshots
+screenshots/

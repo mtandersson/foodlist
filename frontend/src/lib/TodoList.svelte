@@ -1655,7 +1655,7 @@
   }
 
   .todos-section {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
   }
 
   .todo-container {
@@ -1672,14 +1672,8 @@
 
   .todo-wrapper {
     position: relative;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
     transition: transform var(--duration-instant);
-  }
-
-  @media (max-width: 768px) {
-    .todo-wrapper {
-      margin-bottom: var(--spacing-xs);
-    }
   }
 
   .todo-wrapper.dragging {
