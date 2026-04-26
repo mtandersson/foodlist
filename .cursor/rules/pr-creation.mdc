@@ -1,0 +1,69 @@
+# FoodList PR Creation Skill
+
+## When to use
+When creating a pull request for FoodList.
+
+## Prerequisites checklist
+
+Before creating a PR, ALWAYS:
+
+1. **Run all verification** (required order per AGENTS.md):
+   ```bash
+   make lint                        # Backend lint
+   cd frontend && npm run check     # Frontend typecheck
+   make test                        # All tests
+   ```
+2. **Take before/after screenshots** if the change is visual (see `screenshots.mdc`)
+3. **Ensure commit follows Conventional Commits** (per CONTRIBUTING.md):
+   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+   - Scope is optional: `feat(ui):` or `feat:`
+   - Note: `style(ui)` triggers a patch release; plain `style` does not
+
+## Workflow
+
+1. Create branch from `main`:
+   ```bash
+   git checkout -b feat/short-description
+   ```
+
+2. Commit changes:
+   ```bash
+   git add <files>
+   git commit -m "feat(scope): description of change"
+   ```
+
+3. Push and create PR targeting `main`:
+   ```bash
+   git push -u origin feat/short-description
+   gh pr create \
+     --title "feat(scope): description" \
+     --body "$(cat <<'EOF'
+   ## Summary
+   <1-3 bullet points>
+
+   ## Changes
+   <table of files and what changed>
+
+   ## Verification
+   - ✅ Test results
+
+   ## Screenshots (if visual)
+   | Before | After |
+   |--------|-------|
+   | ![Before](url) | ![After](url) |
+   EOF
+   )" \
+     --base main
+   ```
+
+4. Return the PR URL to the user.
+
+## GitHub auth
+`gh` CLI should be pre-authenticated. Verify with `gh auth status`.
+Repo: `mtandersson/foodlist`
+
+## Cleanup
+- Restore `backend/events.jsonl` from backup
+- Remove temp artifacts (`backend/foodlist` binary, `frontend/dist/screenshot.html`)
+- Remove temporarily installed packages (`npm uninstall playwright`)
+- Don't commit `AGENTS.md` unless explicitly asked

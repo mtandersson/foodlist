@@ -1,0 +1,36 @@
+# FoodList Screenshot Skill
+
+## When to use
+When you need to capture before/after screenshots of FoodList for PRs or visual regression.
+
+For headless browser commands and NixOS specifics, see the user-level skill `~/.cursor/rules/nixos-screenshots.mdc`.
+
+## Serving the app for screenshots
+
+FoodList is a WebSocket SPA that requires a live backend. Steps:
+
+1. Build: `make build`
+2. Back up existing data: `cp backend/events.jsonl backend/events.jsonl.backup`
+3. Seed data: Write representative events to `backend/events.jsonl` (include starred items, completed items, categorized items, and duplicate counts for realistic visuals)
+4. Start backend:
+   ```bash
+   cd backend && nohup sh -c 'STATIC_DIR=../frontend/dist PORT=18080 BIND_ADDR=localhost SHARED_SECRET= CIDR_WHITELIST= ./foodlist' > /tmp/foodlist.log 2>&1 &
+   ```
+5. Wait for server: `sleep 2 && curl -s http://localhost:18080 | head -5`
+6. Take screenshots using NixOS Chromium (see user-level skill) — **light mode**, **5s virtual time budget** for WebSocket data
+7. Clean up: `pkill -f "foodlist"` and `mv backend/events.jsonl.backup backend/events.jsonl`
+
+## Viewports to capture
+
+| Viewport | Width | Height | Notes |
+|----------|-------|--------|-------|
+| Desktop | 1280 | 800 | Light mode |
+| Mobile iOS | 375 | 667 | Light mode, iPhone SE |
+
+## Before/After workflow
+
+1. Check out `main`, build, seed data, start backend, capture **before** screenshots
+2. Apply changes, rebuild (`cd frontend && npm run build`), restart backend, capture **after** screenshots
+3. Copy screenshots to `screenshots/` dir in the repo
+4. Reference in PR body via GitHub raw URLs:
+   `![Before](https://raw.githubusercontent.com/OWNER/REPO/BRANCH/screenshots/before-desktop.png)`
