@@ -1,3 +1,9 @@
+## [1.15.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.15.0) (2026-04-26)
+
+### Features
+
+* **ui:** reduce vertical spacing for todo items ([e26e18c](https://github.com/mtandersson/foodlist/commit/e26e18cc685e6b22c023a5116c2da6420bee73e2))
+
 ## [1.14.12](https://github.com/mtandersson/foodlist/compare/v1.14.11...v1.14.12) (2026-04-24)
 
 ### Chores
