@@ -1,3 +1,16 @@
+## [1.15.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.15.0) (2026-04-28)
+
+### Features
+
+* **ui:** reduce vertical spacing for todo items ([977dc28](https://github.com/mtandersson/foodlist/commit/977dc28d01c385c2f18782c9e96054426e7a446c))
+
+### Chores
+
+* **deps:** update module github.com/google/jsonschema-go to v0.4.3 ([9ad389d](https://github.com/mtandersson/foodlist/commit/9ad389dc4e82b926baf0dd60885946dea75495ff))
+* **deps:** update renovatebot/github-action action to v46.1.11 ([d3096cb](https://github.com/mtandersson/foodlist/commit/d3096cbf8576ad4fe63455d93541005176fd4595))
+* **release:** 1.15.0 [skip ci] ([8c5e62b](https://github.com/mtandersson/foodlist/commit/8c5e62b64293e97edc0131568d0286471b8819d3))
+* **release:** 1.15.0 [skip ci] ([d6cb5e6](https://github.com/mtandersson/foodlist/commit/d6cb5e647ee21b7f86c37aeb978798562f1b439a))
+
 ## [1.15.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.15.0) (2026-04-27)
 
 ### Features
