@@ -1,3 +1,24 @@
+## [1.15.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.15.0) (2026-05-02)
+
+### Features
+
+* **ui:** reduce vertical spacing for todo items ([977dc28](https://github.com/mtandersson/foodlist/commit/977dc28d01c385c2f18782c9e96054426e7a446c))
+
+### Chores
+
+* **deps:** update module github.com/caarlos0/env/v11 to v11.4.1 ([318acdf](https://github.com/mtandersson/foodlist/commit/318acdfb77d57b47f3bb260fcdc4d0d05114d507))
+* **deps:** update module github.com/google/jsonschema-go to v0.4.3 ([9ad389d](https://github.com/mtandersson/foodlist/commit/9ad389dc4e82b926baf0dd60885946dea75495ff))
+* **deps:** update module github.com/modelcontextprotocol/go-sdk to v1.6.0 ([33b3a7d](https://github.com/mtandersson/foodlist/commit/33b3a7de809d27f4972bdd664fea72721a09c667))
+* **deps:** update renovatebot/github-action action to v46.1.11 ([d3096cb](https://github.com/mtandersson/foodlist/commit/d3096cbf8576ad4fe63455d93541005176fd4595))
+* **deps:** update renovatebot/github-action action to v46.1.12 ([963f6bc](https://github.com/mtandersson/foodlist/commit/963f6bcd88746bc1a064c8c2fdfcbeb59ff942dd))
+* **deps:** update svelte-check to ^4.4.7 ([b6a4174](https://github.com/mtandersson/foodlist/commit/b6a417487a28f8bf9cbddf7db4238401e61be15b))
+* **release:** 1.15.0 [skip ci] ([3e03254](https://github.com/mtandersson/foodlist/commit/3e032540135b7a0ba7ee7f76ccf87603b115566a))
+* **release:** 1.15.0 [skip ci] ([7e4ee65](https://github.com/mtandersson/foodlist/commit/7e4ee65c68be76733facc5f2acd7d3515f573de5))
+* **release:** 1.15.0 [skip ci] ([55f72b2](https://github.com/mtandersson/foodlist/commit/55f72b2e010f2dbe5d0ac26e0e0c22a0407a0cbf))
+* **release:** 1.15.0 [skip ci] ([007a5f2](https://github.com/mtandersson/foodlist/commit/007a5f2ad75dd02d04b3e058a28ba1f31f270c22))
+* **release:** 1.15.0 [skip ci] ([8c5e62b](https://github.com/mtandersson/foodlist/commit/8c5e62b64293e97edc0131568d0286471b8819d3))
+* **release:** 1.15.0 [skip ci] ([d6cb5e6](https://github.com/mtandersson/foodlist/commit/d6cb5e647ee21b7f86c37aeb978798562f1b439a))
+
 ## [1.15.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.15.0) (2026-05-01)
 
 ### Features
