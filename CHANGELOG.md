@@ -1,3 +1,52 @@
+## [1.15.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.15.0) (2026-05-11)
+
+### Features
+
+* **ui:** reduce vertical spacing for todo items ([977dc28](https://github.com/mtandersson/foodlist/commit/977dc28d01c385c2f18782c9e96054426e7a446c))
+
+### Chores
+
+* **deps:** update @sveltejs/vite-plugin-svelte to ^7.1.0 ([8449a61](https://github.com/mtandersson/foodlist/commit/8449a610309a7fea758904d138d7fe6fb5ea31c7))
+* **deps:** update @sveltejs/vite-plugin-svelte to ^7.1.1 ([31796d7](https://github.com/mtandersson/foodlist/commit/31796d7dc21d45da4ab5703925a1de718e004432))
+* **deps:** update @sveltejs/vite-plugin-svelte to ^7.1.2 ([36e846a](https://github.com/mtandersson/foodlist/commit/36e846a231b3f04e0e8df6a1c88622dac396fc38))
+* **deps:** update @types/node to ^24.12.3 ([ef8ee92](https://github.com/mtandersson/foodlist/commit/ef8ee925f28f4c1de8000bba7d817583465f96c3))
+* **deps:** update go module directive to v1.26.3 ([78148e3](https://github.com/mtandersson/foodlist/commit/78148e37610e78c82b8a90310a51e069d70334bc))
+* **deps:** update golang Docker tag to v1.26.3 ([7645517](https://github.com/mtandersson/foodlist/commit/7645517a5d393ef94171945436e5790fb2437fd4))
+* **deps:** update module github.com/caarlos0/env/v11 to v11.4.1 ([318acdf](https://github.com/mtandersson/foodlist/commit/318acdfb77d57b47f3bb260fcdc4d0d05114d507))
+* **deps:** update module github.com/google/jsonschema-go to v0.4.3 ([9ad389d](https://github.com/mtandersson/foodlist/commit/9ad389dc4e82b926baf0dd60885946dea75495ff))
+* **deps:** update module github.com/microsoftgraph/msgraph-sdk-go to v1.98.0 ([de2a94a](https://github.com/mtandersson/foodlist/commit/de2a94a89cdafe2c1926cfefd9be453a61df4bf0))
+* **deps:** update module github.com/modelcontextprotocol/go-sdk to v1.6.0 ([33b3a7d](https://github.com/mtandersson/foodlist/commit/33b3a7de809d27f4972bdd664fea72721a09c667))
+* **deps:** update module golang.org/x/net to v0.54.0 ([6abc886](https://github.com/mtandersson/foodlist/commit/6abc8869398a1c7f8b6aa347f33d1e9fd2006a1a))
+* **deps:** update renovatebot/github-action action to v46.1.11 ([d3096cb](https://github.com/mtandersson/foodlist/commit/d3096cbf8576ad4fe63455d93541005176fd4595))
+* **deps:** update renovatebot/github-action action to v46.1.12 ([963f6bc](https://github.com/mtandersson/foodlist/commit/963f6bcd88746bc1a064c8c2fdfcbeb59ff942dd))
+* **deps:** update renovatebot/github-action action to v46.1.13 ([203d578](https://github.com/mtandersson/foodlist/commit/203d57834b2db1bdfc58a2ae64eb8a6a4f38cf75))
+* **deps:** update renovatebot/github-action action to v46.1.14 ([ce5a880](https://github.com/mtandersson/foodlist/commit/ce5a88078925e2e07df7b455e31b05305737c418))
+* **deps:** update semantic-release monorepo ([ef0a841](https://github.com/mtandersson/foodlist/commit/ef0a841276bd9c4255ea6770c2cdaa3a3235723a))
+* **deps:** update svelte-check to ^4.4.7 ([b6a4174](https://github.com/mtandersson/foodlist/commit/b6a417487a28f8bf9cbddf7db4238401e61be15b))
+* **deps:** update svelte-check to ^4.4.8 ([b6a2c56](https://github.com/mtandersson/foodlist/commit/b6a2c56b322f45f27a66027534041bc9bff6c1db))
+* **deps:** update vite to ^8.0.11 ([c9184f2](https://github.com/mtandersson/foodlist/commit/c9184f282daf1e11a56d13785f219d49310e3cd5))
+* **deps:** update vite-plugin-pwa to ^1.3.0 ([9a97f5e](https://github.com/mtandersson/foodlist/commit/9a97f5e103543ceabfce3fc742919cb547d049c0))
+* **release:** 1.15.0 [skip ci] ([938640a](https://github.com/mtandersson/foodlist/commit/938640abfe10eaebb52b5f42c71da973f355a284))
+* **release:** 1.15.0 [skip ci] ([06f0e7f](https://github.com/mtandersson/foodlist/commit/06f0e7f78202ea239312f048a1f32f43216cd425))
+* **release:** 1.15.0 [skip ci] ([b596ea0](https://github.com/mtandersson/foodlist/commit/b596ea053a907b617da294231fb9e557382982d6))
+* **release:** 1.15.0 [skip ci] ([53408e0](https://github.com/mtandersson/foodlist/commit/53408e07cf5ece0a82076eb768b008a3bb02b898))
+* **release:** 1.15.0 [skip ci] ([2f8d7e6](https://github.com/mtandersson/foodlist/commit/2f8d7e6e0d7d2067564bb448ef633ca91745cc68))
+* **release:** 1.15.0 [skip ci] ([7687955](https://github.com/mtandersson/foodlist/commit/7687955e031ca547afa19a4ab0f7644b8fb5d1ef))
+* **release:** 1.15.0 [skip ci] ([ddab98b](https://github.com/mtandersson/foodlist/commit/ddab98bbe65c17317a38046aec6c66694f8fd87c))
+* **release:** 1.15.0 [skip ci] ([fb38f15](https://github.com/mtandersson/foodlist/commit/fb38f156565a619b6da0f5a1ba006517f8d57d2a))
+* **release:** 1.15.0 [skip ci] ([c60bc93](https://github.com/mtandersson/foodlist/commit/c60bc93ad9197dc87a8eb0c7e4b21ed984edaea7))
+* **release:** 1.15.0 [skip ci] ([d19887d](https://github.com/mtandersson/foodlist/commit/d19887deeedfeee98f36b28056fe8f72461ac287))
+* **release:** 1.15.0 [skip ci] ([c7a9a29](https://github.com/mtandersson/foodlist/commit/c7a9a29f733258d6059a96e9a2787f79ff3dd930))
+* **release:** 1.15.0 [skip ci] ([d4f674b](https://github.com/mtandersson/foodlist/commit/d4f674b149c2456796701eabd3fed74cf16aaaaa))
+* **release:** 1.15.0 [skip ci] ([b169990](https://github.com/mtandersson/foodlist/commit/b1699909a63f6a9913add95ea05c93796e4e80ed))
+* **release:** 1.15.0 [skip ci] ([55f3cb8](https://github.com/mtandersson/foodlist/commit/55f3cb8387c53769cd216954a8f763f44cdbf8e7))
+* **release:** 1.15.0 [skip ci] ([3e03254](https://github.com/mtandersson/foodlist/commit/3e032540135b7a0ba7ee7f76ccf87603b115566a))
+* **release:** 1.15.0 [skip ci] ([7e4ee65](https://github.com/mtandersson/foodlist/commit/7e4ee65c68be76733facc5f2acd7d3515f573de5))
+* **release:** 1.15.0 [skip ci] ([55f72b2](https://github.com/mtandersson/foodlist/commit/55f72b2e010f2dbe5d0ac26e0e0c22a0407a0cbf))
+* **release:** 1.15.0 [skip ci] ([007a5f2](https://github.com/mtandersson/foodlist/commit/007a5f2ad75dd02d04b3e058a28ba1f31f270c22))
+* **release:** 1.15.0 [skip ci] ([8c5e62b](https://github.com/mtandersson/foodlist/commit/8c5e62b64293e97edc0131568d0286471b8819d3))
+* **release:** 1.15.0 [skip ci] ([d6cb5e6](https://github.com/mtandersson/foodlist/commit/d6cb5e647ee21b7f86c37aeb978798562f1b439a))
+
 ## [1.15.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.15.0) (2026-05-10)
 
 ### Features
