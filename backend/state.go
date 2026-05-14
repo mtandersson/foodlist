@@ -244,6 +244,30 @@ func (s *State) GetCategory(id string) (*Category, bool) {
 	return cat, true
 }
 
+// GetAllNormalizedNames returns the unique, non-empty normalized names of every
+// todo that has ever existed in the projected state (regardless of category,
+// completion status, or whether the category was later deleted). Used to seed
+// the embedding cache.
+func (s *State) GetAllNormalizedNames() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	seen := make(map[string]struct{}, len(s.todos))
+	for _, todo := range s.todos {
+		n := normalizeName(todo.Name)
+		if n == "" {
+			continue
+		}
+		seen[n] = struct{}{}
+	}
+	names := make([]string, 0, len(seen))
+	for n := range seen {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names
+}
+
 // GetActiveTodoNames returns a slice of names of all non-completed todos.
 func (s *State) GetActiveTodoNames() []string {
 	s.mu.RLock()
