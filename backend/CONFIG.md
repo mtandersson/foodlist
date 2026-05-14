@@ -19,6 +19,32 @@ All configuration is done via environment variables. The backend will automatica
 | `DATA_DIR`   | `.`                | Directory where `events.jsonl` will be stored                |
 | `LOG_FORMAT` | `logfmt`           | Log format: `logfmt` (human-readable) or `json` (structured) |
 
+### Embeddings + auto-categorize
+
+The server can suggest a category for new todos based on cosine similarity
+between their embeddings and the embeddings of existing categorized items.
+The feature is only active when `GEMINI_API_KEY` is set.
+
+| Variable                                    | Default                  | Description                                                                                  |
+| ------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`                            | _empty_                  | Google AI Studio API key. When empty, the embedding cache build is skipped and auto-categorize is disabled. |
+| `EMBEDDING_MODEL`                           | `gemini-embedding-001`   | Gemini embedding model name (without `models/` prefix).                                      |
+| `EMBEDDING_CACHE_FILE`                      | `<DATA_DIR>/embeddings.jsonl` | Path to the JSONL cache file. Validated to be inside `DATA_DIR`.                        |
+| `EMBEDDING_BATCH_SIZE`                      | `100`                    | Texts per batchEmbedContents call (max 100).                                                 |
+| `EMBEDDING_RPM`                             | `60`                     | Shared outbound request rate (startup batch + runtime hook share one bucket).                |
+| `EMBEDDING_CATEGORIZE_ENABLED`              | `true`                   | Master switch. Set to `false` to disable auto-categorize even with an API key set.           |
+| `EMBEDDING_CATEGORIZE_SIMILARITY_FLOOR`     | `0.55`                   | Per-item similarity floor; lower values contribute zero score.                               |
+| `EMBEDDING_CATEGORIZE_RECENCY_WINDOW_DAYS`  | `30`                     | Recent-pass window in days.                                                                  |
+| `EMBEDDING_CATEGORIZE_RECENT_WEIGHT`        | `0.70`                   | Blend factor: `combined = recentWeight*recent + (1-recentWeight)*all`.                       |
+| `EMBEDDING_CATEGORIZE_POPULARITY_WEIGHT`    | `0.30`                   | Sublinear category-size bias `1 + weight*log(1+N)`. Set to `0` to disable.                   |
+| `EMBEDDING_CATEGORIZE_MAX_SIM_GATE`         | `0.20`                   | Minimum floored similarity any single item must hit before its category is eligible.         |
+| `EMBEDDING_CATEGORIZE_ACCEPTANCE_THRESHOLD` | `0.30`                   | Minimum final score required to emit a `TodoCategorized` suggestion.                         |
+
+Operational counters are exposed at `GET /api/v1/auto-categorize/metrics`
+(bearer-auth, returns 404 when the feature is disabled). See
+[`backend/auto_categorize_metrics.go`](auto_categorize_metrics.go) for the
+JSON schema.
+
 MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when the backend runs. It is not behind `SHARED_SECRET`; with `CIDR_WHITELIST` set, `/mcp` is still reachable for whitelisted clients (same idea as public PWA assets). Protect access at the network or reverse-proxy layer if the server is exposed.
 
 ### MCP: resources vs tools (protocol)

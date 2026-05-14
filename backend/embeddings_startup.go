@@ -9,27 +9,33 @@ import (
 
 // embeddingBuilderConfig is the subset of Config that BuildEmbeddingCache needs.
 // Kept as its own type so tests can construct one without env parsing.
+//
+// Model is stamped on each cached entry's provenance.
 type embeddingBuilderConfig struct {
 	Model     string
-	APIKey    string
 	BatchSize int
-	RPM       int
 }
 
 // BuildEmbeddingCache collects every unique normalized todo name from the
 // server's projected state, finds those without a cached embedding, and
-// fetches them from the Gemini API in rate-limited batches. Each successful
-// embedding is appended to the cache (in-memory + JSONL on disk). The call
-// blocks until all uncached items have been processed (or a hard error).
+// fetches them from the injected Embedder in rate-limited batches. Each
+// successful embedding is appended to the cache (in-memory + JSONL on
+// disk). The call blocks until all uncached items have been processed (or
+// a hard error).
+//
+// The Embedder is injected (rather than constructed inside) so the same
+// rate-limited client can be reused by the runtime auto-categorize hook;
+// otherwise startup and runtime would maintain two independent RPM
+// buckets and double the effective quota cost.
 //
 // On per-batch failures (after retries), the affected items are skipped and
 // will be retried on the next startup; this is logged but not fatal.
-func BuildEmbeddingCache(ctx context.Context, cfg embeddingBuilderConfig, server *Server, cache *EmbeddingCache) error {
+func BuildEmbeddingCache(ctx context.Context, cfg embeddingBuilderConfig, client Embedder, server *Server, cache *EmbeddingCache) error {
 	if cache == nil {
 		return fmt.Errorf("embedding cache is nil")
 	}
-	if cfg.APIKey == "" {
-		return fmt.Errorf("gemini api key is empty")
+	if client == nil {
+		return fmt.Errorf("embedder is nil")
 	}
 
 	start := time.Now()
@@ -54,10 +60,13 @@ func BuildEmbeddingCache(ctx context.Context, cfg embeddingBuilderConfig, server
 		return nil
 	}
 
-	client := NewEmbeddingClient(cfg.APIKey, cfg.Model, cfg.BatchSize, cfg.RPM)
-	defer client.Close()
-
-	batchSize := client.BatchSize()
+	batchSize := cfg.BatchSize
+	if batchSize <= 0 {
+		batchSize = 100
+	}
+	if batchSize > 100 {
+		batchSize = 100
+	}
 	var added, failed int
 
 	for i := 0; i < len(missing); i += batchSize {

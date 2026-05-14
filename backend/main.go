@@ -2,14 +2,38 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
+
+// validateCachePath resolves cacheFile to an absolute path and confirms it
+// is contained inside dataDir. Returns the resolved absolute path on
+// success. The check uses a trailing separator so /data/foo never matches
+// /data/foobar. This is the path-traversal guard from the workspace rules.
+func validateCachePath(cacheFile, dataDir string) (string, error) {
+	absCache, err := filepath.Abs(cacheFile)
+	if err != nil {
+		return "", fmt.Errorf("resolve cache path: %w", err)
+	}
+	absData, err := filepath.Abs(dataDir)
+	if err != nil {
+		return "", fmt.Errorf("resolve data dir: %w", err)
+	}
+	cacheWithSep := absCache + string(os.PathSeparator)
+	dataWithSep := absData + string(os.PathSeparator)
+	if !strings.HasPrefix(cacheWithSep, dataWithSep) {
+		return "", fmt.Errorf("cache path %q escapes data dir %q", absCache, absData)
+	}
+	return absCache, nil
+}
 
 // version is set at build time via ldflags: -X main.version=<version>
 // Default value is "dev" if not set during build
@@ -43,6 +67,16 @@ type Config struct {
 	EmbeddingCacheFile string `env:"EMBEDDING_CACHE_FILE" envDefault:""`
 	EmbeddingBatchSize int    `env:"EMBEDDING_BATCH_SIZE" envDefault:"100"`
 	EmbeddingRPM       int    `env:"EMBEDDING_RPM" envDefault:"60"`
+
+	// Auto-categorize via embeddings. All tunables have defaults that
+	// match the documented algorithm; see backend/categorizer.go.
+	EmbeddingCategorizeEnabled             bool    `env:"EMBEDDING_CATEGORIZE_ENABLED" envDefault:"true"`
+	EmbeddingCategorizeSimilarityFloor     float32 `env:"EMBEDDING_CATEGORIZE_SIMILARITY_FLOOR" envDefault:"0.55"`
+	EmbeddingCategorizeRecencyWindowDays   int     `env:"EMBEDDING_CATEGORIZE_RECENCY_WINDOW_DAYS" envDefault:"30"`
+	EmbeddingCategorizeRecentWeight        float32 `env:"EMBEDDING_CATEGORIZE_RECENT_WEIGHT" envDefault:"0.70"`
+	EmbeddingCategorizePopularityWeight    float32 `env:"EMBEDDING_CATEGORIZE_POPULARITY_WEIGHT" envDefault:"0.30"`
+	EmbeddingCategorizeMaxSimGate          float32 `env:"EMBEDDING_CATEGORIZE_MAX_SIM_GATE" envDefault:"0.20"`
+	EmbeddingCategorizeAcceptanceThreshold float32 `env:"EMBEDDING_CATEGORIZE_ACCEPTANCE_THRESHOLD" envDefault:"0.30"`
 }
 
 func main() {
@@ -86,15 +120,23 @@ func runHTTPServer() {
 		return // defer will close store
 	}
 
-	// Build the embedding cache before serving traffic. The next PR will use
-	// it to auto-categorize new items, so the system must not become active
-	// until every uncached item has been embedded and persisted.
+	// Build the embedding cache before serving traffic, and share the same
+	// embedding client with the runtime auto-categorize hook so we only
+	// maintain one RPM bucket.
 	if cfg.GeminiAPIKey != "" {
 		cachePath := cfg.EmbeddingCacheFile
 		if cachePath == "" {
 			cachePath = filepath.Join(cfg.DataDir, "embeddings.jsonl")
 		}
-		absCachePath, _ := filepath.Abs(cachePath)
+		// Validate that the cache file stays under DATA_DIR. Path
+		// traversal rule: never let user-controllable config write
+		// outside the configured data directory.
+		absCachePath, err := validateCachePath(cachePath, cfg.DataDir)
+		if err != nil {
+			slog.Error("embedding cache path rejected", "error", err)
+			return
+		}
+
 		slog.Info("initializing embedding cache",
 			"file", absCachePath,
 			"model", cfg.EmbeddingModel,
@@ -107,17 +149,42 @@ func runHTTPServer() {
 			return
 		}
 		defer cache.Close()
+
+		client := NewEmbeddingClient(cfg.GeminiAPIKey, cfg.EmbeddingModel, cfg.EmbeddingBatchSize, cfg.EmbeddingRPM)
+		defer client.Close()
+
 		builderCfg := embeddingBuilderConfig{
 			Model:     cfg.EmbeddingModel,
-			APIKey:    cfg.GeminiAPIKey,
 			BatchSize: cfg.EmbeddingBatchSize,
-			RPM:       cfg.EmbeddingRPM,
 		}
-		if err := BuildEmbeddingCache(context.Background(), builderCfg, server, cache); err != nil {
+		if err := BuildEmbeddingCache(context.Background(), builderCfg, client, server, cache); err != nil {
 			slog.Error("failed to build embedding cache", "error", err)
 			return
 		}
 		server.SetEmbeddingCache(cache)
+
+		if cfg.EmbeddingCategorizeEnabled {
+			cat := NewCategorizer(Categorizer{
+				SimilarityFloor:     cfg.EmbeddingCategorizeSimilarityFloor,
+				RecencyWindow:       time.Duration(cfg.EmbeddingCategorizeRecencyWindowDays) * 24 * time.Hour,
+				RecentWeight:        cfg.EmbeddingCategorizeRecentWeight,
+				PopularityWeight:    cfg.EmbeddingCategorizePopularityWeight,
+				MaxSimGate:          cfg.EmbeddingCategorizeMaxSimGate,
+				AcceptanceThreshold: cfg.EmbeddingCategorizeAcceptanceThreshold,
+			})
+			server.SetEmbeddingClient(client)
+			server.SetCategorizer(&cat)
+			slog.Info("auto_categorize_configured",
+				"similarity_floor", cat.SimilarityFloor,
+				"recency_window_days", int(cat.RecencyWindow/(24*time.Hour)),
+				"recent_weight", cat.RecentWeight,
+				"popularity_weight", cat.PopularityWeight,
+				"max_sim_gate", cat.MaxSimGate,
+				"acceptance_threshold", cat.AcceptanceThreshold,
+			)
+		} else {
+			slog.Info("auto_categorize_disabled_via_config")
+		}
 	} else {
 		slog.Info("embedding cache disabled (no GEMINI_API_KEY)")
 	}
@@ -191,8 +258,13 @@ func runHTTPServer() {
 
 	mux.Handle("/api/v1/state", apiBearerAuth(cfg.APIToken, http.HandlerFunc(server.handleAPIState)))
 	mux.Handle("/api/v1/command", apiBearerAuth(cfg.APIToken, http.HandlerFunc(server.handleAPICommand)))
+	mux.Handle("/api/v1/auto-categorize/metrics", apiBearerAuth(cfg.APIToken, http.HandlerFunc(server.handleAutoCategorizeMetrics)))
 	if cfg.APIToken != "" {
-		slog.Info("HTTP API enabled", "get_state", "/api/v1/state", "post_command", "/api/v1/command")
+		slog.Info("HTTP API enabled",
+			"get_state", "/api/v1/state",
+			"post_command", "/api/v1/command",
+			"auto_categorize_metrics", "/api/v1/auto-categorize/metrics",
+		)
 	}
 
 	// Build middleware chain

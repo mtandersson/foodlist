@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"golang.org/x/sync/singleflight"
 )
 
 var upgrader = websocket.Upgrader{
@@ -33,8 +34,15 @@ type Server struct {
 	broadcast  chan []byte
 
 	// embeddingCache, if set, holds the in-memory embedding cache populated
-	// at startup. Used by the upcoming auto-categorize feature.
+	// at startup. Used by the auto-categorize feature.
 	embeddingCache *EmbeddingCache
+
+	// Auto-categorize dependencies. All four fields must be set for the
+	// feature to activate; any nil disables it as a no-op.
+	embeddingClient       Embedder
+	categorizer           *Categorizer
+	suggestFlight         *singleflight.Group
+	autoCategorizeMetrics *autoCategorizeMetrics
 }
 
 // ClientCountMessage informs clients of current connected user count
@@ -161,6 +169,37 @@ func (s *Server) SetEmbeddingCache(c *EmbeddingCache) {
 // EmbeddingCache returns the attached embedding cache, or nil if none is set.
 func (s *Server) EmbeddingCache() *EmbeddingCache {
 	return s.embeddingCache
+}
+
+// SetEmbeddingClient attaches the embedder used by auto-categorize to fetch
+// on cache miss. Pass nil to leave the feature disabled.
+func (s *Server) SetEmbeddingClient(e Embedder) {
+	s.embeddingClient = e
+	if e != nil && s.suggestFlight == nil {
+		s.suggestFlight = &singleflight.Group{}
+	}
+	if e != nil && s.autoCategorizeMetrics == nil {
+		s.autoCategorizeMetrics = &autoCategorizeMetrics{}
+	}
+}
+
+// SetCategorizer attaches the pure scorer used by auto-categorize. Pass nil
+// to leave the feature disabled.
+func (s *Server) SetCategorizer(c *Categorizer) {
+	s.categorizer = c
+	if c != nil && s.suggestFlight == nil {
+		s.suggestFlight = &singleflight.Group{}
+	}
+	if c != nil && s.autoCategorizeMetrics == nil {
+		s.autoCategorizeMetrics = &autoCategorizeMetrics{}
+	}
+}
+
+// AutoCategorizeEnabled reports whether every dependency is wired.
+func (s *Server) AutoCategorizeEnabled() bool {
+	return s.embeddingCache != nil && s.embeddingClient != nil &&
+		s.categorizer != nil && s.suggestFlight != nil &&
+		s.autoCategorizeMetrics != nil
 }
 
 // Run starts the server's main event loop
@@ -310,7 +349,7 @@ func (s *Server) readPump(client *Client) {
 		// Log received command
 		slog.Info("command received", "type", cmd.GetType(), "commandId", cmd.GetCommandID(), "message", string(message))
 
-		eventData, err := s.applyCommand(cmd)
+		event, eventData, err := s.applyCommand(cmd)
 		if err != nil {
 			slog.Error("command failed", "error", err, "command_type", cmd.GetType(), "commandId", cmd.GetCommandID())
 			response := CommandResponse{
@@ -336,41 +375,50 @@ func (s *Server) readPump(client *Client) {
 			client.sendCh <- responseData
 		}
 		s.broadcast <- eventData
+		// Fire auto-categorize AFTER broadcast so any follow-up
+		// TodoCategorized strictly trails the TodoCreated on the wire.
+		s.maybeStartAutoCategorize(event)
 	}
 }
 
 // applyCommand converts cmd to an event, persists it, applies it to state, and returns the
-// wire-format bytes for broadcasting. It does not broadcast or send CommandResponse.
-func (s *Server) applyCommand(cmd Command) ([]byte, error) {
+// produced event plus its wire-format bytes for broadcasting. It does not
+// broadcast or send CommandResponse.
+func (s *Server) applyCommand(cmd Command) (Event, []byte, error) {
 	if cmd == nil {
-		return nil, fmt.Errorf("nil command")
+		return nil, nil, fmt.Errorf("nil command")
 	}
 	event, err := s.commandToEvent(cmd)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if event == nil {
-		return nil, fmt.Errorf("invalid command")
+		return nil, nil, fmt.Errorf("invalid command")
 	}
 	if err := s.store.Append(event); err != nil {
-		return nil, fmt.Errorf("failed to persist event: %w", err)
+		return nil, nil, fmt.Errorf("failed to persist event: %w", err)
 	}
 	s.state.ApplyEvents([]Event{event})
 	eventData, err := MarshalEvent(event)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal event: %w", err)
+		return nil, nil, fmt.Errorf("failed to marshal event: %w", err)
 	}
-	return eventData, nil
+	return event, eventData, nil
 }
 
 // ExecuteCommand validates the command, persists the resulting event, updates in-memory state,
 // and broadcasts the event to all WebSocket clients.
+//
+// The auto-categorize hook (if configured) is dispatched AFTER the broadcast
+// so any follow-up TodoCategorized always arrives strictly after the
+// originating TodoCreated on the wire.
 func (s *Server) ExecuteCommand(cmd Command) error {
-	eventData, err := s.applyCommand(cmd)
+	event, eventData, err := s.applyCommand(cmd)
 	if err != nil {
 		return err
 	}
 	s.broadcast <- eventData
+	s.maybeStartAutoCategorize(event)
 	return nil
 }
 
