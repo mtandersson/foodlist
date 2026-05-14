@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
@@ -34,6 +35,14 @@ type Config struct {
 
 	// Optional bearer-token HTTP API (see api.go)
 	APIToken string `env:"FOODLIST_API_TOKEN" envDefault:""`
+
+	// Embedding cache configuration. If GeminiAPIKey is empty the cache
+	// build is skipped entirely.
+	GeminiAPIKey       string `env:"GEMINI_API_KEY" envDefault:""`
+	EmbeddingModel     string `env:"EMBEDDING_MODEL" envDefault:"gemini-embedding-001"`
+	EmbeddingCacheFile string `env:"EMBEDDING_CACHE_FILE" envDefault:""`
+	EmbeddingBatchSize int    `env:"EMBEDDING_BATCH_SIZE" envDefault:"100"`
+	EmbeddingRPM       int    `env:"EMBEDDING_RPM" envDefault:"60"`
 }
 
 func main() {
@@ -75,6 +84,42 @@ func runHTTPServer() {
 	if err := server.LoadEvents(); err != nil {
 		slog.Error("failed to load events", "error", err)
 		return // defer will close store
+	}
+
+	// Build the embedding cache before serving traffic. The next PR will use
+	// it to auto-categorize new items, so the system must not become active
+	// until every uncached item has been embedded and persisted.
+	if cfg.GeminiAPIKey != "" {
+		cachePath := cfg.EmbeddingCacheFile
+		if cachePath == "" {
+			cachePath = filepath.Join(cfg.DataDir, "embeddings.jsonl")
+		}
+		absCachePath, _ := filepath.Abs(cachePath)
+		slog.Info("initializing embedding cache",
+			"file", absCachePath,
+			"model", cfg.EmbeddingModel,
+			"batch_size", cfg.EmbeddingBatchSize,
+			"rpm", cfg.EmbeddingRPM,
+		)
+		cache, err := NewEmbeddingCache(cachePath)
+		if err != nil {
+			slog.Error("failed to initialize embedding cache", "error", err)
+			return
+		}
+		defer cache.Close()
+		builderCfg := embeddingBuilderConfig{
+			Model:     cfg.EmbeddingModel,
+			APIKey:    cfg.GeminiAPIKey,
+			BatchSize: cfg.EmbeddingBatchSize,
+			RPM:       cfg.EmbeddingRPM,
+		}
+		if err := BuildEmbeddingCache(context.Background(), builderCfg, server, cache); err != nil {
+			slog.Error("failed to build embedding cache", "error", err)
+			return
+		}
+		server.SetEmbeddingCache(cache)
+	} else {
+		slog.Info("embedding cache disabled (no GEMINI_API_KEY)")
 	}
 
 	// Start server event loop

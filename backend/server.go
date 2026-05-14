@@ -31,6 +31,10 @@ type Server struct {
 	register   chan *Client
 	unregister chan *Client
 	broadcast  chan []byte
+
+	// embeddingCache, if set, holds the in-memory embedding cache populated
+	// at startup. Used by the upcoming auto-categorize feature.
+	embeddingCache *EmbeddingCache
 }
 
 // ClientCountMessage informs clients of current connected user count
@@ -146,6 +150,17 @@ func NewServer(store *EventStore) *Server {
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte, 256),
 	}
+}
+
+// SetEmbeddingCache attaches a populated embedding cache to the server.
+// Intended to be called once at startup before Run.
+func (s *Server) SetEmbeddingCache(c *EmbeddingCache) {
+	s.embeddingCache = c
+}
+
+// EmbeddingCache returns the attached embedding cache, or nil if none is set.
+func (s *Server) EmbeddingCache() *EmbeddingCache {
+	return s.embeddingCache
 }
 
 // Run starts the server's main event loop

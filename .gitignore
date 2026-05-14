@@ -43,3 +43,5 @@ backend/foodlist
 
 # Screenshots
 screenshots/
+backend/.env
+backend/embeddings.jsonl
