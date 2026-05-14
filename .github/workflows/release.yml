@@ -4,12 +4,22 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
   issues: write
   pull-requests: write
   packages: write
+
+# Ensure only one release workflow runs at a time against `main`.
+# Without this, two pushes (e.g. a renovate merge + a feature merge) can start
+# overlapping Release runs that race when pushing the `chore(release): ...`
+# commit, causing semantic-release to abort with
+# "The local branch main is behind the remote one, therefore a new version won't be published."
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test:
