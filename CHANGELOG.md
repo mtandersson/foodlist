@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/mtandersson/foodlist/compare/v1.16.0...v1.16.1) (2026-05-14)
+
+### Chores
+
+* **deps:** update vite to ^8.0.13 ([55c9f26](https://github.com/mtandersson/foodlist/commit/55c9f266361173c1cebd05158b299ed2c107b490))
+* **release:** sync VERSION and CHANGELOG to 1.16.0 ([ff88338](https://github.com/mtandersson/foodlist/commit/ff8833848c18aa9025a3b57f0171ec217556a5d3))
+
 ## [1.16.0](https://github.com/mtandersson/foodlist/compare/v1.14.12...v1.16.0) (2026-05-14)
 
 > Note: `v1.15.0` was deliberately skipped. The original `v1.15.0` was an
