@@ -1,3 +1,10 @@
+## [1.16.2](https://github.com/mtandersson/foodlist/compare/v1.16.1...v1.16.2) (2026-05-14)
+
+### Chores
+
+* **deps:** migrate config renovate.json ([3b34345](https://github.com/mtandersson/foodlist/commit/3b3434516badc4e56e3aaa13e39797d694ebd545))
+* **deps:** update svelte to ^5.55.6 ([515dd8b](https://github.com/mtandersson/foodlist/commit/515dd8b8e22236519eb60a5c6b9b1a17341a1176))
+
 ## [1.16.1](https://github.com/mtandersson/foodlist/compare/v1.16.0...v1.16.1) (2026-05-14)
 
 ### Chores
