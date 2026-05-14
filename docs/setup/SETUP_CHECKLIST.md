@@ -108,7 +108,7 @@ For branch `main`:
 
 - ✅ Require a pull request before merging
 - ✅ Require status checks to pass before merging
-  - Add: `Backend Tests`, `Frontend Tests`, `Lint`
+  - Add: `Backend Tests`, `Frontend Tests`, `Lint`, `Build Docker Image`
 - ✅ Require conversation resolution before merging
 
 ### 4. Configure GitHub Pages (Optional)
