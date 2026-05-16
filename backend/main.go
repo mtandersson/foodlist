@@ -81,13 +81,13 @@ type Config struct {
 	// Suggestion engine. Requires embeddings to be active; if
 	// GEMINI_API_KEY is unset the feature is forcibly disabled regardless
 	// of this flag.
-	SuggestionsEnabled           bool    `env:"SUGGESTIONS_ENABLED" envDefault:"true"`
-	SuggestionsMinPurchases      int     `env:"SUGGESTIONS_MIN_PURCHASES" envDefault:"3"`
-	SuggestionsMaxIntervalDays   int     `env:"SUGGESTIONS_MAX_INTERVAL_DAYS" envDefault:"90"`
-	SuggestionsDueFraction       float32 `env:"SUGGESTIONS_DUE_FRACTION" envDefault:"0.667"`
-	SuggestionsDedupSimilarity   float32 `env:"SUGGESTIONS_DEDUP_SIMILARITY" envDefault:"0.85"`
-	SuggestionsRecentLimit       int     `env:"SUGGESTIONS_RECENT_PURCHASES_LIMIT" envDefault:"6"`
-	SuggestionsRecomputeHours    int     `env:"SUGGESTIONS_RECOMPUTE_INTERVAL_HOURS" envDefault:"6"`
+	SuggestionsEnabled         bool    `env:"SUGGESTIONS_ENABLED" envDefault:"true"`
+	SuggestionsMinPurchases    int     `env:"SUGGESTIONS_MIN_PURCHASES" envDefault:"3"`
+	SuggestionsMaxIntervalDays int     `env:"SUGGESTIONS_MAX_INTERVAL_DAYS" envDefault:"90"`
+	SuggestionsDueFraction     float32 `env:"SUGGESTIONS_DUE_FRACTION" envDefault:"0.667"`
+	SuggestionsDedupSimilarity float32 `env:"SUGGESTIONS_DEDUP_SIMILARITY" envDefault:"0.85"`
+	SuggestionsRecentLimit     int     `env:"SUGGESTIONS_RECENT_PURCHASES_LIMIT" envDefault:"6"`
+	SuggestionsRecomputeHours  int     `env:"SUGGESTIONS_RECOMPUTE_INTERVAL_HOURS" envDefault:"6"`
 }
 
 func main() {

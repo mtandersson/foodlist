@@ -27,13 +27,13 @@ var suggestionNamespace = uuid.MustParse("8b1c4a0a-1f6e-4f2a-9b1a-2e1e7d5c0b21")
 // SuggestionEngineConfig holds all tunables for the engine. Zero values
 // fall back to the documented defaults via NewSuggestionEngine.
 type SuggestionEngineConfig struct {
-	MinPurchases     int
-	MaxInterval      time.Duration
-	DueFraction      float32
-	DedupSimilarity  float32
-	RecentLimit      int
-	RecomputeEvery   time.Duration
-	Now              func() time.Time
+	MinPurchases    int
+	MaxInterval     time.Duration
+	DueFraction     float32
+	DedupSimilarity float32
+	RecentLimit     int
+	RecomputeEvery  time.Duration
+	Now             func() time.Time
 }
 
 // SuggestionEngine maintains the in-memory map of active grocery suggestions
@@ -45,8 +45,8 @@ type SuggestionEngineConfig struct {
 type SuggestionEngine struct {
 	cfg SuggestionEngineConfig
 
-	mu       sync.RWMutex
-	current  map[string]Suggestion
+	mu      sync.RWMutex
+	current map[string]Suggestion
 }
 
 // NewSuggestionEngine constructs an engine with the given config. Missing
@@ -214,10 +214,10 @@ func (e *SuggestionEngine) computeSuggestions(
 	sort.Strings(keys)
 
 	type cluster struct {
-		canonical    string
-		memberKeys   []string
-		totalCount   int
-		allCompleted []time.Time
+		canonical     string
+		memberKeys    []string
+		totalCount    int
+		allCompleted  []time.Time
 		categoryVotes map[string]int
 		canonicalName string
 	}
