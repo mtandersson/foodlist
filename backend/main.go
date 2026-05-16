@@ -77,6 +77,17 @@ type Config struct {
 	EmbeddingCategorizePopularityWeight    float32 `env:"EMBEDDING_CATEGORIZE_POPULARITY_WEIGHT" envDefault:"0.30"`
 	EmbeddingCategorizeMaxSimGate          float32 `env:"EMBEDDING_CATEGORIZE_MAX_SIM_GATE" envDefault:"0.20"`
 	EmbeddingCategorizeAcceptanceThreshold float32 `env:"EMBEDDING_CATEGORIZE_ACCEPTANCE_THRESHOLD" envDefault:"0.30"`
+
+	// Suggestion engine. Requires embeddings to be active; if
+	// GEMINI_API_KEY is unset the feature is forcibly disabled regardless
+	// of this flag.
+	SuggestionsEnabled           bool    `env:"SUGGESTIONS_ENABLED" envDefault:"true"`
+	SuggestionsMinPurchases      int     `env:"SUGGESTIONS_MIN_PURCHASES" envDefault:"3"`
+	SuggestionsMaxIntervalDays   int     `env:"SUGGESTIONS_MAX_INTERVAL_DAYS" envDefault:"90"`
+	SuggestionsDueFraction       float32 `env:"SUGGESTIONS_DUE_FRACTION" envDefault:"0.667"`
+	SuggestionsDedupSimilarity   float32 `env:"SUGGESTIONS_DEDUP_SIMILARITY" envDefault:"0.85"`
+	SuggestionsRecentLimit       int     `env:"SUGGESTIONS_RECENT_PURCHASES_LIMIT" envDefault:"6"`
+	SuggestionsRecomputeHours    int     `env:"SUGGESTIONS_RECOMPUTE_INTERVAL_HOURS" envDefault:"6"`
 }
 
 func main() {
@@ -185,8 +196,39 @@ func runHTTPServer() {
 		} else {
 			slog.Info("auto_categorize_disabled_via_config")
 		}
+
+		// Suggestion engine — only enabled when embeddings are wired.
+		if cfg.SuggestionsEnabled {
+			engineCfg := SuggestionEngineConfig{
+				MinPurchases:    cfg.SuggestionsMinPurchases,
+				MaxInterval:     time.Duration(cfg.SuggestionsMaxIntervalDays) * 24 * time.Hour,
+				DueFraction:     cfg.SuggestionsDueFraction,
+				DedupSimilarity: cfg.SuggestionsDedupSimilarity,
+				RecentLimit:     cfg.SuggestionsRecentLimit,
+				RecomputeEvery:  time.Duration(cfg.SuggestionsRecomputeHours) * time.Hour,
+			}
+			engine := NewSuggestionEngine(engineCfg)
+			server.SetSuggestionEngine(engine)
+			slog.Info("suggestions_configured",
+				"min_purchases", engineCfg.MinPurchases,
+				"max_interval_days", cfg.SuggestionsMaxIntervalDays,
+				"due_fraction", engineCfg.DueFraction,
+				"dedup_similarity", engineCfg.DedupSimilarity,
+				"recent_limit", engineCfg.RecentLimit,
+				"recompute_interval_hours", cfg.SuggestionsRecomputeHours,
+			)
+			// Initial recompute now that all events have been loaded
+			// (LoadEvents above). Broadcasts no deltas (no clients yet).
+			server.RecomputeSuggestions()
+			// Periodic recompute. Catches "time-based" transitions
+			// (e.g. a previously-fresh item becoming due as time passes).
+			go runSuggestionsTicker(server, engine.Config().RecomputeEvery)
+		} else {
+			slog.Info("suggestions_disabled_via_config")
+		}
 	} else {
 		slog.Info("embedding cache disabled (no GEMINI_API_KEY)")
+		slog.Info("suggestions_disabled_no_embeddings")
 	}
 
 	// Start server event loop
@@ -300,6 +342,20 @@ func runHTTPServer() {
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		slog.Error("server failed", "error", err)
 		// defer will close store
+	}
+}
+
+// runSuggestionsTicker fires a periodic recompute on the given interval and
+// broadcasts any deltas. Runs forever; intended to be launched in its own
+// goroutine.
+func runSuggestionsTicker(server *Server, interval time.Duration) {
+	if interval <= 0 {
+		interval = time.Duration(DefaultSuggestionsRecomputeHours) * time.Hour
+	}
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for range t.C {
+		server.RecomputeSuggestions()
 	}
 }
 

@@ -45,6 +45,28 @@ Operational counters are exposed at `GET /api/v1/auto-categorize/metrics`
 [`backend/auto_categorize_metrics.go`](auto_categorize_metrics.go) for the
 JSON schema.
 
+### Suggestions (Förslag) tab
+
+The server can build a list of items the user is likely to buy soon, based
+on completed-todo history clustered by embedding similarity. This feature
+**requires `GEMINI_API_KEY`** (and the embedding cache it enables) — without
+it the engine is not initialized and the frontend hides the tab.
+
+| Variable                          | Default | Description                                                                                          |
+| --------------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `SUGGESTIONS_ENABLED`             | `true`  | Master switch. Set to `false` to disable the feature even when `GEMINI_API_KEY` is set.              |
+| `SUGGESTIONS_MIN_PURCHASES`       | `3`     | Minimum number of historical purchases required before an item becomes eligible for suggestion.      |
+| `SUGGESTIONS_MAX_INTERVAL_DAYS`   | `90`    | Items with an average purchase interval longer than this are considered too rare and skipped.        |
+| `SUGGESTIONS_DUE_FRACTION`        | `0.667` | An item is suggested only when (now − lastPurchased) / avgInterval ≥ this fraction.                  |
+| `SUGGESTIONS_DEDUP_SIMILARITY`    | `0.85`  | Cosine-similarity threshold for treating two strings as the same product (e.g. `mjölk` vs `2l mjölk`). |
+| `SUGGESTIONS_RECENT_LIMIT`        | `6`     | Number of most-recent purchases used when computing the average purchase interval.                   |
+| `SUGGESTIONS_RECOMPUTE_HOURS`     | `6`     | Background recompute cadence in hours. The engine also recomputes on relevant todo/category events.  |
+
+The list is pushed to clients over WebSocket: a full `SuggestionsRollup`
+on connect, then `SuggestionAdded` / `SuggestionRemoved` deltas. Both the
+MCP tool `foodlist_suggestions` and the resource `foodlist://suggestions`
+expose the same view to AI agents.
+
 MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when the backend runs. It is not behind `SHARED_SECRET`; with `CIDR_WHITELIST` set, `/mcp` is still reachable for whitelisted clients (same idea as public PWA assets). Protect access at the network or reverse-proxy layer if the server is exposed.
 
 ### MCP: resources vs tools (protocol)

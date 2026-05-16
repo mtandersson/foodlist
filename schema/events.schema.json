@@ -291,9 +291,66 @@
           "items": {"$ref": "#/definitions/Category"}
         },
         "listTitle": {"type": "string"},
-        "version": {"type": "string"}
+        "version": {"type": "string"},
+        "featureFlags": {"$ref": "#/definitions/FeatureFlags"}
       },
       "required": ["type", "todos", "categories", "listTitle"],
+      "additionalProperties": false
+    },
+    "FeatureFlags": {
+      "type": "object",
+      "description": "Optional server-side feature flags surfaced to clients",
+      "properties": {
+        "suggestions": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "Suggestion": {
+      "type": "object",
+      "description": "A suggested grocery item the user probably wants to buy soon",
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "categoryId": {"type": ["string", "null"], "format": "uuid"},
+        "categoryName": {"type": ["string", "null"]},
+        "lastPurchasedAt": {"type": "string", "format": "date-time"},
+        "purchaseCount": {"type": "integer", "minimum": 0},
+        "avgIntervalSeconds": {"type": "number", "minimum": 0}
+      },
+      "required": ["id", "name", "lastPurchasedAt", "purchaseCount", "avgIntervalSeconds"],
+      "additionalProperties": false
+    },
+    "SuggestionsRollup": {
+      "type": "object",
+      "description": "Full snapshot of current suggestions sent on connection and after large recomputes",
+      "properties": {
+        "type": {"const": "SuggestionsRollup"},
+        "suggestions": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Suggestion"}
+        }
+      },
+      "required": ["type", "suggestions"],
+      "additionalProperties": false
+    },
+    "SuggestionAdded": {
+      "type": "object",
+      "description": "Delta: a new suggestion appeared",
+      "properties": {
+        "type": {"const": "SuggestionAdded"},
+        "suggestion": {"$ref": "#/definitions/Suggestion"}
+      },
+      "required": ["type", "suggestion"],
+      "additionalProperties": false
+    },
+    "SuggestionRemoved": {
+      "type": "object",
+      "description": "Delta: a suggestion is no longer relevant",
+      "properties": {
+        "type": {"const": "SuggestionRemoved"},
+        "id": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "id"],
       "additionalProperties": false
     },
     "AutocompleteRequest": {
@@ -413,7 +470,10 @@
         {"$ref": "#/definitions/ListTitleChanged"},
         {"$ref": "#/definitions/StateRollup"},
         {"$ref": "#/definitions/ClientCount"},
-        {"$ref": "#/definitions/AutocompleteResponse"}
+        {"$ref": "#/definitions/AutocompleteResponse"},
+        {"$ref": "#/definitions/SuggestionsRollup"},
+        {"$ref": "#/definitions/SuggestionAdded"},
+        {"$ref": "#/definitions/SuggestionRemoved"}
       ]
     },
     "ClientMessage": {

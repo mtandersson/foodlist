@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TodoWebSocket, ConnectionState } from './websocket';
-import type { ServerMessage, TodoCreated, StateRollup, CreateTodo } from './types';
+import type { ServerMessage, TodoCreated, StateRollup, CreateTodo, SuggestionsRollup, SuggestionAdded, SuggestionRemoved } from './types';
 
 // Mock WebSocket
 class MockWebSocket {
@@ -322,6 +322,41 @@ describe('TodoWebSocket', () => {
     // Check that queued message was sent
     expect(newMockWs.send).toHaveBeenCalledWith(JSON.stringify(command));
     
+    ws.close();
+  });
+
+  it('should pass SuggestionsRollup / Added / Removed messages through onMessage', async () => {
+    const ws = new TodoWebSocket('ws://localhost:8080/ws', { enableHeartbeat: false });
+    const messages: ServerMessage[] = [];
+    ws.onMessage((m) => messages.push(m));
+
+    await vi.runAllTimersAsync();
+    mockWs = (ws as any).ws;
+
+    const rollup: SuggestionsRollup = { type: 'SuggestionsRollup', suggestions: [] };
+    const added: SuggestionAdded = {
+      type: 'SuggestionAdded',
+      suggestion: {
+        id: 'a',
+        name: 'Mjölk',
+        categoryId: null,
+        categoryName: null,
+        lastPurchasedAt: '2026-01-01T00:00:00Z',
+        purchaseCount: 4,
+        avgIntervalSeconds: 604800,
+      },
+    };
+    const removed: SuggestionRemoved = { type: 'SuggestionRemoved', id: 'a' };
+
+    mockWs.simulateMessage(rollup);
+    mockWs.simulateMessage(added);
+    mockWs.simulateMessage(removed);
+
+    expect(messages).toHaveLength(3);
+    expect(messages[0]).toEqual(rollup);
+    expect(messages[1]).toEqual(added);
+    expect(messages[2]).toEqual(removed);
+
     ws.close();
   });
 });

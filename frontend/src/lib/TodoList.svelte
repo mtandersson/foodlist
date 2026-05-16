@@ -7,6 +7,7 @@
   import TodoItem from './TodoItem.svelte';
   import ModeSwitch from './ModeSwitch.svelte';
   import CategoriesView from './CategoriesView.svelte';
+  import SuggestionsView from './SuggestionsView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
@@ -38,7 +39,7 @@
   }
 
   const store = createTodoStore(wsUrl);
-  const { activeTodosCollapsed, completedTodos, completedTodosCollapsed, categories, activeTodosByCategoryCollapsed, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced, serverVersion } = store;
+  const { activeTodosCollapsed, completedTodos, completedTodosCollapsed, categories, activeTodosByCategoryCollapsed, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced, serverVersion, suggestions, featureFlags } = store;
   
   // Get client version from build-time injection
   const clientVersion = import.meta.env.VITE_APP_VERSION || 'dev';
@@ -65,9 +66,19 @@
     lastCategoryCount = currentCount;
   });
 
+  type ViewMode = 'normal' | 'categories' | 'suggestions';
+
   let newTodoName = $state('');
   let completedExpanded = $state(typeof localStorage !== 'undefined' && localStorage.getItem('completedExpanded') !== null ? localStorage.getItem('completedExpanded') === 'true' : true);
-  let viewMode: 'normal' | 'categories' = $state((typeof localStorage !== 'undefined' && (localStorage.getItem('viewMode') as 'normal' | 'categories')) || 'normal');
+  let viewMode: ViewMode = $state((typeof localStorage !== 'undefined' && (localStorage.getItem('viewMode') as ViewMode)) || 'normal');
+
+  // If the saved viewMode is 'suggestions' but the feature flag turns off,
+  // fall back to normal so the user is never stuck on an empty tab.
+  $effect(() => {
+    if (viewMode === 'suggestions' && !$featureFlags.suggestions) {
+      viewMode = 'normal';
+    }
+  });
 
   // Expanded categories state
   let expandedCategories = $state<Set<string | null>>(new Set());
@@ -417,11 +428,15 @@
     }
   }
 
-  function handleModeChange(mode: 'normal' | 'categories') {
+  function handleModeChange(mode: ViewMode) {
     viewMode = mode;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('viewMode', mode);
     }
+  }
+
+  function handleSuggestionAdd(suggestion: { name: string; categoryId?: string | null }) {
+    store.createTodo(suggestion.name, suggestion.categoryId ?? null);
   }
 
   function getCategoryName(categoryId: string | null | undefined): string | null {
@@ -876,7 +891,7 @@
       </button>
     {/if}
     <div class="header-right">
-      <ModeSwitch value={viewMode} on:change={(e) => handleModeChange(e.detail)} />
+      <ModeSwitch value={viewMode} showSuggestions={!!$featureFlags.suggestions} on:change={(e) => handleModeChange(e.detail)} />
       <span class="member-count" aria-label="Connected users">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -1068,7 +1083,7 @@
           {/each}
         </CollapsibleSection>
       {/if}
-    {:else}
+    {:else if viewMode === 'categories'}
       <CategoriesView
         categories={$categories}
         activeTodosByCategory={$activeTodosByCategoryCollapsed}
@@ -1086,8 +1101,10 @@
         onToggleCompletedSection={toggleCompletedSection}
         expandedCategories={expandedCategories}
         onToggleCategory={handleToggleCategory}
-        viewMode={viewMode}
+        viewMode="categories"
       />
+    {:else if viewMode === 'suggestions'}
+      <SuggestionsView suggestions={$suggestions} onAdd={handleSuggestionAdd} />
     {/if}
   </div>
 
