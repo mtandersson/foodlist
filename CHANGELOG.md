@@ -1,3 +1,9 @@
+## [1.17.0](https://github.com/mtandersson/foodlist/compare/v1.16.4...v1.17.0) (2026-05-16)
+
+### Features
+
+* **backend:** auto-categorize new todos via embedding similarity ([db022ed](https://github.com/mtandersson/foodlist/commit/db022ed2fc1c728473bcdec14c18b369cda4a29d))
+
 ## [1.16.4](https://github.com/mtandersson/foodlist/compare/v1.16.3...v1.16.4) (2026-05-15)
 
 ### Chores
