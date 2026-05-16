@@ -35,6 +35,8 @@ import type {
   SetListTitle,
   AutocompleteResponse,
   AutocompleteSuggestion,
+  Suggestion,
+  FeatureFlags,
 } from "./types"
 
 export interface TodoStore {
@@ -75,6 +77,10 @@ export interface TodoStore {
   errorMessage: ReturnType<typeof writable<string | null>>
   isSynced: ReturnType<typeof writable<boolean>>
   serverVersion: ReturnType<typeof writable<string | null>>
+  suggestions: ReturnType<
+    typeof derived<ReturnType<typeof writable<Map<string, Suggestion>>>, Suggestion[]>
+  >
+  featureFlags: ReturnType<typeof writable<FeatureFlags>>
   createTodo: (name: string, categoryId?: string | null) => void
   createCategory: (name: string, id?: string) => Promise<string>
   renameCategory: (id: string, name: string) => Promise<void>
@@ -138,6 +144,8 @@ export function createTodoStore(wsUrl: string): TodoStore {
   const errorMessage = writable<string | null>(null)
   const isSynced = writable<boolean>(false)
   const serverVersion = writable<string | null>(null)
+  const suggestionsMap = writable<Map<string, Suggestion>>(new Map())
+  const featureFlags = writable<FeatureFlags>({})
   let errorTimeout: number | null = null
 
   // Track pending autocomplete request to match responses
@@ -251,6 +259,21 @@ export function createTodoStore(wsUrl: string): TodoStore {
     }
   )
 
+  // Suggestions: most-frequent first, then shortest interval, then name.
+  const suggestionsList = derived(suggestionsMap, ($map) => {
+    const arr = Array.from($map.values())
+    arr.sort((a, b) => {
+      if (a.purchaseCount !== b.purchaseCount) {
+        return b.purchaseCount - a.purchaseCount
+      }
+      if (a.avgIntervalSeconds !== b.avgIntervalSeconds) {
+        return a.avgIntervalSeconds - b.avgIntervalSeconds
+      }
+      return a.name.localeCompare(b.name)
+    })
+    return arr
+  })
+
   // WebSocket connection
   const ws = new TodoWebSocket(wsUrl)
 
@@ -290,6 +313,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
       listTitle.set(message.listTitle)
       // Extract server version from rollup (handles undefined/missing gracefully)
       serverVersion.set(message.version ?? null)
+      featureFlags.set(message.featureFlags ?? {})
       isSynced.set(true)
       return
     }
@@ -310,6 +334,35 @@ export function createTodoStore(wsUrl: string): TodoStore {
         }
         pendingCommands.delete(message.commandId)
       }
+      return
+    }
+
+    if (message.type === "SuggestionsRollup") {
+      // Replace the whole client-side suggestion set.
+      const next = new Map<string, Suggestion>()
+      for (const s of message.suggestions) {
+        next.set(s.id, s)
+      }
+      suggestionsMap.set(next)
+      return
+    }
+
+    if (message.type === "SuggestionAdded") {
+      suggestionsMap.update((m) => {
+        const next = new Map(m)
+        next.set(message.suggestion.id, message.suggestion)
+        return next
+      })
+      return
+    }
+
+    if (message.type === "SuggestionRemoved") {
+      suggestionsMap.update((m) => {
+        if (!m.has(message.id)) return m
+        const next = new Map(m)
+        next.delete(message.id)
+        return next
+      })
       return
     }
 
@@ -860,6 +913,8 @@ export function createTodoStore(wsUrl: string): TodoStore {
     errorMessage,
     isSynced,
     serverVersion,
+    suggestions: suggestionsList as any,
+    featureFlags,
     createTodo,
     createCategory,
     renameCategory,

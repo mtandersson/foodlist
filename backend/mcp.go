@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -14,8 +15,9 @@ import (
 const (
 	mcpHTTPPath = "/mcp"
 
-	mcpResourceState      = "foodlist://state"
-	mcpResourceCategories = "foodlist://categories"
+	mcpResourceState       = "foodlist://state"
+	mcpResourceCategories  = "foodlist://categories"
+	mcpResourceSuggestions = "foodlist://suggestions"
 	// Legacy URI kept for compatibility with existing MCP clients.
 	mcpResourceTodos = "foodlist://todos"
 )
@@ -273,6 +275,64 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 			return nil, mcp.ResourceNotFoundError(req.Params.URI)
 		}
 		return writeResourceJSON(mcpResourceTodos, app.state.GetTodos())
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "foodlist_suggestions",
+		Description: "List grocery items the user probably wants to buy soon (frequently purchased, currently not in the shopping list, and due based on the typical interval). Empty when the suggestion engine is disabled.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in struct{}) (*mcp.CallToolResult, any, error) {
+		_ = ctx
+		_ = req
+		_ = in
+		var b strings.Builder
+		_, _ = fmt.Fprintf(&b, "**Suggestions for %s**\n\n", app.state.GetListTitle())
+		if !app.SuggestionsEnabled() {
+			b.WriteString("_Suggestion engine is disabled (requires embeddings)._\n")
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
+			}, nil, nil
+		}
+		sugs := app.suggestions.Snapshot()
+		if len(sugs) == 0 {
+			b.WriteString("_No suggestions right now._\n")
+		}
+		now := time.Now().UTC()
+		for _, sg := range sugs {
+			catLabel := "(uncategorized)"
+			if sg.CategoryName != nil && *sg.CategoryName != "" {
+				catLabel = *sg.CategoryName
+			} else if sg.CategoryID != nil {
+				catLabel = *sg.CategoryID
+			}
+			sinceLast := now.Sub(sg.LastPurchasedAt).Round(time.Hour)
+			intervalDays := sg.AvgIntervalSeconds / 86400
+			_, _ = fmt.Fprintf(
+				&b,
+				"- **%s** `%s` — %s (bought %d times, last %s ago, typical interval ~%.1f days)\n",
+				sg.Name, sg.ID, catLabel, sg.PurchaseCount, sinceLast, intervalDays,
+			)
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
+		}, nil, nil
+	})
+
+	s.AddResource(&mcp.Resource{
+		URI:         mcpResourceSuggestions,
+		Name:        "suggestions",
+		Description: "Current grocery suggestions as a JSON array. Empty when the suggestion engine is disabled.",
+		MIMEType:    "application/json",
+	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		if req.Params.URI != mcpResourceSuggestions {
+			return nil, mcp.ResourceNotFoundError(req.Params.URI)
+		}
+		var sugs []Suggestion
+		if app.SuggestionsEnabled() {
+			sugs = app.suggestions.Snapshot()
+		} else {
+			sugs = []Suggestion{}
+		}
+		return writeResourceJSON(mcpResourceSuggestions, sugs)
 	})
 
 	return s

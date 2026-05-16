@@ -118,11 +118,46 @@ type ListTitleChanged struct {
 }
 
 type StateRollup struct {
+	Type         string        `json:"type"`
+	Todos        []Todo        `json:"todos"`
+	Categories   []Category    `json:"categories"`
+	ListTitle    string        `json:"listTitle"`
+	Version      string        `json:"version,omitempty"`
+	FeatureFlags *FeatureFlags `json:"featureFlags,omitempty"`
+}
+
+// FeatureFlags signals server-side capabilities to the client.
+type FeatureFlags struct {
+	Suggestions bool `json:"suggestions,omitempty"`
+}
+
+// Suggestion is a "you should probably buy this soon" hint computed on the server.
+type Suggestion struct {
+	ID                 string    `json:"id"`
+	Name               string    `json:"name"`
+	CategoryID         *string   `json:"categoryId,omitempty"`
+	CategoryName       *string   `json:"categoryName,omitempty"`
+	LastPurchasedAt    time.Time `json:"lastPurchasedAt"`
+	PurchaseCount      int       `json:"purchaseCount"`
+	AvgIntervalSeconds float64   `json:"avgIntervalSeconds"`
+}
+
+// SuggestionsRollup replaces the full client-side suggestion list.
+type SuggestionsRollup struct {
+	Type        string       `json:"type"`
+	Suggestions []Suggestion `json:"suggestions"`
+}
+
+// SuggestionAdded is a delta announcing a new suggestion.
+type SuggestionAdded struct {
 	Type       string     `json:"type"`
-	Todos      []Todo     `json:"todos"`
-	Categories []Category `json:"categories"`
-	ListTitle  string     `json:"listTitle"`
-	Version    string     `json:"version,omitempty"`
+	Suggestion Suggestion `json:"suggestion"`
+}
+
+// SuggestionRemoved is a delta saying a suggestion is no longer relevant.
+type SuggestionRemoved struct {
+	Type string `json:"type"`
+	ID   string `json:"id"`
 }
 
 // Event is an interface for all event types

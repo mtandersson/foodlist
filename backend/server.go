@@ -43,6 +43,11 @@ type Server struct {
 	categorizer           *Categorizer
 	suggestFlight         *singleflight.Group
 	autoCategorizeMetrics *autoCategorizeMetrics
+
+	// suggestions is the optional engine that computes "things you should
+	// probably buy soon" hints. Requires the embedding stack; nil when
+	// disabled. Access is safe (nil-checked) from event hooks.
+	suggestions *SuggestionEngine
 }
 
 // ClientCountMessage informs clients of current connected user count
@@ -202,6 +207,96 @@ func (s *Server) AutoCategorizeEnabled() bool {
 		s.autoCategorizeMetrics != nil
 }
 
+// SetSuggestionEngine attaches an engine. Pass nil to disable the feature.
+func (s *Server) SetSuggestionEngine(e *SuggestionEngine) {
+	s.suggestions = e
+}
+
+// SuggestionsEnabled reports whether the suggestion engine is configured.
+func (s *Server) SuggestionsEnabled() bool {
+	return s.suggestions != nil && s.embeddingCache != nil
+}
+
+// RecomputeSuggestions runs a full recompute and broadcasts the resulting
+// deltas (or rollup for large changes). Safe to call when the engine is
+// disabled (no-op). Used at startup and from the periodic ticker.
+func (s *Server) RecomputeSuggestions() {
+	if !s.SuggestionsEnabled() {
+		return
+	}
+	todos := s.state.GetTodos()
+	cats := s.state.GetCategories()
+	embs := s.embeddingCache.All()
+	added, removed := s.suggestions.Recompute(todos, embs, cats)
+	s.broadcastSuggestionDeltas(added, removed)
+}
+
+// broadcastSuggestionDeltas serializes and queues SuggestionAdded /
+// SuggestionRemoved messages for every connected client. Uses non-blocking
+// sends so a slow broadcast loop (or a full channel) drops the delta rather
+// than blocking the caller — the next periodic recompute (or reconnect)
+// will reconcile state.
+func (s *Server) broadcastSuggestionDeltas(added []Suggestion, removed []string) {
+	for _, id := range removed {
+		msg := SuggestionRemoved{Type: "SuggestionRemoved", ID: id}
+		s.enqueueBroadcast(msg, "SuggestionRemoved")
+	}
+	for _, sg := range added {
+		msg := SuggestionAdded{Type: "SuggestionAdded", Suggestion: sg}
+		s.enqueueBroadcast(msg, "SuggestionAdded")
+	}
+}
+
+// enqueueBroadcast marshals msg and pushes it onto s.broadcast without
+// blocking. On marshal error or a full channel it logs (without exposing
+// message contents) and returns.
+func (s *Server) enqueueBroadcast(msg any, label string) {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		slog.Error("failed to marshal broadcast message", "label", label, "error", err)
+		return
+	}
+	select {
+	case s.broadcast <- data:
+	default:
+		slog.Warn("broadcast channel full, dropping message", "label", label)
+	}
+}
+
+// maybeUpdateSuggestionsForEvent reacts to events that may affect the
+// suggestion set. Runs the recompute synchronously (it's cheap: pure
+// in-memory) but after the originating event has been broadcast.
+//
+// Optimistic short-circuit: when the event is a TodoCreated, immediately
+// remove any matching suggestion so the UI feels instant; the full
+// recompute then reconciles canonical state.
+//
+// The switch enumerates every event class whose data flows into
+// SuggestionEngine.computeSuggestions: completion timestamps, names,
+// category assignments, and the live category set.
+func (s *Server) maybeUpdateSuggestionsForEvent(event Event) {
+	if !s.SuggestionsEnabled() {
+		return
+	}
+	switch ev := event.(type) {
+	case TodoCreated:
+		if id, ok := s.suggestions.MarkPurchased(ev.Name); ok {
+			s.broadcastSuggestionDeltas(nil, []string{id})
+		}
+	case TodoCompleted,
+		TodoUncompleted,
+		TodoRenamed,
+		TodoCategorized,
+		CategoryCreated,
+		CategoryDeleted,
+		CategoryRenamed:
+		// fall through to full recompute below
+	default:
+		return
+	}
+	s.RecomputeSuggestions()
+}
+
 // Run starts the server's main event loop
 func (s *Server) Run() {
 	for {
@@ -273,11 +368,32 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		ListTitle:  s.state.GetListTitle(),
 		Version:    version,
 	}
+	if s.SuggestionsEnabled() {
+		rollup.FeatureFlags = &FeatureFlags{Suggestions: true}
+	}
 	rollupData, err := json.Marshal(rollup)
 	if err != nil {
 		slog.Error("failed to marshal state rollup", "error", err)
 	} else {
 		client.sendCh <- rollupData
+	}
+
+	// Send suggestion snapshot to the new client (not broadcast) when
+	// the engine is enabled. This is the initial "array replace" message.
+	if s.SuggestionsEnabled() {
+		snapshot := SuggestionsRollup{
+			Type:        "SuggestionsRollup",
+			Suggestions: s.suggestions.Snapshot(),
+		}
+		if data, err := json.Marshal(snapshot); err != nil {
+			slog.Error("failed to marshal suggestions rollup", "error", err)
+		} else {
+			select {
+			case client.sendCh <- data:
+			default:
+				slog.Warn("client send buffer full, dropping suggestions rollup")
+			}
+		}
 	}
 
 	// Start goroutines for reading and writing
@@ -378,6 +494,9 @@ func (s *Server) readPump(client *Client) {
 		// Fire auto-categorize AFTER broadcast so any follow-up
 		// TodoCategorized strictly trails the TodoCreated on the wire.
 		s.maybeStartAutoCategorize(event)
+		// Update suggestion engine after the originating event has
+		// already been queued for broadcast.
+		s.maybeUpdateSuggestionsForEvent(event)
 	}
 }
 
@@ -419,6 +538,7 @@ func (s *Server) ExecuteCommand(cmd Command) error {
 	}
 	s.broadcast <- eventData
 	s.maybeStartAutoCategorize(event)
+	s.maybeUpdateSuggestionsForEvent(event)
 	return nil
 }
 

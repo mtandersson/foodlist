@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -1472,4 +1473,261 @@ func TestServer_TrimWhitespaceFromSetListTitle(t *testing.T) {
 
 	changed4 := event4.(ListTitleChanged)
 	assert.Equal(t, "", changed4.Title)
+}
+
+// --- Suggestion engine end-to-end over WebSocket ---
+
+// setupSuggestionsServer is like setupTestServer but also wires an empty
+// embedding cache and a pinned-clock suggestion engine, so the
+// SuggestionsEnabled() check passes.
+func setupSuggestionsServer(t *testing.T, now time.Time) (*Server, *httptest.Server, string) {
+	tmpDir := t.TempDir()
+	filePath := filepath.Join(tmpDir, "events.jsonl")
+	store, err := NewEventStore(filePath)
+	require.NoError(t, err)
+	t.Cleanup(func() { store.Close() })
+
+	server := NewServer(store)
+
+	cachePath := filepath.Join(tmpDir, "embeddings.jsonl")
+	cache, err := NewEmbeddingCache(cachePath)
+	require.NoError(t, err)
+	t.Cleanup(func() { cache.Close() })
+	server.SetEmbeddingCache(cache)
+
+	server.SetSuggestionEngine(NewSuggestionEngine(SuggestionEngineConfig{
+		Now: func() time.Time { return now },
+	}))
+
+	go server.Run()
+
+	ts := httptest.NewServer(http.HandlerFunc(server.HandleWebSocket))
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http")
+	return server, ts, wsURL
+}
+
+// readMessageOfType reads up to maxMessages messages from conn and returns
+// the first that JSON-decodes to a struct whose Type matches typeName. The
+// raw bytes are returned so the caller can re-decode into a concrete type.
+func readMessageOfType(t *testing.T, conn *websocket.Conn, typeName string, maxMessages int) []byte {
+	t.Helper()
+	for i := 0; i < maxMessages; i++ {
+		conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+		_, msg, err := conn.ReadMessage()
+		require.NoError(t, err)
+		var probe struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(msg, &probe); err != nil {
+			continue
+		}
+		if probe.Type == typeName {
+			return msg
+		}
+	}
+	t.Fatalf("no %s message received after %d reads", typeName, maxMessages)
+	return nil
+}
+
+// TestServer_StateRollupAdvertisesSuggestionsFeatureFlag verifies that
+// connecting clients learn the suggestions feature is on via featureFlags.
+func TestServer_StateRollupAdvertisesSuggestionsFeatureFlag(t *testing.T) {
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	_, ts, wsURL := setupSuggestionsServer(t, now)
+	defer ts.Close()
+
+	conn := connectWS(t, wsURL)
+	defer conn.Close()
+
+	raw := readMessageOfType(t, conn, "StateRollup", 5)
+	var rollup StateRollup
+	require.NoError(t, json.Unmarshal(raw, &rollup))
+	require.NotNil(t, rollup.FeatureFlags, "featureFlags should be present when engine is wired")
+	require.True(t, rollup.FeatureFlags.Suggestions, "suggestions flag should be true")
+}
+
+// TestServer_SendsSuggestionsRollupOnConnect verifies the new client
+// receives the current snapshot right after the state rollup.
+func TestServer_SendsSuggestionsRollupOnConnect(t *testing.T) {
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	server, ts, wsURL := setupSuggestionsServer(t, now)
+	defer ts.Close()
+
+	// Seed with enough completed Mjölk to produce one suggestion.
+	for i, age := range []time.Duration{
+		26 * 24 * time.Hour,
+		19 * 24 * time.Hour,
+		12 * 24 * time.Hour,
+		7 * 24 * time.Hour,
+	} {
+		completed := now.Add(-age)
+		ev := TodoCreated{
+			Type:      "TodoCreated",
+			ID:        fmt.Sprintf("seed-%d", i),
+			Name:      "Mjölk",
+			CreatedAt: completed.Add(-time.Hour),
+			SortOrder: 1000 + i,
+		}
+		require.NoError(t, server.store.Append(ev))
+		comp := TodoCompleted{Type: "TodoCompleted", ID: ev.ID, CompletedAt: completed}
+		require.NoError(t, server.store.Append(comp))
+	}
+	events, _ := server.store.ReadAll()
+	server.state.ApplyEvents(events)
+	server.RecomputeSuggestions()
+
+	conn := connectWS(t, wsURL)
+	defer conn.Close()
+
+	raw := readMessageOfType(t, conn, "SuggestionsRollup", 8)
+	var rollup SuggestionsRollup
+	require.NoError(t, json.Unmarshal(raw, &rollup))
+	require.Len(t, rollup.Suggestions, 1)
+	require.Equal(t, "Mjölk", rollup.Suggestions[0].Name)
+}
+
+// TestServer_TodoCreatedBroadcastsSuggestionRemoved verifies the optimistic
+// "added to list → suggestion goes away" delta is broadcast to every
+// connected client.
+func TestServer_TodoCreatedBroadcastsSuggestionRemoved(t *testing.T) {
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	server, ts, wsURL := setupSuggestionsServer(t, now)
+	defer ts.Close()
+
+	for i, age := range []time.Duration{
+		26 * 24 * time.Hour,
+		19 * 24 * time.Hour,
+		12 * 24 * time.Hour,
+		7 * 24 * time.Hour,
+	} {
+		completed := now.Add(-age)
+		id := fmt.Sprintf("seed-%d", i)
+		require.NoError(t, server.store.Append(TodoCreated{
+			Type: "TodoCreated", ID: id, Name: "Mjölk",
+			CreatedAt: completed.Add(-time.Hour), SortOrder: 1000 + i,
+		}))
+		require.NoError(t, server.store.Append(TodoCompleted{
+			Type: "TodoCompleted", ID: id, CompletedAt: completed,
+		}))
+	}
+	events, _ := server.store.ReadAll()
+	server.state.ApplyEvents(events)
+	server.RecomputeSuggestions()
+
+	conn := connectWS(t, wsURL)
+	defer conn.Close()
+
+	// Drain the initial messages so we can isolate later deltas.
+	rollupRaw := readMessageOfType(t, conn, "SuggestionsRollup", 8)
+	var rollup SuggestionsRollup
+	require.NoError(t, json.Unmarshal(rollupRaw, &rollup))
+	require.Len(t, rollup.Suggestions, 1)
+	expectedID := rollup.Suggestions[0].ID
+
+	// Send a CreateTodo for "Mjölk" — should produce a SuggestionRemoved.
+	createCmd := map[string]any{
+		"type":      "CreateTodo",
+		"commandId": "c1",
+		"id":        "fresh-mjolk",
+		"name":      "Mjölk",
+	}
+	cmdBytes, err := json.Marshal(createCmd)
+	require.NoError(t, err)
+	require.NoError(t, conn.WriteMessage(websocket.TextMessage, cmdBytes))
+
+	raw := readMessageOfType(t, conn, "SuggestionRemoved", 16)
+	var removed SuggestionRemoved
+	require.NoError(t, json.Unmarshal(raw, &removed))
+	require.Equal(t, expectedID, removed.ID)
+}
+
+// TestServer_RenameAndCategorizeTriggerSuggestionRecompute verifies that
+// TodoRenamed and TodoCategorized events flow into the suggestion engine
+// (they used to be silently ignored, which left stale suggestions after a
+// user renamed or recategorized a previously-purchased item).
+func TestServer_RenameAndCategorizeTriggerSuggestionRecompute(t *testing.T) {
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	server, ts, _ := setupSuggestionsServer(t, now)
+	defer ts.Close()
+
+	// Seed four completed Mjölks → one suggestion.
+	ids := []string{"a", "b", "c", "d"}
+	ages := []time.Duration{
+		26 * 24 * time.Hour,
+		19 * 24 * time.Hour,
+		12 * 24 * time.Hour,
+		7 * 24 * time.Hour,
+	}
+	for i, id := range ids {
+		completed := now.Add(-ages[i])
+		require.NoError(t, server.store.Append(TodoCreated{
+			Type: "TodoCreated", ID: id, Name: "Mjölk",
+			CreatedAt: completed.Add(-time.Hour), SortOrder: 1000 + i,
+		}))
+		require.NoError(t, server.store.Append(TodoCompleted{
+			Type: "TodoCompleted", ID: id, CompletedAt: completed,
+		}))
+	}
+	events, _ := server.store.ReadAll()
+	server.state.ApplyEvents(events)
+	server.RecomputeSuggestions()
+	require.Len(t, server.suggestions.Snapshot(), 1, "baseline: Mjölk should be suggested")
+
+	// Rename two of the Mjölks → bucket falls below MinPurchases.
+	for _, id := range []string{"a", "b"} {
+		renamed := TodoRenamed{Type: "TodoRenamed", ID: id, Name: "Bröd"}
+		require.NoError(t, server.store.Append(renamed))
+		server.state.ApplyEvents([]Event{renamed})
+		server.maybeUpdateSuggestionsForEvent(renamed)
+	}
+	require.Empty(t, server.suggestions.Snapshot(),
+		"after rename, the Mjölk cluster should drop below MinPurchases")
+
+	// Putting them back via a categorize event (no rename) should also be
+	// routed through recompute. We rename them back to Mjölk first to set
+	// up state, then issue TodoCategorized and verify recompute fires by
+	// observing that Snapshot reflects the freshly assigned category.
+	for _, id := range []string{"a", "b"} {
+		rn := TodoRenamed{Type: "TodoRenamed", ID: id, Name: "Mjölk"}
+		require.NoError(t, server.store.Append(rn))
+		server.state.ApplyEvents([]Event{rn})
+		server.maybeUpdateSuggestionsForEvent(rn)
+	}
+	require.Len(t, server.suggestions.Snapshot(), 1, "after rename back, Mjölk re-appears")
+
+	catEv := CategoryCreated{Type: "CategoryCreated", ID: "dairy", Name: "Mejeri", CreatedAt: now}
+	require.NoError(t, server.store.Append(catEv))
+	server.state.ApplyEvents([]Event{catEv})
+	server.maybeUpdateSuggestionsForEvent(catEv)
+
+	dairyID := "dairy"
+	for _, id := range ids {
+		ct := TodoCategorized{Type: "TodoCategorized", ID: id, CategoryID: &dairyID}
+		require.NoError(t, server.store.Append(ct))
+		server.state.ApplyEvents([]Event{ct})
+		server.maybeUpdateSuggestionsForEvent(ct)
+	}
+	snap := server.suggestions.Snapshot()
+	require.Len(t, snap, 1)
+	require.NotNil(t, snap[0].CategoryID, "TodoCategorized should have flowed into a recompute")
+	require.Equal(t, "dairy", *snap[0].CategoryID)
+}
+
+// TestServer_SuggestionsDisabledWhenEngineNil ensures the default test
+// server (no engine wired) sends no SuggestionsRollup and clears the
+// featureFlags flag.
+func TestServer_SuggestionsDisabledWhenEngineNil(t *testing.T) {
+	_, ts, wsURL := setupTestServer(t)
+	defer ts.Close()
+
+	conn := connectWS(t, wsURL)
+	defer conn.Close()
+
+	raw := readMessageOfType(t, conn, "StateRollup", 5)
+	var rollup StateRollup
+	require.NoError(t, json.Unmarshal(raw, &rollup))
+	// Either nil flags or suggestions=false is fine.
+	if rollup.FeatureFlags != nil {
+		require.False(t, rollup.FeatureFlags.Suggestions)
+	}
 }

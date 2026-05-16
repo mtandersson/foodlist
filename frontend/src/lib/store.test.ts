@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { get } from 'svelte/store';
-import type { Todo, Category, StateRollup, TodoCreated, TodoCompleted, Event, ServerMessage, ListTitleChanged, AutocompleteResponse, AutocompleteSuggestion } from './types';
+import type { Todo, Category, StateRollup, TodoCreated, TodoCompleted, Event, ServerMessage, ListTitleChanged, AutocompleteResponse, AutocompleteSuggestion, Suggestion, SuggestionsRollup, SuggestionAdded, SuggestionRemoved } from './types';
 
 // Mock handlers storage
 let messageHandler: ((msg: ServerMessage) => void) | null = null;
@@ -1399,6 +1399,135 @@ describe('TodoStore', () => {
       const sentEvent3 = JSON.parse(mockSend.mock.calls[2][0]);
       expect(sentEvent3.title).toBe('Trailing spaces');
       
+      store.destroy();
+    });
+  });
+
+  describe('Suggestions', () => {
+    const mkSuggestion = (overrides: Partial<Suggestion> = {}): Suggestion => ({
+      id: 'sug-1',
+      name: 'Mjölk',
+      categoryId: null,
+      categoryName: null,
+      lastPurchasedAt: '2026-01-01T00:00:00Z',
+      purchaseCount: 4,
+      avgIntervalSeconds: 7 * 86400,
+      ...overrides,
+    });
+
+    it('should read suggestions featureFlag from StateRollup', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [],
+        categories: [],
+        listTitle: 'My Todo List',
+        featureFlags: { suggestions: true },
+      });
+      expect(get(store.featureFlags)).toEqual({ suggestions: true });
+      store.destroy();
+    });
+
+    it('should default featureFlags to {} when missing', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({
+        type: 'StateRollup',
+        todos: [],
+        categories: [],
+        listTitle: 'My Todo List',
+      });
+      expect(get(store.featureFlags)).toEqual({});
+      store.destroy();
+    });
+
+    it('should replace suggestions list on SuggestionsRollup', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+
+      const rollup: SuggestionsRollup = {
+        type: 'SuggestionsRollup',
+        suggestions: [
+          mkSuggestion({ id: 'a', name: 'Mjölk', purchaseCount: 5 }),
+          mkSuggestion({ id: 'b', name: 'Bröd', purchaseCount: 3 }),
+        ],
+      };
+      messageHandler!(rollup);
+      const list = get(store.suggestions);
+      expect(list).toHaveLength(2);
+      // Sorted by purchaseCount desc → Mjölk first.
+      expect(list[0].id).toBe('a');
+      expect(list[1].id).toBe('b');
+
+      // A second rollup wipes the old contents.
+      messageHandler!({
+        type: 'SuggestionsRollup',
+        suggestions: [mkSuggestion({ id: 'c', name: 'Smör' })],
+      });
+      const list2 = get(store.suggestions);
+      expect(list2).toHaveLength(1);
+      expect(list2[0].id).toBe('c');
+
+      store.destroy();
+    });
+
+    it('should add a suggestion on SuggestionAdded', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+
+      const added: SuggestionAdded = {
+        type: 'SuggestionAdded',
+        suggestion: mkSuggestion({ id: 'a' }),
+      };
+      messageHandler!(added);
+      expect(get(store.suggestions)).toHaveLength(1);
+
+      // Re-adding the same id replaces in place (no duplicate).
+      messageHandler!({
+        type: 'SuggestionAdded',
+        suggestion: mkSuggestion({ id: 'a', name: 'Mjölk uppdaterad' }),
+      });
+      const list = get(store.suggestions);
+      expect(list).toHaveLength(1);
+      expect(list[0].name).toBe('Mjölk uppdaterad');
+
+      store.destroy();
+    });
+
+    it('should remove a suggestion on SuggestionRemoved', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+      messageHandler!({
+        type: 'SuggestionsRollup',
+        suggestions: [mkSuggestion({ id: 'a' }), mkSuggestion({ id: 'b' })],
+      });
+      expect(get(store.suggestions)).toHaveLength(2);
+
+      const removed: SuggestionRemoved = { type: 'SuggestionRemoved', id: 'a' };
+      messageHandler!(removed);
+      const list = get(store.suggestions);
+      expect(list).toHaveLength(1);
+      expect(list[0].id).toBe('b');
+
+      // Removing an unknown id is a no-op.
+      messageHandler!({ type: 'SuggestionRemoved', id: 'does-not-exist' });
+      expect(get(store.suggestions)).toHaveLength(1);
+
+      store.destroy();
+    });
+
+    it('should sort suggestions by purchaseCount desc, then interval asc, then name asc', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+      messageHandler!({
+        type: 'SuggestionsRollup',
+        suggestions: [
+          mkSuggestion({ id: '1', name: 'C', purchaseCount: 3, avgIntervalSeconds: 7 * 86400 }),
+          mkSuggestion({ id: '2', name: 'A', purchaseCount: 5, avgIntervalSeconds: 14 * 86400 }),
+          mkSuggestion({ id: '3', name: 'B', purchaseCount: 5, avgIntervalSeconds: 7 * 86400 }),
+        ],
+      });
+      const list = get(store.suggestions);
+      expect(list.map((s) => s.id)).toEqual(['3', '2', '1']);
       store.destroy();
     });
   });

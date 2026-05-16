@@ -55,7 +55,7 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 		m, _ := r.(map[string]any)
 		uris = append(uris, m["uri"].(string))
 	}
-	for _, want := range []string{mcpResourceState, mcpResourceCategories, mcpResourceTodos} {
+	for _, want := range []string{mcpResourceState, mcpResourceCategories, mcpResourceTodos, mcpResourceSuggestions} {
 		require.Contains(t, uris, want, "resources/list should include %s", want)
 	}
 
@@ -93,6 +93,7 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 		"foodlist_list",
 		"foodlist_mark_done",
 		"foodlist_mark_starred",
+		"foodlist_suggestions",
 	}, names)
 
 	// --- foodlist_categories (JSON matches resource + schema shape) ---
@@ -193,6 +194,59 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 	require.NotNil(t, milk2)
 	cid, hasCID := milk2["categoryId"]
 	require.True(t, !hasCID || cid == nil, "expected category cleared (missing or null categoryId), got %v", cid)
+
+	// --- foodlist_suggestions when engine is NOT configured ---
+	// The default test server has no SuggestionEngine set, so the tool should
+	// politely report that the feature is disabled and the resource should
+	// return an empty array.
+	sugTxt := firstTextContent(t, toolCall(t, base, 40, "foodlist_suggestions", map[string]any{}))
+	require.Contains(t, sugTxt, "disabled")
+
+	sugRes := resourceText(t, base, 41, mcpResourceSuggestions)
+	var sugArr []any
+	require.NoError(t, json.Unmarshal([]byte(sugRes), &sugArr))
+	require.Equal(t, 0, len(sugArr), "expected empty suggestions array when engine disabled")
+}
+
+// Verifies that when a SuggestionEngine is wired, the MCP layer exposes
+// it through both the tool (markdown) and the resource (JSON array).
+func TestMCP_Suggestions_WithEngine(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "events.jsonl")
+	store, err := NewEventStore(path)
+	require.NoError(t, err)
+	t.Cleanup(func() { store.Close() })
+
+	srv := NewServer(store)
+	require.NoError(t, srv.LoadEvents())
+
+	// Wire a fake embedding cache so SuggestionsEnabled() returns true.
+	cachePath := filepath.Join(tmp, "embeddings.jsonl")
+	cache, err := NewEmbeddingCache(cachePath)
+	require.NoError(t, err)
+	t.Cleanup(func() { cache.Close() })
+	srv.SetEmbeddingCache(cache)
+	srv.SetSuggestionEngine(NewSuggestionEngine(SuggestionEngineConfig{}))
+
+	ts := httptest.NewServer(foodlistMCPHandler(srv))
+	t.Cleanup(ts.Close)
+	base := ts.URL
+
+	require.NoError(t, mcpOK(t, base, 1, "initialize", map[string]any{
+		"protocolVersion": "2025-06-18",
+		"capabilities":    map[string]any{},
+		"clientInfo":      map[string]any{"name": "integration", "version": "1"},
+	}))
+
+	// Empty suggestions still produce a valid response.
+	sugTxt := firstTextContent(t, toolCall(t, base, 2, "foodlist_suggestions", map[string]any{}))
+	require.NotContains(t, sugTxt, "disabled")
+	require.Contains(t, sugTxt, "Suggestions")
+
+	sugRes := resourceText(t, base, 3, mcpResourceSuggestions)
+	var sugArr []any
+	require.NoError(t, json.Unmarshal([]byte(sugRes), &sugArr))
+	require.Equal(t, 0, len(sugArr))
 }
 
 func mcpOK(t *testing.T, base string, id int, method string, params map[string]any) error {

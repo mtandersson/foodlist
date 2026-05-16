@@ -197,12 +197,42 @@ export interface SetListTitle {
   title: string
 }
 
+export interface FeatureFlags {
+  suggestions?: boolean
+}
+
 export interface StateRollup {
   type: "StateRollup"
   todos: Todo[]
   categories: Category[]
   listTitle: string
   version?: string
+  featureFlags?: FeatureFlags
+}
+
+export interface Suggestion {
+  id: string
+  name: string
+  categoryId?: string | null
+  categoryName?: string | null
+  lastPurchasedAt: string
+  purchaseCount: number
+  avgIntervalSeconds: number
+}
+
+export interface SuggestionsRollup {
+  type: "SuggestionsRollup"
+  suggestions: Suggestion[]
+}
+
+export interface SuggestionAdded {
+  type: "SuggestionAdded"
+  suggestion: Suggestion
+}
+
+export interface SuggestionRemoved {
+  type: "SuggestionRemoved"
+  id: string
 }
 
 // Union types
@@ -258,6 +288,9 @@ export type ServerMessage =
   | ClientCount
   | AutocompleteResponse
   | CommandResponse
+  | SuggestionsRollup
+  | SuggestionAdded
+  | SuggestionRemoved
 
 export type Command =
   | CreateTodo
