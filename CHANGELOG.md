@@ -1,3 +1,13 @@
+## [1.18.0](https://github.com/mtandersson/foodlist/compare/v1.17.0...v1.18.0) (2026-05-17)
+
+### Features
+
+* add "Förslag" tab suggesting groceries to re-buy ([40e89d6](https://github.com/mtandersson/foodlist/commit/40e89d66ec950ab439afffcf228cf4dbf1a0b98b))
+
+### Styles
+
+* gofmt ([3f7c60a](https://github.com/mtandersson/foodlist/commit/3f7c60a41a30ab0e14a717b0c9be99986a503cf6))
+
 ## [1.17.0](https://github.com/mtandersson/foodlist/compare/v1.16.4...v1.17.0) (2026-05-16)
 
 ### Features
