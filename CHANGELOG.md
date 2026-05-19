@@ -1,3 +1,9 @@
+## [1.18.2](https://github.com/mtandersson/foodlist/compare/v1.18.1...v1.18.2) (2026-05-19)
+
+### Chores
+
+* **deps:** update module github.com/microsoftgraph/msgraph-sdk-go to v1.99.0 ([d410ff2](https://github.com/mtandersson/foodlist/commit/d410ff21ec9bc5f13394a56a24f50d906215bd91))
+
 ## [1.18.1](https://github.com/mtandersson/foodlist/compare/v1.18.0...v1.18.1) (2026-05-19)
 
 ### Chores
