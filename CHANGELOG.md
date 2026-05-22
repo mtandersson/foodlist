@@ -1,3 +1,9 @@
+## [1.18.7](https://github.com/mtandersson/foodlist/compare/v1.18.6...v1.18.7) (2026-05-22)
+
+### Chores
+
+* **deps:** update module golang.org/x/sys to v0.45.0 ([a230f69](https://github.com/mtandersson/foodlist/commit/a230f694a973181f295eb8aef2fb4458c3858801))
+
 ## [1.18.6](https://github.com/mtandersson/foodlist/compare/v1.18.5...v1.18.6) (2026-05-21)
 
 ### Chores
