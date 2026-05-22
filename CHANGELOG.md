@@ -1,3 +1,9 @@
+## [1.18.8](https://github.com/mtandersson/foodlist/compare/v1.18.7...v1.18.8) (2026-05-22)
+
+### Chores
+
+* **deps:** update module golang.org/x/net to v0.55.0 ([cf2bfef](https://github.com/mtandersson/foodlist/commit/cf2bfefa24ec045b987146325d574df85f207c1e))
+
 ## [1.18.7](https://github.com/mtandersson/foodlist/compare/v1.18.6...v1.18.7) (2026-05-22)
 
 ### Chores
