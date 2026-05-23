@@ -1,3 +1,9 @@
+## [1.18.10](https://github.com/mtandersson/foodlist/compare/v1.18.9...v1.18.10) (2026-05-23)
+
+### Chores
+
+* **deps:** update node to v24.16.0 ([dd29e42](https://github.com/mtandersson/foodlist/commit/dd29e42fb8282ee57c52ef0b0133ae8c99ce6efb))
+
 ## [1.18.9](https://github.com/mtandersson/foodlist/compare/v1.18.8...v1.18.9) (2026-05-22)
 
 ### Chores
