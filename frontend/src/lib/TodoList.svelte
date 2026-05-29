@@ -298,14 +298,7 @@
       pendingCategoryId = null;
       selectedAutocompleteIndex = -1;
 
-      // Keep suggestions open for fast multi-add if the input is still focused.
-      if (inputFocused) {
-        store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
-        showAutocomplete = true;
-        queueMicrotask(() => todoInputEl?.focus());
-      } else {
-        hideAutocomplete();
-      }
+      hideAutocomplete();
     }
   }
 
@@ -335,13 +328,7 @@
           inlineSuggestion = '';
           pendingCategoryId = null;
           selectedAutocompleteIndex = -1;
-          if (inputFocused) {
-            store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
-            showAutocomplete = true;
-            queueMicrotask(() => todoInputEl?.focus());
-          } else {
-            hideAutocomplete();
-          }
+          hideAutocomplete();
         } else if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < suggestions.length) {
           selectSuggestion(suggestions[selectedAutocompleteIndex]);
         } else {
@@ -382,9 +369,10 @@
 
   function handleInputFocus() {
     inputFocused = true;
-    // Request autocomplete when focusing even if empty
-    store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
-    showAutocomplete = true;
+    if (newTodoName.trim()) {
+      store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
+      showAutocomplete = true;
+    }
   }
 
   function handleInputBlur() {
@@ -398,20 +386,14 @@
   }
 
   function selectSuggestion(suggestion: AutocompleteSuggestion) {
-    // Immediately add the todo (without closing the dropdown)
+    // Immediately add the todo and hide the dropdown
     store.createTodo(suggestion.name, suggestion.categoryId ?? null);
     newTodoName = '';
     inlineSuggestion = '';
     pendingCategoryId = null;
     selectedAutocompleteIndex = -1;
 
-    if (inputFocused) {
-      store.requestAutocomplete(extractAutocompleteQuery(newTodoName));
-      showAutocomplete = true;
-      queueMicrotask(() => todoInputEl?.focus());
-    } else {
-      hideAutocomplete();
-    }
+    hideAutocomplete();
   }
 
   function hideAutocomplete() {
