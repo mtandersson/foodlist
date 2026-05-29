@@ -1,3 +1,13 @@
+## [1.18.13](https://github.com/mtandersson/foodlist/compare/v1.18.12...v1.18.13) (2026-05-29)
+
+### Bug Fixes
+
+* hide autocomplete dropdown after item submission ([34a2616](https://github.com/mtandersson/foodlist/commit/34a26168b78907f36be1de85268ee16cd016fe52))
+
+### Chores
+
+* **deps:** update gcr.io/distroless/static-debian13:nonroot Docker digest to 963fa6c ([6448028](https://github.com/mtandersson/foodlist/commit/644802875e84934982c1b45efefa27b542d21870))
+
 ## [1.18.12](https://github.com/mtandersson/foodlist/compare/v1.18.11...v1.18.12) (2026-05-28)
 
 ### Chores
