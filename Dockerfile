@@ -1,3 +1,8 @@
+# syntax=docker/dockerfile:1.7
+# The syntax directive enables BuildKit `--mount=type=cache` so the Go module
+# cache and Go build cache (which contains compiled cgo C objects from
+# goheif's vendored libde265/dav1d) survive across image builds.
+
 # Stage 1: Build Frontend (Svelte/TypeScript)
 FROM node:24.16.0-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14 AS frontend-builder
 
@@ -38,8 +43,10 @@ RUN apk add --no-cache gcc g++ musl-dev
 # Copy go mod files
 COPY backend/go.mod backend/go.sum ./
 
-# Download dependencies
-RUN go mod download
+# Download dependencies. The module cache is mounted so unchanged go.sum
+# entries are not re-downloaded between builds.
+RUN --mount=type=cache,target=/go/pkg/mod,sharing=locked \
+    go mod download
 
 # Copy backend source
 COPY backend/ ./
@@ -47,10 +54,18 @@ COPY backend/ ./
 # Build the Go application with version injection. CGO is enabled but the
 # binary is statically linked (osusergo/netgo + -extldflags -static) so it has
 # no runtime libc dependency and remains compatible with distroless/static.
-RUN if [ -n "$VERSION" ]; then \
-      CGO_ENABLED=1 GOOS=linux go build -a -tags "osusergo netgo" -ldflags "-w -s -X main.version=$VERSION -extldflags '-static'" -o foodlist .; \
+#
+# The Go build cache (/root/.cache/go-build) is mounted so that goheif's
+# vendored libde265/dav1d C sources are not recompiled on every build when
+# only Go code in this repo changes. Dropping `-a` lets the build cache
+# actually be used; without it Go ignores cached artifacts and rebuilds
+# everything from scratch (which is what made each Docker build slow).
+RUN --mount=type=cache,target=/go/pkg/mod,sharing=locked \
+    --mount=type=cache,target=/root/.cache/go-build,sharing=locked \
+    if [ -n "$VERSION" ]; then \
+      CGO_ENABLED=1 GOOS=linux go build -tags "osusergo netgo" -ldflags "-w -s -X main.version=$VERSION -extldflags '-static'" -o foodlist .; \
     else \
-      CGO_ENABLED=1 GOOS=linux go build -a -tags "osusergo netgo" -ldflags "-w -s -extldflags '-static'" -o foodlist .; \
+      CGO_ENABLED=1 GOOS=linux go build -tags "osusergo netgo" -ldflags "-w -s -extldflags '-static'" -o foodlist .; \
     fi
 
 # Create data directory structure for distroless (no shell available)
