@@ -1,3 +1,17 @@
+## [1.19.0](https://github.com/mtandersson/foodlist/compare/v1.18.14...v1.19.0) (2026-05-31)
+
+### Features
+
+* **recipes:** add Recept tab with LLM photo parsing, cook mode, HEIC, and zoomable lightbox ([f1ace92](https://github.com/mtandersson/foodlist/commit/f1ace9298628e605ef6b70025e84d3652e8bbf35))
+
+### Bug Fixes
+
+* **release:** drop cross-platform binaries, cache cgo in docker ([7600e09](https://github.com/mtandersson/foodlist/commit/7600e09e6c8ab3954595d9161d4e9fc67180e505))
+
+### Continuous Integration
+
+* roll up renovate chore commits into a weekly release ([477afb2](https://github.com/mtandersson/foodlist/commit/477afb2d15c9715a333eff22008595f584cae516))
+
 ## [1.18.14](https://github.com/mtandersson/foodlist/compare/v1.18.13...v1.18.14) (2026-05-30)
 
 ### Chores
