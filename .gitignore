@@ -41,7 +41,15 @@ frontend/coverage/
 backend/events.jsonl
 backend/foodlist
 
+# Recipe storage (created at runtime by the dev server; data dir is
+# operator-configurable via RECIPE_DIR and not source-controlled).
+backend/recpies/
+backend/recipes/
+
 # Screenshots
 screenshots/
 backend/.env
 backend/embeddings.jsonl
+
+# Vite PWA dev-server artifacts (regenerated on every `npm run dev`)
+frontend/dev-dist/

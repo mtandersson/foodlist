@@ -37,6 +37,9 @@ import type {
   AutocompleteSuggestion,
   Suggestion,
   FeatureFlags,
+  CookCheckStep,
+  CookUncheckStep,
+  CookReset,
 } from "./types"
 
 export interface TodoStore {
@@ -81,7 +84,13 @@ export interface TodoStore {
     typeof derived<ReturnType<typeof writable<Map<string, Suggestion>>>, Suggestion[]>
   >
   featureFlags: ReturnType<typeof writable<FeatureFlags>>
-  createTodo: (name: string, categoryId?: string | null) => void
+  cookSessions: ReturnType<typeof writable<Map<string, Set<number>>>>
+  recipesVersion: ReturnType<typeof writable<number>>
+  createTodo: (
+    name: string,
+    categoryId?: string | null,
+    opts?: {count?: number | null; unit?: string | null; originalInput?: string}
+  ) => void
   createCategory: (name: string, id?: string) => Promise<string>
   renameCategory: (id: string, name: string) => Promise<void>
   deleteCategory: (id: string) => void
@@ -95,6 +104,9 @@ export interface TodoStore {
   requestAutocomplete: (query: string) => void
   clearAutocomplete: () => void
   clearError: () => void
+  cookCheck: (recipeId: string, stepIndex: number) => void
+  cookUncheck: (recipeId: string, stepIndex: number) => void
+  cookReset: (recipeId: string) => void
   destroy: () => void
 }
 
@@ -146,6 +158,13 @@ export function createTodoStore(wsUrl: string): TodoStore {
   const serverVersion = writable<string | null>(null)
   const suggestionsMap = writable<Map<string, Suggestion>>(new Map())
   const featureFlags = writable<FeatureFlags>({})
+  // cookSessions maps recipeId -> set of checked step indices. Populated
+  // by CookStateRollup on connect and updated by CookStateChanged.
+  const cookSessions = writable<Map<string, Set<number>>>(new Map())
+  // recipesVersion bumps any time a RecipeChanged broadcast arrives so
+  // recipe-list views can re-fetch via HTTP without keeping a parallel
+  // cache in memory.
+  const recipesVersion = writable<number>(0)
   let errorTimeout: number | null = null
 
   // Track pending autocomplete request to match responses
@@ -363,6 +382,34 @@ export function createTodoStore(wsUrl: string): TodoStore {
         next.delete(message.id)
         return next
       })
+      return
+    }
+
+    if (message.type === "CookStateRollup") {
+      const next = new Map<string, Set<number>>()
+      for (const [recipeId, steps] of Object.entries(message.sessions)) {
+        next.set(recipeId, new Set(steps))
+      }
+      cookSessions.set(next)
+      return
+    }
+
+    if (message.type === "CookStateChanged") {
+      cookSessions.update((m) => {
+        const next = new Map(m)
+        if (message.checkedSteps.length === 0) {
+          next.delete(message.recipeId)
+        } else {
+          next.set(message.recipeId, new Set(message.checkedSteps))
+        }
+        return next
+      })
+      return
+    }
+
+    if (message.type === "RecipeChanged") {
+      // Bump the version so any subscribed view re-fetches the list/detail.
+      recipesVersion.update((v) => v + 1)
       return
     }
 
@@ -622,29 +669,46 @@ export function createTodoStore(wsUrl: string): TodoStore {
 
   // Public actions
 
-  function createTodo(name: string, categoryId: string | null = null) {
+  /**
+   * createTodo creates a new todo. When structured options are provided
+   * (count + unit), the server skips the natural-language parser and
+   * trusts those values. originalInput preserves the user-facing text
+   * for the badge ("2 dl mjölk").
+   */
+  function createTodo(
+    name: string,
+    categoryId: string | null = null,
+    opts?: {count?: number | null; unit?: string | null; originalInput?: string}
+  ) {
     // Trim whitespace from name
     const trimmedName = name.trim()
     if (!trimmedName) return
 
     const commandId = uuidv4()
     const id = uuidv4()
+    const sortOrder = getHighestSortOrder() + 1000
     const command: CreateTodo = {
       type: "CreateTodo",
       commandId,
       id,
       name: trimmedName,
-      sortOrder: getHighestSortOrder() + 1000,
+      sortOrder,
       categoryId,
     }
+    if (opts?.count != null) command.count = opts.count
+    if (opts?.unit != null) command.unit = opts.unit
+    if (opts?.originalInput) command.originalInput = opts.originalInput
+
     const optimistic: TodoCreated = {
       type: "TodoCreated",
       id,
       name: trimmedName,
       createdAt: new Date().toISOString(),
-      sortOrder: command.sortOrder ?? getHighestSortOrder() + 1000,
+      sortOrder,
       categoryId,
-      originalInput: trimmedName,
+      count: opts?.count ?? null,
+      unit: opts?.unit ?? null,
+      originalInput: opts?.originalInput ?? trimmedName,
     }
     sendCommand(command, optimistic)
   }
@@ -892,6 +956,96 @@ export function createTodoStore(wsUrl: string): TodoStore {
     autocompleteSuggestions.set([])
   }
 
+  // Cook mode actions. Cook* commands ride the same WebSocket but are
+  // never persisted as events on the server. All three apply an
+  // optimistic local update and roll it back if the server rejects
+  // (e.g. the recipe was deleted in another tab). The next
+  // CookStateChanged broadcast is the authoritative resync.
+  function cookCheck(recipeId: string, stepIndex: number) {
+    const command: CookCheckStep = {
+      type: "CookCheckStep",
+      commandId: uuidv4(),
+      recipeId,
+      stepIndex,
+    }
+    cookSessions.update((m) => {
+      const next = new Map(m)
+      const set = new Set(next.get(recipeId) ?? [])
+      set.add(stepIndex)
+      next.set(recipeId, set)
+      return next
+    })
+    sendCommand(command).catch(() => {
+      cookSessions.update((m) => {
+        const next = new Map(m)
+        const set = new Set(next.get(recipeId) ?? [])
+        set.delete(stepIndex)
+        if (set.size === 0) next.delete(recipeId)
+        else next.set(recipeId, set)
+        return next
+      })
+    })
+  }
+
+  function cookUncheck(recipeId: string, stepIndex: number) {
+    const command: CookUncheckStep = {
+      type: "CookUncheckStep",
+      commandId: uuidv4(),
+      recipeId,
+      stepIndex,
+    }
+    // Capture whether the step had been checked so we can restore it
+    // on rejection rather than silently dropping the inconsistency.
+    let hadStep = false
+    cookSessions.update((m) => {
+      const set = new Set(m.get(recipeId) ?? [])
+      hadStep = set.has(stepIndex)
+      if (!hadStep) return m
+      const next = new Map(m)
+      set.delete(stepIndex)
+      if (set.size === 0) next.delete(recipeId)
+      else next.set(recipeId, set)
+      return next
+    })
+    sendCommand(command).catch(() => {
+      if (!hadStep) return
+      cookSessions.update((m) => {
+        const next = new Map(m)
+        const set = new Set(next.get(recipeId) ?? [])
+        set.add(stepIndex)
+        next.set(recipeId, set)
+        return next
+      })
+    })
+  }
+
+  function cookReset(recipeId: string) {
+    const command: CookReset = {
+      type: "CookReset",
+      commandId: uuidv4(),
+      recipeId,
+    }
+    // Snapshot the previous set so a rejection can restore it.
+    let previous: Set<number> | null = null
+    cookSessions.update((m) => {
+      const existing = m.get(recipeId)
+      if (!existing) return m
+      previous = new Set(existing)
+      const next = new Map(m)
+      next.delete(recipeId)
+      return next
+    })
+    sendCommand(command).catch(() => {
+      if (!previous) return
+      const restored = previous
+      cookSessions.update((m) => {
+        const next = new Map(m)
+        next.set(recipeId, restored)
+        return next
+      })
+    })
+  }
+
   function destroy() {
     ws.close()
   }
@@ -915,6 +1069,8 @@ export function createTodoStore(wsUrl: string): TodoStore {
     serverVersion,
     suggestions: suggestionsList as any,
     featureFlags,
+    cookSessions,
+    recipesVersion,
     createTodo,
     createCategory,
     renameCategory,
@@ -929,6 +1085,9 @@ export function createTodoStore(wsUrl: string): TodoStore {
     requestAutocomplete,
     clearAutocomplete,
     clearError,
+    cookCheck,
+    cookUncheck,
+    cookReset,
     destroy,
   }
 }

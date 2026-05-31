@@ -67,6 +67,77 @@ on connect, then `SuggestionAdded` / `SuggestionRemoved` deltas. Both the
 MCP tool `foodlist_suggestions` and the resource `foodlist://suggestions`
 expose the same view to AI agents.
 
+### Recipes (Recept) tab
+
+The recipes feature lets users upload photos of paper recipes, run them
+through a vision LLM, review/edit the parsed result, and save them. Saved
+recipes can later be browsed, sent into the shopping list ingredient by
+ingredient, or stepped through in a shared "cook mode".
+
+**Security boundary: `SHARED_SECRET` + `CIDR_WHITELIST`.** Recipe HTTP
+routes (`GET`, `POST`, `PATCH`, `DELETE` under `/api/v1/recipes/...`)
+carry NO application-level auth — no bearer token, no cookie session,
+no per-route check. They sit on the same mux as the homepage,
+WebSocket, and static assets, and are protected by exactly the same
+mechanism the rest of the app already relies on:
+
+- `SHARED_SECRET` mounts every route under a non-guessable URL prefix
+  (`/<secret>/...`). Without the secret you cannot even guess the
+  recipes path.
+- `CIDR_WHITELIST` runs `IPWhitelistMiddleware` over the entire mux,
+  rejecting any caller whose source IP is outside the allowed
+  networks before the request reaches a handler.
+
+Together those two are the security perimeter — a leaked URL alone
+cannot reach the recipes API from off-network, and an on-network
+attacker cannot reach it without the secret prefix. No further
+per-route auth is added, by design.
+
+`FOODLIST_API_TOKEN` is **not** consulted for recipe routes; it only
+applies to the legacy `/api/v1/state` and `/api/v1/command` JSON
+endpoints kept for AppleScript/HTTP integrations.
+
+| Variable                   | Default                | Description                                                                                |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `RECIPE_DIR`               | `<DATA_DIR>/recipes`   | Storage directory. Validated to live inside `DATA_DIR`.                                    |
+| `RECIPE_LLM_BASE_URL`      | _empty_                | OpenAI-compatible base URL (e.g. `https://api.opencode.ai/v1`). Only http(s).              |
+| `RECIPE_LLM_API_KEY`       | _empty_                | Bearer token sent to the LLM. **Never logged**, even on error paths.                       |
+| `RECIPE_LLM_MODEL`         | _empty_                | Vision-capable model name. The frontend `recipesParse` flag goes true only with all three. |
+| `RECIPE_PARSE_RPM`         | `10`                   | Per-process rate limit on `POST /recipes/parse`. 429 on overflow.                          |
+| `RECIPE_MAX_IMAGE_PIXELS`  | `24000000`             | Decompression-bomb cap; uploads decoded to more pixels are rejected.                       |
+
+**Security properties**:
+
+- **Path traversal**: server-generated UUIDs for every recipe ID; route
+  IDs are UUID-validated before any filesystem call; `filepath.Abs` +
+  prefix check against `RECIPE_DIR`; sidecar extension comes from a
+  sniffed-MIME allowlist (`image/jpeg→.jpg`, `image/png→.png`,
+  `image/webp→.webp`), never from the client filename.
+- **SSRF**: the LLM base URL is read from env at startup and is never
+  user-supplied. Operators must avoid pointing it at private/loopback
+  addresses that host other internal services.
+- **Image safety**: 10 MB transport cap (`MaxBytesReader`), MIME sniffed
+  via `http.DetectContentType` against the allowlist plus an explicit
+  ISO-BMFF `ftyp` brand check for HEIC, pixel cap enforced via
+  `image.DecodeConfig`. iPhone HEIC/HEIF uploads are transcoded to
+  JPEG server-side via `goheif` before the bounds check, the LLM call,
+  or the sidecar write — only browser-renderable mimes (JPEG/PNG/WebP)
+  are ever stored. Sidecar served with the stored MIME plus
+  `X-Content-Type-Options: nosniff` and `Content-Disposition: inline`.
+- **Logging**: API key, image bytes, request body, and LLM response body
+  are never logged. Only model name, image size, and HTTP status are
+  emitted (success or failure).
+- **Stored XSS**: the frontend renders LLM-derived strings via text
+  bindings only; `{@html}` is not used in any `Recipe*.svelte` view.
+
+**Cook mode** (the shared "check off each step" workflow) is purely
+WebSocket and ephemeral: `Cook*` commands are dispatched by a dedicated
+handler that does NOT touch the event store. Cook session state survives
+multi-client edits but is dropped on server restart and on recipe DELETE,
+and is pruned when a recipe's instructions list shrinks via PATCH. New
+clients receive a `CookStateRollup` snapshot on connect so they sync up
+with whatever any other tab has already checked off.
+
 MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when the backend runs. It is not behind `SHARED_SECRET`; with `CIDR_WHITELIST` set, `/mcp` is still reachable for whitelisted clients (same idea as public PWA assets). Protect access at the network or reverse-proxy layer if the server is exposed.
 
 ### MCP: resources vs tools (protocol)
@@ -75,6 +146,31 @@ MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when
 - **Tools** are listed with **`tools/list`** and invoked with **`tools/call`** — this is what the MCP spec defines (plural `tools/...`, not `tool/list`).
 - MCP protocol identifiers keep legacy `todo` naming for compatibility (for example `foodlist://todos` and `todo_id`), but they refer to grocery items.
 - To fetch every defined category (including unused ones), use the **`foodlist_categories`** tool or **`resources/read`** with `uri: "foodlist://categories"`. **`foodlist_list`** only reflects categories that appear on grocery items in that markdown view.
+
+### MCP: recipes
+
+The recipes MCP surface is read-mostly and mirrors the HTTP API. It is
+mounted automatically; when the recipes feature is disabled the tools
+return graceful "_disabled_" responses and the resource returns an empty
+JSON array (so an MCP client can still introspect the server).
+
+- **Tool `foodlist_recipes_list`** — markdown list of saved recipes
+  (title + id), newest first.
+- **Tool `foodlist_recipe_get`** — markdown view of a single recipe
+  (title, ingredients with optional amount/unit, numbered instructions).
+  Argument: `recipe_id` (UUID).
+- **Tool `foodlist_recipe_add_ingredients`** — adds a recipe's ingredients
+  to the shopping list as todo items via the same `CreateTodo` event the
+  UI emits. Arguments: `recipe_id`, optional `indexes` (0-based; empty
+  means "all"), optional `category_id`. When an ingredient row carries
+  both `amount` and `unit`, the structured-input precedence kicks in so
+  the server skips `ParseIngredientInput` and trusts those values.
+- **Resource `foodlist://recipes`** — JSON array of recipe metadata
+  (id, title, image filename, timestamps).
+
+Image uploads, the LLM parse path, and `PATCH`/`DELETE` are intentionally
+HTTP-only because they are either binary, costly, or destructive in ways
+that don't fit the JSON-RPC tool surface.
 
 ## Usage
 

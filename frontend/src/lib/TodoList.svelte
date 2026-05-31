@@ -8,6 +8,7 @@
   import ModeSwitch from './ModeSwitch.svelte';
   import CategoriesView from './CategoriesView.svelte';
   import SuggestionsView from './SuggestionsView.svelte';
+  import RecipesView from './RecipesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
@@ -66,7 +67,7 @@
     lastCategoryCount = currentCount;
   });
 
-  type ViewMode = 'normal' | 'categories' | 'suggestions';
+  type ViewMode = 'normal' | 'categories' | 'suggestions' | 'recipes';
 
   let newTodoName = $state('');
   let completedExpanded = $state(typeof localStorage !== 'undefined' && localStorage.getItem('completedExpanded') !== null ? localStorage.getItem('completedExpanded') === 'true' : true);
@@ -76,6 +77,15 @@
   // fall back to normal so the user is never stuck on an empty tab.
   $effect(() => {
     if (viewMode === 'suggestions' && !$featureFlags.suggestions) {
+      viewMode = 'normal';
+    }
+  });
+
+  // Same fallback for recipes: if the operator turns off the feature flag
+  // mid-session, kick the UI back to normal mode rather than render an
+  // empty/erroring tab.
+  $effect(() => {
+    if (viewMode === 'recipes' && !$featureFlags.recipes) {
       viewMode = 'normal';
     }
   });
@@ -873,7 +883,7 @@
       </button>
     {/if}
     <div class="header-right">
-      <ModeSwitch value={viewMode} showSuggestions={!!$featureFlags.suggestions} on:change={(e) => handleModeChange(e.detail)} />
+      <ModeSwitch value={viewMode} showSuggestions={!!$featureFlags.suggestions} showRecipes={!!$featureFlags.recipes} on:change={(e) => handleModeChange(e.detail)} />
       <span class="member-count" aria-label="Connected users">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -1087,9 +1097,12 @@
       />
     {:else if viewMode === 'suggestions'}
       <SuggestionsView suggestions={$suggestions} onAdd={handleSuggestionAdd} />
+    {:else if viewMode === 'recipes'}
+      <RecipesView {store} parseEnabled={!!$featureFlags.recipesParse} />
     {/if}
   </div>
 
+  {#if viewMode !== 'recipes'}
   <!-- Add todo input at bottom -->
   <div class="add-todo-wrapper">
     {#if showAutocomplete && $autocompleteSuggestions.length > 0}
@@ -1150,6 +1163,7 @@
       </div>
     </form>
   </div>
+  {/if}
 </div>
 
 {#if showAboutModal}

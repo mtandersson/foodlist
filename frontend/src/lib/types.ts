@@ -116,6 +116,9 @@ export interface CreateTodo {
   name: string
   sortOrder?: number
   categoryId?: string | null
+  count?: number | null
+  unit?: string | null
+  originalInput?: string
 }
 
 export interface CategorizeTodo {
@@ -199,6 +202,8 @@ export interface SetListTitle {
 
 export interface FeatureFlags {
   suggestions?: boolean
+  recipes?: boolean
+  recipesParse?: boolean
 }
 
 export interface StateRollup {
@@ -233,6 +238,87 @@ export interface SuggestionAdded {
 export interface SuggestionRemoved {
   type: "SuggestionRemoved"
   id: string
+}
+
+// Recipe types - stored as JSON files on the backend, served via HTTP.
+// They are NOT events: they don't appear in the event log and don't
+// follow the WS command/event flow.
+export interface Ingredient {
+  amount?: number | null
+  unit?: string
+  name: string
+}
+
+export interface Recipe {
+  id: string
+  title: string
+  ingredients: Ingredient[]
+  instructions: string[]
+  imageFilename: string
+  imageMime: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RecipeListItem {
+  id: string
+  title: string
+  imageUrl: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RecipeListResponse {
+  recipes: RecipeListItem[]
+}
+
+export interface RecipeDetailResponse {
+  recipe: Recipe
+  imageUrl: string
+}
+
+export interface RecipeParseResponse {
+  parsed: Recipe
+}
+
+// Cook* commands are sent over WebSocket but are NOT events: the server
+// keeps the cook session in memory only and never persists them. They
+// share the standard CommandResponse acknowledgment.
+export interface CookCheckStep {
+  type: "CookCheckStep"
+  commandId: string
+  recipeId: string
+  stepIndex: number
+}
+
+export interface CookUncheckStep {
+  type: "CookUncheckStep"
+  commandId: string
+  recipeId: string
+  stepIndex: number
+}
+
+export interface CookReset {
+  type: "CookReset"
+  commandId: string
+  recipeId: string
+}
+
+export interface CookStateChanged {
+  type: "CookStateChanged"
+  recipeId: string
+  checkedSteps: number[]
+}
+
+export interface CookStateRollup {
+  type: "CookStateRollup"
+  sessions: Record<string, number[]>
+}
+
+export interface RecipeChanged {
+  type: "RecipeChanged"
+  id: string
+  deleted: boolean
 }
 
 // Union types
@@ -291,6 +377,9 @@ export type ServerMessage =
   | SuggestionsRollup
   | SuggestionAdded
   | SuggestionRemoved
+  | CookStateChanged
+  | CookStateRollup
+  | RecipeChanged
 
 export type Command =
   | CreateTodo
@@ -306,6 +395,9 @@ export type Command =
   | DeleteCategory
   | ReorderCategory
   | SetListTitle
+  | CookCheckStep
+  | CookUncheckStep
+  | CookReset
 
 // Type guards
 export function isTodoCreated(msg: ServerMessage): msg is TodoCreated {

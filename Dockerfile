@@ -30,6 +30,11 @@ ARG VERSION
 
 WORKDIR /app/backend
 
+# goheif (HEIC/HEIF transcoding) requires cgo for its bundled libde265/dav1d
+# decoders, so we install a C toolchain and statically link against musl so the
+# resulting binary still runs on distroless/static.
+RUN apk add --no-cache gcc g++ musl-dev
+
 # Copy go mod files
 COPY backend/go.mod backend/go.sum ./
 
@@ -39,11 +44,13 @@ RUN go mod download
 # Copy backend source
 COPY backend/ ./
 
-# Build the Go application with version injection
+# Build the Go application with version injection. CGO is enabled but the
+# binary is statically linked (osusergo/netgo + -extldflags -static) so it has
+# no runtime libc dependency and remains compatible with distroless/static.
 RUN if [ -n "$VERSION" ]; then \
-      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags "-X main.version=$VERSION" -o foodlist .; \
+      CGO_ENABLED=1 GOOS=linux go build -a -tags "osusergo netgo" -ldflags "-w -s -X main.version=$VERSION -extldflags '-static'" -o foodlist .; \
     else \
-      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o foodlist .; \
+      CGO_ENABLED=1 GOOS=linux go build -a -tags "osusergo netgo" -ldflags "-w -s -extldflags '-static'" -o foodlist .; \
     fi
 
 # Create data directory structure for distroless (no shell available)

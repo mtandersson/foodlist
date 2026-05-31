@@ -88,6 +88,16 @@ type Config struct {
 	SuggestionsDedupSimilarity float32 `env:"SUGGESTIONS_DEDUP_SIMILARITY" envDefault:"0.85"`
 	SuggestionsRecentLimit     int     `env:"SUGGESTIONS_RECENT_PURCHASES_LIMIT" envDefault:"6"`
 	SuggestionsRecomputeHours  int     `env:"SUGGESTIONS_RECOMPUTE_INTERVAL_HOURS" envDefault:"6"`
+
+	// Recipes feature. Storage is enabled when auth is configured (token or
+	// shared-secret + CIDR whitelist) and the directory is writable.
+	// LLM upload/parse is enabled separately when all RECIPE_LLM_* are set.
+	RecipeDir            string `env:"RECIPE_DIR" envDefault:""`
+	RecipeLLMBaseURL     string `env:"RECIPE_LLM_BASE_URL" envDefault:""`
+	RecipeLLMAPIKey      string `env:"RECIPE_LLM_API_KEY" envDefault:""`
+	RecipeLLMModel       string `env:"RECIPE_LLM_MODEL" envDefault:""`
+	RecipeParseRPM       int    `env:"RECIPE_PARSE_RPM" envDefault:"10"`
+	RecipeMaxImagePixels int    `env:"RECIPE_MAX_IMAGE_PIXELS" envDefault:"24000000"`
 }
 
 func main() {
@@ -306,6 +316,40 @@ func runHTTPServer() {
 			"get_state", "/api/v1/state",
 			"post_command", "/api/v1/command",
 			"auto_categorize_metrics", "/api/v1/auto-categorize/metrics",
+		)
+	}
+
+	// Recipes feature. The recipe HTTP routes carry NO application-level
+	// authentication: they share the same security boundary as the rest
+	// of the app (homepage, WebSocket, static files), namely
+	// SHARED_SECRET (non-guessable URL prefix) and CIDR_WHITELIST
+	// (IPWhitelistMiddleware applied to the whole mux below). See
+	// backend/CONFIG.md for the documented threat model.
+	recipeStore, err := NewRecipeStore(cfg.RecipeDir, cfg.DataDir, cfg.RecipeMaxImagePixels)
+	if err != nil {
+		slog.Error("recipe store init failed", "error", err)
+	} else {
+		server.SetRecipeStore(recipeStore)
+		var llmClient *RecipeLLMClient
+		if cfg.RecipeLLMBaseURL != "" || cfg.RecipeLLMAPIKey != "" || cfg.RecipeLLMModel != "" {
+			c, err := NewRecipeLLMClient(cfg.RecipeLLMBaseURL, cfg.RecipeLLMAPIKey, cfg.RecipeLLMModel)
+			if err != nil {
+				slog.Warn("recipe llm disabled", "error_class", "config")
+			} else {
+				llmClient = c
+				server.SetRecipeLLMEnabled(true)
+				slog.Info("recipe llm enabled", "model", cfg.RecipeLLMModel)
+			}
+		}
+		recipeAPI := NewRecipeAPI(recipeStore, llmClient, server, strings.TrimSuffix(pathPrefix, "/"), cfg.RecipeParseRPM)
+		// Identity wrap: no bearer/cookie auth on recipe routes by design.
+		// IPWhitelistMiddleware (when SHARED_SECRET + CIDR_WHITELIST is
+		// configured) is applied to the whole mux below, which gives the
+		// secret-path posture for free.
+		recipeAPI.Register(mux, func(h http.Handler) http.Handler { return h })
+		slog.Info("recipes enabled",
+			"path_base", strings.TrimSuffix(pathPrefix, "/")+"/api/v1/recipes",
+			"llm_enabled", llmClient != nil,
 		)
 	}
 

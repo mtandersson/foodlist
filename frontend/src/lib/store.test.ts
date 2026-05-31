@@ -1531,5 +1531,66 @@ describe('TodoStore', () => {
       store.destroy();
     });
   });
+
+  describe('Recipes / cook mode', () => {
+    it('createTodo with structured opts forwards count/unit/originalInput to the command', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+
+      store.createTodo('Mjölk', null, {count: 2, unit: 'dl', originalInput: '2 dl mjölk'});
+
+      const sent = JSON.parse(mockSend.mock.calls[0][0]);
+      expect(sent.type).toBe('CreateTodo');
+      expect(sent.name).toBe('Mjölk');
+      expect(sent.count).toBe(2);
+      expect(sent.unit).toBe('dl');
+      expect(sent.originalInput).toBe('2 dl mjölk');
+      store.destroy();
+    });
+
+    it('CookStateRollup populates the cookSessions map', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+
+      messageHandler!({
+        type: 'CookStateRollup',
+        sessions: {
+          'aaaa-recipe': [0, 2],
+        },
+      });
+      const m = get(store.cookSessions);
+      expect(Array.from(m.get('aaaa-recipe') ?? [])).toEqual([0, 2]);
+      store.destroy();
+    });
+
+    it('CookStateChanged with empty steps clears the entry', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+
+      messageHandler!({
+        type: 'CookStateChanged',
+        recipeId: 'r1',
+        checkedSteps: [1],
+      });
+      expect(get(store.cookSessions).get('r1')?.size).toBe(1);
+
+      messageHandler!({
+        type: 'CookStateChanged',
+        recipeId: 'r1',
+        checkedSteps: [],
+      });
+      expect(get(store.cookSessions).has('r1')).toBe(false);
+      store.destroy();
+    });
+
+    it('RecipeChanged bumps recipesVersion', () => {
+      const store = createTodoStore('ws://localhost:8080/ws');
+      messageHandler!({ type: 'StateRollup', todos: [], categories: [], listTitle: 'X' });
+      const before = get(store.recipesVersion);
+      messageHandler!({ type: 'RecipeChanged', id: 'r1', deleted: false });
+      expect(get(store.recipesVersion)).toBe(before + 1);
+      store.destroy();
+    });
+  });
 });
 
