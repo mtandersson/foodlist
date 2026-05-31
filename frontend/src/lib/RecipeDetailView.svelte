@@ -18,17 +18,22 @@
 
   let { recipeId, store, onBack, onDelete }: Props = $props();
 
-  let recipe: Recipe | null = $state(null);
-  let imageUrl: string | null = $state(null);
+  // Use the $state<T> type parameter (not a `: T | null` annotation
+  // on the let) so Svelte 5's runes mode preserves the union type
+  // through reactivity. The annotation form narrows to `null` under
+  // tsconfig.app.json's stricter check and breaks `recipe?.sections`
+  // (the `?:` chain is typed as `never`).
+  let recipe = $state<Recipe | null>(null);
+  let imageUrl = $state<string | null>(null);
   let loading = $state(true);
-  let error: string | null = $state(null);
+  let error = $state<string | null>(null);
 
   let lightboxOpen = $state(false);
   let editing = $state(false);
   let editTitle = $state('');
   let editDescription = $state('');
-  let editSections: RecipeSection[] = $state([]);
-  let saveError: string | null = $state(null);
+  let editSections = $state<RecipeSection[]>([]);
+  let saveError = $state<string | null>(null);
 
   // Subscribe to the cook session for this recipe so checkboxes reflect
   // other clients' state in real time. Indices are FLAT across sections

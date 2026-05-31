@@ -280,4 +280,3 @@ func TestMCP_RecipeAddIngredients_GlobalIndexAcrossSections(t *testing.T) {
 	}
 	require.True(t, found, "global index 3 must resolve to second-section first ingredient")
 }
-
