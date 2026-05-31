@@ -28,14 +28,14 @@ import (
 // Recipe is the stored representation of a recipe. It is NOT projected from
 // events; recipes live in their own JSON files outside the event log.
 type Recipe struct {
-	ID            string       `json:"id"`
-	Title         string       `json:"title"`
-	Ingredients   []Ingredient `json:"ingredients"`
-	Instructions  []string     `json:"instructions"`
-	ImageFilename string       `json:"imageFilename"`
-	ImageMIME     string       `json:"imageMime"`
-	CreatedAt     time.Time    `json:"createdAt"`
-	UpdatedAt     time.Time    `json:"updatedAt"`
+	ID            string          `json:"id"`
+	Title         string          `json:"title"`
+	Description   string          `json:"description,omitempty"`
+	Sections      []RecipeSection `json:"sections"`
+	ImageFilename string          `json:"imageFilename"`
+	ImageMIME     string          `json:"imageMime"`
+	CreatedAt     time.Time       `json:"createdAt"`
+	UpdatedAt     time.Time       `json:"updatedAt"`
 }
 
 // Ingredient is one row of a recipe ingredient list.
@@ -57,11 +57,13 @@ type RecipeMeta struct {
 // Bounds enforced for any persisted recipe. Limits guard against
 // LLM-output and PATCH-driven memory/disk DoS.
 const (
-	maxRecipeTitleLen      = 200
-	maxRecipeIngredients   = 50
-	maxRecipeInstructions  = 50
-	maxRecipeStringLen     = 2000
-	maxRecipeMetadataBytes = 256 * 1024
+	maxRecipeTitleLen       = 200
+	maxRecipeIngredients    = 50
+	maxRecipeInstructions   = 50
+	maxRecipeStringLen      = 2000
+	maxRecipeMetadataBytes  = 256 * 1024
+	maxRecipeSections       = 10
+	maxRecipeDescriptionLen = 4000
 )
 
 // allowedImageMimes maps each accepted sniffed MIME to its canonical
@@ -217,6 +219,18 @@ func (s *RecipeStore) findExistingImage(id string) (string, string, bool) {
 
 // ValidateAndNormalize enforces field bounds and trims whitespace.
 // Returned recipe is safe to persist.
+//
+// Section rules:
+//   - whitespace-only Description collapses to "";
+//   - each section is trimmed and its name capped;
+//   - sections with empty ingredient AND instruction lists are dropped
+//     even when named, so an LLM hallucinating a "Sås" heading does
+//     not leave a dangling section in the UI;
+//   - totals across all sections are summed against the same
+//     maxRecipeIngredients / maxRecipeInstructions caps the flat
+//     model used, so multi-section recipes cannot exceed the
+//     deployment-wide budget;
+//   - at least one section with content is required.
 func ValidateAndNormalize(r Recipe) (Recipe, error) {
 	r.Title = strings.TrimSpace(r.Title)
 	if r.Title == "" {
@@ -225,40 +239,69 @@ func ValidateAndNormalize(r Recipe) (Recipe, error) {
 	if len(r.Title) > maxRecipeTitleLen {
 		return r, fmt.Errorf("%w: title too long", ErrRecipeInvalid)
 	}
-	if len(r.Ingredients) > maxRecipeIngredients {
-		return r, fmt.Errorf("%w: too many ingredients", ErrRecipeInvalid)
+
+	r.Description = strings.TrimSpace(r.Description)
+	if len(r.Description) > maxRecipeDescriptionLen {
+		return r, fmt.Errorf("%w: description too long", ErrRecipeInvalid)
 	}
-	if len(r.Instructions) > maxRecipeInstructions {
-		return r, fmt.Errorf("%w: too many instructions", ErrRecipeInvalid)
+
+	if len(r.Sections) > maxRecipeSections {
+		return r, fmt.Errorf("%w: too many sections", ErrRecipeInvalid)
 	}
-	cleanedIng := make([]Ingredient, 0, len(r.Ingredients))
-	for _, ing := range r.Ingredients {
-		ing.Name = strings.TrimSpace(ing.Name)
-		ing.Unit = strings.TrimSpace(ing.Unit)
-		if ing.Name == "" {
+
+	cleanedSections := make([]RecipeSection, 0, len(r.Sections))
+	for _, s := range r.Sections {
+		s.Name = strings.TrimSpace(s.Name)
+		if len(s.Name) > maxRecipeStringLen {
+			return r, fmt.Errorf("%w: section name too long", ErrRecipeInvalid)
+		}
+		cleanedIng := make([]Ingredient, 0, len(s.Ingredients))
+		for _, ing := range s.Ingredients {
+			ing.Name = strings.TrimSpace(ing.Name)
+			ing.Unit = strings.TrimSpace(ing.Unit)
+			if ing.Name == "" {
+				continue
+			}
+			if len(ing.Name) > maxRecipeStringLen {
+				return r, fmt.Errorf("%w: ingredient name too long", ErrRecipeInvalid)
+			}
+			if len(ing.Unit) > maxRecipeStringLen {
+				return r, fmt.Errorf("%w: ingredient unit too long", ErrRecipeInvalid)
+			}
+			cleanedIng = append(cleanedIng, ing)
+		}
+		cleanedSteps := make([]string, 0, len(s.Instructions))
+		for _, step := range s.Instructions {
+			step = strings.TrimSpace(step)
+			if step == "" {
+				continue
+			}
+			if len(step) > maxRecipeStringLen {
+				return r, fmt.Errorf("%w: instruction too long", ErrRecipeInvalid)
+			}
+			cleanedSteps = append(cleanedSteps, step)
+		}
+		s.Ingredients = cleanedIng
+		s.Instructions = cleanedSteps
+		// Drop sections that are entirely empty after trimming. Named
+		// but content-less sections are still dropped (LLM-hallucination
+		// guard); the title alone is not meaningful for cooking.
+		if len(s.Ingredients) == 0 && len(s.Instructions) == 0 {
 			continue
 		}
-		if len(ing.Name) > maxRecipeStringLen {
-			return r, fmt.Errorf("%w: ingredient name too long", ErrRecipeInvalid)
-		}
-		if len(ing.Unit) > maxRecipeStringLen {
-			return r, fmt.Errorf("%w: ingredient unit too long", ErrRecipeInvalid)
-		}
-		cleanedIng = append(cleanedIng, ing)
+		cleanedSections = append(cleanedSections, s)
 	}
-	r.Ingredients = cleanedIng
-	cleanedSteps := make([]string, 0, len(r.Instructions))
-	for _, step := range r.Instructions {
-		step = strings.TrimSpace(step)
-		if step == "" {
-			continue
-		}
-		if len(step) > maxRecipeStringLen {
-			return r, fmt.Errorf("%w: instruction too long", ErrRecipeInvalid)
-		}
-		cleanedSteps = append(cleanedSteps, step)
+
+	if len(cleanedSections) == 0 {
+		return r, fmt.Errorf("%w: recipe must contain at least one section with ingredients or steps", ErrRecipeInvalid)
 	}
-	r.Instructions = cleanedSteps
+	if recipeTotalIngredients(cleanedSections) > maxRecipeIngredients {
+		return r, fmt.Errorf("%w: too many ingredients across sections", ErrRecipeInvalid)
+	}
+	if recipeTotalSteps(cleanedSections) > maxRecipeInstructions {
+		return r, fmt.Errorf("%w: too many instructions across sections", ErrRecipeInvalid)
+	}
+	r.Sections = cleanedSections
 	return r, nil
 }
 

@@ -307,6 +307,45 @@ func (rw *responseWriter) Flush() {
 	}
 }
 
+// SecurityHeadersMiddleware sets a baseline Content-Security-Policy plus
+// the other defense-in-depth headers required by the CSRF/XSS workspace
+// rule. The policy is intentionally strict (no inline script, no eval,
+// no objects, no iframes) and is compatible with the SPA + sanitized
+// markdown rendering pipeline: marked + DOMPurify never emit <style>,
+// <script>, or <img> for descriptions, so the only inline-allowance
+// needed is style-src for Svelte's scoped CSS attributes.
+//
+// Image sidecars are served same-origin from /api/v1/recipes/<id>/image
+// and need img-src 'self'. Recipe upload previews use blob: URLs
+// (URL.createObjectURL on the picked file) and during the OffscreenCanvas
+// resize pipeline we also rely on data: URLs in tests, hence the
+// explicit allowance for both. The realtime command channel is
+// same-origin (TodoList opens `${location.host}/ws`), so connect-src
+// 'self' covers WebSocket too under CSP3 - no need to widen with
+// bare `ws:`/`wss:` which would let any future XSS exfiltrate to any
+// host.
+func SecurityHeadersMiddleware(next http.Handler) http.Handler {
+	const csp = "default-src 'self'; " +
+		"base-uri 'self'; " +
+		"form-action 'self'; " +
+		"frame-ancestors 'none'; " +
+		"script-src 'self'; " +
+		"connect-src 'self'; " +
+		"img-src 'self' blob: data:; " +
+		"style-src 'self' 'unsafe-inline'; " +
+		"object-src 'none'"
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		// Setting these on the response header BEFORE delegating means
+		// they survive even when the wrapped handler writes a body
+		// without explicit WriteHeader.
+		h.Set("Content-Security-Policy", csp)
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // HTTPLoggingMiddleware logs all HTTP requests with comprehensive details
 // including IP addresses, headers, response time, and standard HTTP fields
 func HTTPLoggingMiddleware(next http.Handler) http.Handler {

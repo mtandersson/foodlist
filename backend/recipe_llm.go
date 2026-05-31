@@ -27,10 +27,16 @@ const (
 	recipeLLMMaxRespBytes  = 256 * 1024
 	recipeLLMRequestSchema = `{
   "title": "string (required, <= 200 chars)",
-  "ingredients": [
-    {"amount": "number or null", "unit": "short string", "name": "string (required)"}
-  ],
-  "instructions": ["string", "..."]
+  "description": "string (optional, light markdown: **fet**, *kursiv*, listor, citat, länkar, ### och mindre rubriker, inline-kod; INTE råa HTML-taggar, bilder, eller # / ##)",
+  "sections": [
+    {
+      "name": "string (\"\" för enkla recept; annars rubriker som 'Sås', 'Sallad')",
+      "ingredients": [
+        {"amount": "number or null", "unit": "short string", "name": "string (required)"}
+      ],
+      "instructions": ["string", "..."]
+    }
+  ]
 }`
 )
 
@@ -113,8 +119,16 @@ type llmChatResponse struct {
 }
 
 // rawRecipeResponse is the JSON shape the model is asked to emit.
+// Only the sectioned shape is accepted; rawToRecipe maps it straight
+// to a Recipe that ValidateAndNormalize will then trim and bounds-check.
 type rawRecipeResponse struct {
-	Title        string          `json:"title"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Sections    []rawRecipeSection `json:"sections"`
+}
+
+type rawRecipeSection struct {
+	Name         string          `json:"name"`
 	Ingredients  []rawIngredient `json:"ingredients"`
 	Instructions []string        `json:"instructions"`
 }
@@ -123,6 +137,26 @@ type rawIngredient struct {
 	Amount *float64 `json:"amount"`
 	Unit   string   `json:"unit"`
 	Name   string   `json:"name"`
+}
+
+func rawToRecipe(raw rawRecipeResponse) Recipe {
+	sections := make([]RecipeSection, 0, len(raw.Sections))
+	for _, s := range raw.Sections {
+		ings := make([]Ingredient, 0, len(s.Ingredients))
+		for _, ing := range s.Ingredients {
+			ings = append(ings, Ingredient(ing))
+		}
+		sections = append(sections, RecipeSection{
+			Name:         s.Name,
+			Ingredients:  ings,
+			Instructions: s.Instructions,
+		})
+	}
+	return Recipe{
+		Title:       raw.Title,
+		Description: raw.Description,
+		Sections:    sections,
+	}
 }
 
 // ParseImage uploads imageBytes to the LLM and returns the validated
@@ -141,8 +175,13 @@ func (c *RecipeLLMClient) ParseImage(ctx context.Context, imageBytes []byte, mim
 		"Svara på svenska. Använd metriska enheter (dl, ml, l, g, kg, st, msk, tsk, krm).",
 		"Returnera ENDAST giltig JSON i exakt detta format (utan kommentarer):",
 		recipeLLMRequestSchema,
-		"Om bilden inte är ett recept, returnera ett tomt title och tomma listor.",
-		fmt.Sprintf("Maximalt %d ingredienser och %d instruktioner. Varje sträng <= %d tecken.", maxRecipeIngredients, maxRecipeInstructions, maxRecipeStringLen),
+		"Om bilden inte är ett recept, returnera ett tomt title och en tom sections-array.",
+		fmt.Sprintf("Maximalt %d ingredienser och %d instruktioner TOTALT över alla sektioner. Varje sträng <= %d tecken.", maxRecipeIngredients, maxRecipeInstructions, maxRecipeStringLen),
+		"Beskrivning (`description`): extrahera intro-text, portioner, tillagningstid och källa/byline. Behåll radbrytningar och stycken. Om receptet saknar dessa, lämna `description` tom (`\"\"`). Använd markdown bara när källan har formatering att bevara. Tillåtna markdown-element: **fet**, *kursiv*, listor (`- ` / `1. `), blockcitat (`> `), länkar `[text](url)`, rubriker `###` eller mindre, inline-kod med backticks. INTE råa HTML-taggar, bilder, eller `#`/`##`.",
+		"Flytta aldrig sektionsrubriker (t.ex. \"Sås\") till `description` — använd `sections[].name`.",
+		"Dela upp i sektioner när källan har rubriker som \"Sås\", \"Sallad\", \"Topping\". Enkla recept ska ha EXAKT en sektion med `name: \"\"` — uppfinn inte namn som \"Övrigt\" eller \"Huvudrätt\".",
+		"Exempel (enkelt): {\"description\":\"\",\"sections\":[{\"name\":\"\",\"ingredients\":[…],\"instructions\":[…]}]}",
+		"Exempel (rikt intro): {\"description\":\"**4 portioner** · ca 30 min\\n\\n> Ett enkelt vardagsrecept.\",\"sections\":[…]}",
 	}, "\n")
 
 	userPrompt := "Extrahera receptet från bilden."
@@ -235,15 +274,7 @@ func (c *RecipeLLMClient) ParseImage(ctx context.Context, imageBytes []byte, mim
 		return Recipe{}, fmt.Errorf("%w: cannot decode payload", ErrLLMResponse)
 	}
 
-	recipe := Recipe{
-		Title:        raw.Title,
-		Ingredients:  make([]Ingredient, 0, len(raw.Ingredients)),
-		Instructions: raw.Instructions,
-	}
-	for _, ing := range raw.Ingredients {
-		recipe.Ingredients = append(recipe.Ingredients, Ingredient(ing))
-	}
-
+	recipe := rawToRecipe(raw)
 	cleaned, err := ValidateAndNormalize(recipe)
 	if err != nil {
 		slog.Warn("recipe llm payload invalid", append(logAttrs, "error_class", "validate")...)

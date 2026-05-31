@@ -3,7 +3,7 @@ import type {
   RecipeDetailResponse,
   RecipeParseResponse,
   Recipe,
-  Ingredient,
+  RecipeSection,
 } from "./types"
 
 /**
@@ -117,8 +117,8 @@ export async function parseRecipeImage(
 
 export interface RecipeMetadataInput {
   title: string
-  ingredients: Ingredient[]
-  instructions: string[]
+  description?: string
+  sections: RecipeSection[]
 }
 
 export async function saveRecipe(
@@ -141,7 +141,7 @@ export async function saveRecipe(
 
 export async function updateRecipe(
   id: string,
-  patch: Partial<Pick<Recipe, "title" | "ingredients" | "instructions">>
+  patch: Partial<Pick<Recipe, "title" | "description" | "sections">>
 ): Promise<RecipeDetailResponse> {
   const resp = await fetch(`${recipeApiBase()}/api/v1/recipes/${encodeURIComponent(id)}`, {
     method: "PATCH",

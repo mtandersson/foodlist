@@ -249,11 +249,24 @@ export interface Ingredient {
   name: string
 }
 
+// Sections group ingredients + instructions under an optional heading
+// (e.g. "Sås", "Sallad"). A recipe with no logical grouping uses a
+// single section with name === "". This is the ONLY accepted on-wire
+// shape: there is no legacy flat-list compatibility path. Adding a
+// new top-level recipe field requires touching the Go Recipe struct,
+// ValidateAndNormalize, recipePatchBody, the LLM raw schema/prompt,
+// the MCP renderer, AND this file plus the editors.
+export interface RecipeSection {
+  name: string
+  ingredients: Ingredient[]
+  instructions: string[]
+}
+
 export interface Recipe {
   id: string
   title: string
-  ingredients: Ingredient[]
-  instructions: string[]
+  description?: string
+  sections: RecipeSection[]
   imageFilename: string
   imageMime: string
   createdAt: string
