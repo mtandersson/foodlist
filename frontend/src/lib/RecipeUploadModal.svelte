@@ -19,17 +19,21 @@
     | { kind: 'review'; image: Blob }
     | { kind: 'saving'; image: Blob };
 
-  let step: Step = $state({ kind: 'pick' });
-  let parseError: string | null = $state(null);
-  let saveError: string | null = $state(null);
+  // Use the $state<T> type parameter (not a `: T | null` annotation
+  // on the let) so Svelte 5 runes preserve the union under
+  // tsconfig.app.json's stricter typecheck; the annotation form
+  // narrows to `null` and breaks downstream property access.
+  let step = $state<Step>({ kind: 'pick' });
+  let parseError = $state<string | null>(null);
+  let saveError = $state<string | null>(null);
   // Hold the normalized image once and reuse it for both parse and save
   // so we never re-pick or re-upload on retry.
-  let imageBlob: Blob | null = $state(null);
-  let imageUrl: string | null = $state(null);
+  let imageBlob = $state<Blob | null>(null);
+  let imageUrl = $state<string | null>(null);
 
   let title = $state('');
   let description = $state('');
-  let sections: RecipeSection[] = $state([]);
+  let sections = $state<RecipeSection[]>([]);
 
   let parseAbort: AbortController | null = null;
   let saveAbort: AbortController | null = null;
