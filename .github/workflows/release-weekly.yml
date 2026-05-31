@@ -1,0 +1,59 @@
+name: Weekly Dependency Release
+
+# Rolls up accumulated `chore(deps): ...` commits into a single patch release
+# once a week. `chore` commits do not trigger a release on their own (see
+# `.releaserc.cjs`). This workflow checks for unreleased commits since the
+# last tag and, if any exist, pushes an empty `fix(deps): ...` commit to
+# `main`. That push then flows through `release.yml` and produces exactly one
+# patch release containing the week's dependency updates in the changelog.
+
+on:
+  schedule:
+    # Monday 06:00 UTC — runs ~3h after Renovate (Mon 03:00 UTC) so any
+    # auto-merges have time to land on `main` before the roll-up.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-weekly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  force-release:
+    name: Force weekly dependency release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          # Use PAT so the resulting push to `main` triggers `release.yml`.
+          # The default GITHUB_TOKEN does not trigger other workflows.
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Create empty release commit if there are unreleased changes
+        run: |
+          set -euo pipefail
+
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            echo "No tags found; counting all commits on main."
+            COMMITS=$(git rev-list --count HEAD)
+          else
+            echo "Last tag: $LAST_TAG"
+            COMMITS=$(git rev-list --count "$LAST_TAG"..HEAD)
+          fi
+
+          echo "Unreleased commits: $COMMITS"
+
+          if [ "$COMMITS" -gt 0 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "fix(deps): weekly dependency release"
+            git push origin HEAD:main
+          else
+            echo "No unreleased commits since $LAST_TAG; skipping."
+          fi

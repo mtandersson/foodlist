@@ -1,5 +1,8 @@
 // Semantic-release configuration
-// - Always publish patch releases for `chore` commits
+// - `chore` commits do NOT trigger a release on push to `main`.
+//   They accumulate on `main` and are rolled up into a single patch release
+//   once per week by `.github/workflows/release-weekly.yml`, which creates
+//   an empty `fix(deps): weekly dependency release` commit.
 const releaseRules = [
   {type: "feat", release: "minor"},
   {type: "fix", release: "patch"},
@@ -12,7 +15,7 @@ const releaseRules = [
   {type: "test", release: false},
   {type: "build", release: false},
   {type: "ci", release: false},
-  {type: "chore", release: "patch"},
+  {type: "chore", release: false},
   {breaking: true, release: "major"},
 ]
 
