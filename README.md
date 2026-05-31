@@ -12,6 +12,14 @@ A real-time, event-sourced todo list application built with Go, Svelte, and WebS
 - Structured logging with multiple formats
 - **IP-based access control with CIDR whitelisting**
 - **Secret path routing for secure access**
+- **Recipes (Recept) tab**: upload a photo, parse it with a vision LLM,
+  add ingredients to the shopping list, and step through instructions
+  in a shared "cook mode". Recipe routes carry no application-level
+  auth — they are protected by `SHARED_SECRET` (non-guessable URL
+  prefix) and `CIDR_WHITELIST` (IP whitelist on the whole mux), the
+  same boundary the rest of the app relies on. See
+  [`backend/CONFIG.md`](backend/CONFIG.md) for env vars and the
+  SSRF/path-traversal/XSS hardening details.
 
 ## Quick Start
 

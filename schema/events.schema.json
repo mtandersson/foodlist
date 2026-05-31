@@ -17,10 +17,14 @@
       "type": "object",
       "properties": {
         "type": {"const": "CreateTodo"},
+        "commandId": {"type": "string"},
         "id": {"type": "string", "format": "uuid"},
         "name": {"type": "string"},
         "sortOrder": {"type": "integer"},
-        "categoryId": {"type": ["string", "null"], "format": "uuid"}
+        "categoryId": {"type": ["string", "null"], "format": "uuid"},
+        "count": {"type": ["number", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "originalInput": {"type": "string"}
       },
       "required": ["type", "id", "name"],
       "additionalProperties": false
@@ -301,7 +305,9 @@
       "type": "object",
       "description": "Optional server-side feature flags surfaced to clients",
       "properties": {
-        "suggestions": {"type": "boolean"}
+        "suggestions": {"type": "boolean"},
+        "recipes": {"type": "boolean"},
+        "recipesParse": {"type": "boolean"}
       },
       "additionalProperties": false
     },
@@ -362,6 +368,82 @@
         "requestId": {"type": "string"}
       },
       "required": ["type", "query", "requestId"],
+      "additionalProperties": false
+    },
+    "CookCheckStep": {
+      "type": "object",
+      "description": "Mark a recipe step as checked in the shared cook session (ephemeral, not persisted as event)",
+      "properties": {
+        "type": {"const": "CookCheckStep"},
+        "commandId": {"type": "string"},
+        "recipeId": {"type": "string", "format": "uuid"},
+        "stepIndex": {"type": "integer", "minimum": 0}
+      },
+      "required": ["type", "recipeId", "stepIndex"],
+      "additionalProperties": false
+    },
+    "CookUncheckStep": {
+      "type": "object",
+      "description": "Unmark a recipe step in the shared cook session",
+      "properties": {
+        "type": {"const": "CookUncheckStep"},
+        "commandId": {"type": "string"},
+        "recipeId": {"type": "string", "format": "uuid"},
+        "stepIndex": {"type": "integer", "minimum": 0}
+      },
+      "required": ["type", "recipeId", "stepIndex"],
+      "additionalProperties": false
+    },
+    "CookReset": {
+      "type": "object",
+      "description": "Reset the cook session for a recipe (clears all checked steps)",
+      "properties": {
+        "type": {"const": "CookReset"},
+        "commandId": {"type": "string"},
+        "recipeId": {"type": "string", "format": "uuid"}
+      },
+      "required": ["type", "recipeId"],
+      "additionalProperties": false
+    },
+    "CookStateChanged": {
+      "type": "object",
+      "description": "Server broadcast: cook session state changed for a recipe",
+      "properties": {
+        "type": {"const": "CookStateChanged"},
+        "recipeId": {"type": "string", "format": "uuid"},
+        "checkedSteps": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0}
+        }
+      },
+      "required": ["type", "recipeId", "checkedSteps"],
+      "additionalProperties": false
+    },
+    "CookStateRollup": {
+      "type": "object",
+      "description": "Server snapshot: all current cook sessions, sent to a client on connect",
+      "properties": {
+        "type": {"const": "CookStateRollup"},
+        "sessions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"type": "integer", "minimum": 0}
+          }
+        }
+      },
+      "required": ["type", "sessions"],
+      "additionalProperties": false
+    },
+    "RecipeChanged": {
+      "type": "object",
+      "description": "Server broadcast: a recipe was created, updated, or deleted",
+      "properties": {
+        "type": {"const": "RecipeChanged"},
+        "id": {"type": "string", "format": "uuid"},
+        "deleted": {"type": "boolean"}
+      },
+      "required": ["type", "id", "deleted"],
       "additionalProperties": false
     },
     "AutocompleteResponse": {
@@ -450,7 +532,10 @@
         {"$ref": "#/definitions/RenameCategory"},
         {"$ref": "#/definitions/DeleteCategory"},
         {"$ref": "#/definitions/ReorderCategory"},
-        {"$ref": "#/definitions/SetListTitle"}
+        {"$ref": "#/definitions/SetListTitle"},
+        {"$ref": "#/definitions/CookCheckStep"},
+        {"$ref": "#/definitions/CookUncheckStep"},
+        {"$ref": "#/definitions/CookReset"}
       ]
     },
     "ServerMessage": {
@@ -473,7 +558,10 @@
         {"$ref": "#/definitions/AutocompleteResponse"},
         {"$ref": "#/definitions/SuggestionsRollup"},
         {"$ref": "#/definitions/SuggestionAdded"},
-        {"$ref": "#/definitions/SuggestionRemoved"}
+        {"$ref": "#/definitions/SuggestionRemoved"},
+        {"$ref": "#/definitions/CookStateChanged"},
+        {"$ref": "#/definitions/CookStateRollup"},
+        {"$ref": "#/definitions/RecipeChanged"}
       ]
     },
     "ClientMessage": {

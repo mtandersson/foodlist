@@ -55,7 +55,7 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 		m, _ := r.(map[string]any)
 		uris = append(uris, m["uri"].(string))
 	}
-	for _, want := range []string{mcpResourceState, mcpResourceCategories, mcpResourceTodos, mcpResourceSuggestions} {
+	for _, want := range []string{mcpResourceState, mcpResourceCategories, mcpResourceTodos, mcpResourceSuggestions, mcpResourceRecipes} {
 		require.Contains(t, uris, want, "resources/list should include %s", want)
 	}
 
@@ -93,6 +93,9 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 		"foodlist_list",
 		"foodlist_mark_done",
 		"foodlist_mark_starred",
+		"foodlist_recipe_add_ingredients",
+		"foodlist_recipe_get",
+		"foodlist_recipes_list",
 		"foodlist_suggestions",
 	}, names)
 

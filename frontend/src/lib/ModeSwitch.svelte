@@ -1,14 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
-  export type ViewMode = 'normal' | 'categories' | 'suggestions';
+  export type ViewMode = 'normal' | 'categories' | 'suggestions' | 'recipes';
 
   interface Props {
     value?: ViewMode;
     showSuggestions?: boolean;
+    showRecipes?: boolean;
   }
 
-  let { value = 'normal', showSuggestions = false }: Props = $props();
+  let { value = 'normal', showSuggestions = false, showRecipes = false }: Props = $props();
 
   const dispatch = createEventDispatcher<{ change: ViewMode }>();
 
@@ -48,6 +49,19 @@
     >
       <span class="icon">💡</span>
       <span class="label">Förslag</span>
+    </button>
+  {/if}
+  {#if showRecipes}
+    <button
+      type="button"
+      class:selected={value === 'recipes'}
+      aria-pressed={value === 'recipes'}
+      onclick={() => select('recipes')}
+      title="Recept"
+      aria-label="Recept"
+    >
+      <span class="icon">📖</span>
+      <span class="label">Recept</span>
     </button>
   {/if}
 </div>

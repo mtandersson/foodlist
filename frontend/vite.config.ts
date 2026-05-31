@@ -2,7 +2,7 @@
 import {defineConfig} from "vitest/config"
 import {svelte} from "@sveltejs/vite-plugin-svelte"
 import {VitePWA} from "vite-plugin-pwa"
-import {readFileSync} from "fs"
+import {readFileSync, existsSync} from "fs"
 import {join} from "path"
 
 // Read version from environment variable, VERSION file, or default to "dev"
@@ -46,6 +46,70 @@ function getVersionWithSuffix(): string {
 }
 
 const appVersion = getVersionWithSuffix()
+
+/**
+ * Pull SHARED_SECRET out of a backend `.env` file body. Pure string
+ * function (no fs) so it can be unit-tested in isolation. Honors basic
+ * shell-style quoting and ignores comments.
+ *
+ * Exported because the dev proxy needs to add the same secret-path
+ * prefix the backend mounts every route under (see backend/main.go's
+ * `pathPrefix`). Without it, Vite forwards unprefixed URLs and the
+ * backend's IPWhitelistMiddleware 404s them - the exact symptom
+ * behind "GET /api/v1/recipes/parse 404".
+ */
+export function extractSharedSecretFromEnv(text: string): string {
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith("#")) continue
+    const m = line.match(/^SHARED_SECRET\s*=\s*(.*)$/)
+    if (!m) continue
+    let value = m[1].trim()
+    // Strip a single layer of matching surrounding quotes.
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1)
+    }
+    return value
+  }
+  return ""
+}
+
+/**
+ * Compute the path prefix the dev proxy should prepend to every
+ * request before forwarding to the Go backend. Resolution order:
+ *
+ *   1. VITE_BACKEND_PATH_PREFIX env var (explicit override; empty
+ *      string disables the rewrite).
+ *   2. SHARED_SECRET from backend/.env (auto-detected so the common
+ *      `SHARED_SECRET=dev` setup just works).
+ *   3. Empty string (no rewrite, suitable when the backend has no
+ *      shared secret configured).
+ *
+ * Returns either "" or "/<prefix>" - never with a trailing slash.
+ */
+function getBackendDevPathPrefix(): string {
+  const explicit = process.env.VITE_BACKEND_PATH_PREFIX
+  if (explicit !== undefined) {
+    const trimmed = explicit.replace(/\/$/, "")
+    if (trimmed === "") return ""
+    return trimmed.startsWith("/") ? trimmed : `/${trimmed}`
+  }
+  try {
+    const envPath = join(__dirname, "..", "backend", ".env")
+    if (!existsSync(envPath)) return ""
+    const text = readFileSync(envPath, "utf-8")
+    const secret = extractSharedSecretFromEnv(text)
+    if (secret) return `/${secret}`
+  } catch {
+    // backend/.env unreadable; fall through to no rewrite.
+  }
+  return ""
+}
+
+const backendPathPrefix = getBackendDevPathPrefix()
 
 // https://vite.dev/config/
 export default defineConfig(({mode}) => ({
@@ -154,11 +218,31 @@ export default defineConfig(({mode}) => ({
       "/ws": {
         target: process.env.VITE_BACKEND_URL || "ws://localhost:8080",
         ws: true,
+        // Prepend the backend's secret-path prefix so /ws hits
+        // /<secret>/ws on the backend. Without this, requests bypass
+        // the secret path and rely on whitelisted-IP fallthrough,
+        // which is fragile.
+        rewrite: (path) =>
+          backendPathPrefix ? `${backendPathPrefix}${path}` : path,
       },
-      // MCP streamable HTTP (same origin as dev UI; backend serves /mcp)
+      // MCP streamable HTTP (same origin as dev UI; backend serves /mcp).
+      // /mcp is publicly accessible on the backend, so no rewrite needed.
       "/mcp": {
         target: process.env.VITE_BACKEND_HTTP_URL || "http://localhost:8080",
         changeOrigin: true,
+      },
+      // Recipe REST API (and any future /api/v1/* HTTP endpoints).
+      // Without this, Vite's HTML fallback serves index.html for these
+      // paths, causing the frontend's `resp.json()` to fail with
+      // "JSON.parse: unexpected character at line 1 column 1".
+      // The rewrite prepends the backend's secret-path prefix so
+      // requests reach /<secret>/api/v1/... instead of being 404'd
+      // by IPWhitelistMiddleware.
+      "/api": {
+        target: process.env.VITE_BACKEND_HTTP_URL || "http://localhost:8080",
+        changeOrigin: true,
+        rewrite: (path) =>
+          backendPathPrefix ? `${backendPathPrefix}${path}` : path,
       },
     },
   },

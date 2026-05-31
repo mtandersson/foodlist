@@ -128,7 +128,9 @@ type StateRollup struct {
 
 // FeatureFlags signals server-side capabilities to the client.
 type FeatureFlags struct {
-	Suggestions bool `json:"suggestions,omitempty"`
+	Suggestions  bool `json:"suggestions,omitempty"`
+	Recipes      bool `json:"recipes,omitempty"`
+	RecipesParse bool `json:"recipesParse,omitempty"`
 }
 
 // Suggestion is a "you should probably buy this soon" hint computed on the server.
@@ -323,4 +325,51 @@ type AutocompleteSuggestion struct {
 	Name         string  `json:"name"`
 	CategoryID   *string `json:"categoryId"`
 	CategoryName *string `json:"categoryName"`
+}
+
+// CookCheckStep is a WebSocket command marking a recipe step as checked
+// in the shared cook session. Cook* commands are NOT events: they are
+// not persisted to events.jsonl and do not implement the Event interface.
+type CookCheckStep struct {
+	Type      string `json:"type"`
+	CommandID string `json:"commandId"`
+	RecipeID  string `json:"recipeId"`
+	StepIndex int    `json:"stepIndex"`
+}
+
+// CookUncheckStep clears a step from the shared cook session.
+type CookUncheckStep struct {
+	Type      string `json:"type"`
+	CommandID string `json:"commandId"`
+	RecipeID  string `json:"recipeId"`
+	StepIndex int    `json:"stepIndex"`
+}
+
+// CookReset clears every checked step for a recipe across all clients.
+type CookReset struct {
+	Type      string `json:"type"`
+	CommandID string `json:"commandId"`
+	RecipeID  string `json:"recipeId"`
+}
+
+// CookStateChanged is broadcast after any cook-session mutation.
+type CookStateChanged struct {
+	Type         string `json:"type"`
+	RecipeID     string `json:"recipeId"`
+	CheckedSteps []int  `json:"checkedSteps"`
+}
+
+// CookStateRollup is sent to a client on connect with the full set of
+// active cook sessions so a new tab sees the same state as everyone else.
+type CookStateRollup struct {
+	Type     string           `json:"type"`
+	Sessions map[string][]int `json:"sessions"`
+}
+
+// RecipeChanged tells clients a recipe was created, updated, or deleted
+// so they can refresh their local list/detail caches.
+type RecipeChanged struct {
+	Type    string `json:"type"`
+	ID      string `json:"id"`
+	Deleted bool   `json:"deleted"`
 }

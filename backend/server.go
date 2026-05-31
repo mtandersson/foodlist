@@ -48,6 +48,19 @@ type Server struct {
 	// probably buy soon" hints. Requires the embedding stack; nil when
 	// disabled. Access is safe (nil-checked) from event hooks.
 	suggestions *SuggestionEngine
+
+	// recipeStore (when non-nil) enables the Recipe HTTP API and gates
+	// the recipes feature flag. Cook* commands look up step counts here
+	// to validate stepIndex.
+	recipeStore *RecipeStore
+
+	// cookSessions holds the ephemeral cook-mode state shared between
+	// connected clients. Always non-nil once SetRecipeStore was called.
+	cookSessions *CookSessions
+
+	// recipeLLMEnabled mirrors the configured RecipeLLMClient state.
+	// When true, the client surfaces featureFlags.recipesParse.
+	recipeLLMEnabled bool
 }
 
 // ClientCountMessage informs clients of current connected user count
@@ -80,10 +93,13 @@ func (c BaseCommand) GetCommandID() string { return c.CommandID }
 
 type CreateTodoCommand struct {
 	BaseCommand
-	ID         string  `json:"id"`
-	Name       string  `json:"name"`
-	SortOrder  float64 `json:"sortOrder,omitempty"`
-	CategoryID *string `json:"categoryId,omitempty"`
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	SortOrder     float64  `json:"sortOrder,omitempty"`
+	CategoryID    *string  `json:"categoryId,omitempty"`
+	Count         *float64 `json:"count,omitempty"`
+	Unit          *string  `json:"unit,omitempty"`
+	OriginalInput string   `json:"originalInput,omitempty"`
 }
 
 type CategorizeTodoCommand struct {
@@ -210,6 +226,71 @@ func (s *Server) AutoCategorizeEnabled() bool {
 // SetSuggestionEngine attaches an engine. Pass nil to disable the feature.
 func (s *Server) SetSuggestionEngine(e *SuggestionEngine) {
 	s.suggestions = e
+}
+
+// SetRecipeStore attaches a recipe store and creates an associated cook
+// session table. Pass nil to leave the feature disabled. The store's
+// change hook is wired up so HTTP-driven Save/Update/Delete broadcast a
+// RecipeChanged message and (on Delete) clear the cook session for the
+// removed recipe.
+func (s *Server) SetRecipeStore(store *RecipeStore) {
+	s.recipeStore = store
+	if store == nil {
+		s.cookSessions = nil
+		return
+	}
+	if s.cookSessions == nil {
+		s.cookSessions = NewCookSessions()
+	}
+	// CookSessions invokes this hook under its own mutex right after
+	// every observable mutation. Holding that lock during the
+	// non-blocking enqueue is what guarantees CookStateChanged
+	// messages land on s.broadcast in mutation order; releasing
+	// before enqueue would let two near-simultaneous Check calls
+	// reorder.
+	s.cookSessions.SetBroadcastHook(func(recipeID string, steps []int) {
+		s.enqueueBroadcast(CookStateChanged{
+			Type:         "CookStateChanged",
+			RecipeID:     recipeID,
+			CheckedSteps: steps,
+		}, "CookStateChanged")
+	})
+	store.SetChangeHook(func(id string, deleted bool) {
+		// On delete we Drop the cook session BEFORE broadcasting
+		// RecipeChanged{deleted:true}. This matters for clients
+		// re-entering Cook mode for a deleted recipe id - they
+		// see the empty state rollup before the recipe-gone signal.
+		if deleted && s.cookSessions != nil {
+			s.cookSessions.Drop(id)
+		}
+		s.enqueueBroadcast(RecipeChanged{
+			Type:    "RecipeChanged",
+			ID:      id,
+			Deleted: deleted,
+		}, "RecipeChanged")
+	})
+}
+
+// SetRecipeLLMEnabled flips the recipesParse feature flag. The Server
+// itself does not call the LLM (the HTTP layer owns that); this is just
+// used for the rollup on connect.
+func (s *Server) SetRecipeLLMEnabled(enabled bool) {
+	s.recipeLLMEnabled = enabled
+}
+
+// RecipesEnabled reports whether the recipe HTTP routes are mounted.
+func (s *Server) RecipesEnabled() bool {
+	return s.recipeStore != nil
+}
+
+// CookSessions exposes the cook session table for tests and HTTP hooks.
+func (s *Server) CookSessions() *CookSessions {
+	return s.cookSessions
+}
+
+// RecipeStore exposes the underlying store (nil when disabled).
+func (s *Server) RecipeStore() *RecipeStore {
+	return s.recipeStore
 }
 
 // SuggestionsEnabled reports whether the suggestion engine is configured.
@@ -368,8 +449,13 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		ListTitle:  s.state.GetListTitle(),
 		Version:    version,
 	}
-	if s.SuggestionsEnabled() {
-		rollup.FeatureFlags = &FeatureFlags{Suggestions: true}
+	flags := FeatureFlags{
+		Suggestions:  s.SuggestionsEnabled(),
+		Recipes:      s.RecipesEnabled(),
+		RecipesParse: s.RecipesEnabled() && s.recipeLLMEnabled,
+	}
+	if flags.Suggestions || flags.Recipes || flags.RecipesParse {
+		rollup.FeatureFlags = &flags
 	}
 	rollupData, err := json.Marshal(rollup)
 	if err != nil {
@@ -392,6 +478,24 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			case client.sendCh <- data:
 			default:
 				slog.Warn("client send buffer full, dropping suggestions rollup")
+			}
+		}
+	}
+
+	// Send the cook session rollup so a new tab sees any in-progress
+	// cook sessions other clients have already started.
+	if s.cookSessions != nil {
+		rollup := CookStateRollup{
+			Type:     "CookStateRollup",
+			Sessions: s.cookSessions.Snapshot(),
+		}
+		if data, err := json.Marshal(rollup); err != nil {
+			slog.Error("failed to marshal cook state rollup", "error", err)
+		} else {
+			select {
+			case client.sendCh <- data:
+			default:
+				slog.Warn("client send buffer full, dropping cook state rollup")
 			}
 		}
 	}
@@ -448,6 +552,12 @@ func (s *Server) readPump(client *Client) {
 
 		// Check if this is an autocomplete request first
 		if handled := s.handleAutocompleteRequest(client, message); handled {
+			continue
+		}
+
+		// Cook* commands are dispatched separately because they are NOT
+		// events: they do not flow through applyCommand or the EventStore.
+		if handled := s.handleCookCommand(client, message); handled {
 			continue
 		}
 
@@ -589,6 +699,121 @@ func (s *Server) handleAutocompleteRequest(client *Client, message []byte) bool 
 	return true
 }
 
+// handleCookCommand dispatches Cook* messages without going through the
+// event store. It returns true when the message belonged to the cook
+// family (handled or rejected), false otherwise so the caller can fall
+// back to the event-command parser.
+//
+// Concurrency: CookSessions.Check/Uncheck/Reset invoke the broadcast
+// hook (registered in SetRecipeStore) while still holding the cook
+// mutex. That is what guarantees CookStateChanged messages land on
+// s.broadcast in mutation order even when multiple WS clients race
+// to update the same recipe.
+func (s *Server) handleCookCommand(client *Client, message []byte) bool {
+	var typeCheck struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(message, &typeCheck); err != nil {
+		return false
+	}
+	switch typeCheck.Type {
+	case "CookCheckStep", "CookUncheckStep", "CookReset":
+	default:
+		return false
+	}
+
+	if s.cookSessions == nil || s.recipeStore == nil {
+		s.sendCommandResponse(client, parseCommandIDOnly(message), false, "recipes disabled")
+		return true
+	}
+
+	switch typeCheck.Type {
+	case "CookCheckStep":
+		var cmd CookCheckStep
+		if err := json.Unmarshal(message, &cmd); err != nil {
+			s.sendCommandResponse(client, "", false, "invalid CookCheckStep")
+			return true
+		}
+		recipe, err := s.recipeStore.Get(cmd.RecipeID)
+		if err != nil {
+			s.sendCommandResponse(client, cmd.CommandID, false, "recipe not found")
+			return true
+		}
+		if cmd.StepIndex < 0 || cmd.StepIndex >= len(recipe.Instructions) {
+			s.sendCommandResponse(client, cmd.CommandID, false, "step index out of range")
+			return true
+		}
+		s.cookSessions.Check(cmd.RecipeID, cmd.StepIndex)
+		s.sendCommandResponse(client, cmd.CommandID, true, "")
+		return true
+
+	case "CookUncheckStep":
+		var cmd CookUncheckStep
+		if err := json.Unmarshal(message, &cmd); err != nil {
+			s.sendCommandResponse(client, "", false, "invalid CookUncheckStep")
+			return true
+		}
+		recipe, err := s.recipeStore.Get(cmd.RecipeID)
+		if err != nil {
+			s.sendCommandResponse(client, cmd.CommandID, false, "recipe not found")
+			return true
+		}
+		if cmd.StepIndex < 0 || cmd.StepIndex >= len(recipe.Instructions) {
+			s.sendCommandResponse(client, cmd.CommandID, false, "step index out of range")
+			return true
+		}
+		s.cookSessions.Uncheck(cmd.RecipeID, cmd.StepIndex)
+		s.sendCommandResponse(client, cmd.CommandID, true, "")
+		return true
+
+	case "CookReset":
+		var cmd CookReset
+		if err := json.Unmarshal(message, &cmd); err != nil {
+			s.sendCommandResponse(client, "", false, "invalid CookReset")
+			return true
+		}
+		if _, err := s.recipeStore.Get(cmd.RecipeID); err != nil {
+			s.sendCommandResponse(client, cmd.CommandID, false, "recipe not found")
+			return true
+		}
+		s.cookSessions.Reset(cmd.RecipeID)
+		s.sendCommandResponse(client, cmd.CommandID, true, "")
+		return true
+	}
+	return false
+}
+
+// sendCommandResponse pushes a CommandResponse to a single client. Marshal
+// or buffer-full failures are logged without crashing the read loop.
+func (s *Server) sendCommandResponse(client *Client, commandID string, success bool, errMsg string) {
+	resp := CommandResponse{
+		Type:      "CommandResponse",
+		CommandID: commandID,
+		Success:   success,
+		Error:     errMsg,
+	}
+	data, err := json.Marshal(resp)
+	if err != nil {
+		slog.Error("failed to marshal CommandResponse", "error", err)
+		return
+	}
+	select {
+	case client.sendCh <- data:
+	default:
+		slog.Warn("client send buffer full, dropping CommandResponse")
+	}
+}
+
+// parseCommandIDOnly extracts the commandId field from raw JSON without
+// requiring the full command payload to be valid.
+func parseCommandIDOnly(message []byte) string {
+	var x struct {
+		CommandID string `json:"commandId"`
+	}
+	_ = json.Unmarshal(message, &x)
+	return x.CommandID
+}
+
 // ParseCommand unmarshals incoming JSON into the correct command type
 func ParseCommand(data []byte) (Command, error) {
 	var base BaseCommand
@@ -692,10 +917,37 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 		if trimmedName == "" {
 			return nil, fmt.Errorf("todo name cannot be empty")
 		}
-		parsed := ParseIngredientInput(trimmedName)
-		name := parsed.Name
-		if name == "" {
+		// Structured input takes precedence: if the client supplied
+		// count and unit (e.g. from the recipe ingredient + button),
+		// trust them and skip the natural-language parser. Otherwise
+		// fall back to ParseIngredientInput for free-text entry.
+		var (
+			name          string
+			count         *float64
+			unit          *string
+			originalInput string
+		)
+		if c.Count != nil && c.Unit != nil {
 			name = trimmedName
+			count = c.Count
+			trimmedUnit := strings.TrimSpace(*c.Unit)
+			if trimmedUnit != "" {
+				unit = &trimmedUnit
+			}
+			if strings.TrimSpace(c.OriginalInput) != "" {
+				originalInput = strings.TrimSpace(c.OriginalInput)
+			} else {
+				originalInput = trimmedName
+			}
+		} else {
+			parsed := ParseIngredientInput(trimmedName)
+			name = parsed.Name
+			if name == "" {
+				name = trimmedName
+			}
+			count = parsed.Count
+			unit = parsed.Unit
+			originalInput = parsed.OriginalInput
 		}
 		var categoryID *string
 		if c.CategoryID != nil {
@@ -712,9 +964,9 @@ func (s *Server) commandToEvent(cmd Command) (Event, error) {
 			CreatedAt:     time.Now().UTC(),
 			SortOrder:     sortOrder,
 			CategoryID:    categoryID,
-			Count:         parsed.Count,
-			Unit:          parsed.Unit,
-			OriginalInput: parsed.OriginalInput,
+			Count:         count,
+			Unit:          unit,
+			OriginalInput: originalInput,
 		}, nil
 	case CategorizeTodoCommand:
 		// Validate category exists if provided

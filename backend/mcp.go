@@ -18,6 +18,7 @@ const (
 	mcpResourceState       = "foodlist://state"
 	mcpResourceCategories  = "foodlist://categories"
 	mcpResourceSuggestions = "foodlist://suggestions"
+	mcpResourceRecipes     = "foodlist://recipes"
 	// Legacy URI kept for compatibility with existing MCP clients.
 	mcpResourceTodos = "foodlist://todos"
 )
@@ -335,6 +336,8 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 		return writeResourceJSON(mcpResourceSuggestions, sugs)
 	})
 
+	registerRecipeMCP(s, app, writeResourceJSON)
+
 	return s
 }
 
@@ -347,4 +350,256 @@ func foodlistMCPHandler(app *Server) http.Handler {
 		Stateless:    true,
 		JSONResponse: true,
 	})
+}
+
+// recipeRefIn identifies a single recipe by id.
+type recipeRefIn struct {
+	RecipeID string `json:"recipe_id"`
+}
+
+// recipeAddIngredientsIn lets an agent push some or all of a recipe's
+// ingredients onto the shopping list. When Indexes is empty, every
+// ingredient is added.
+type recipeAddIngredientsIn struct {
+	RecipeID   string  `json:"recipe_id"`
+	Indexes    []int   `json:"indexes,omitempty"`
+	CategoryID *string `json:"category_id,omitempty"`
+}
+
+// registerRecipeMCP wires recipe-related tools and resources. The recipe
+// surface is intentionally read-mostly: only the ingredient-to-shopping
+// list action mutates state, and it goes through ExecuteCommand the same
+// way foodlist_add does, so the resulting events are persisted and
+// broadcast normally. Image uploads, LLM parse, and PATCH/DELETE remain
+// HTTP-only because they are either binary, costly, or destructive in
+// ways that don't suit the JSON-RPC tool surface.
+//
+// Tools and resources nil-check app.recipeStore so the MCP server keeps
+// working in the default-deny configuration where the recipes feature is
+// not mounted.
+func registerRecipeMCP(
+	s *mcp.Server,
+	app *Server,
+	writeResourceJSON func(uri string, v any) (*mcp.ReadResourceResult, error),
+) {
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "foodlist_recipes_list",
+		Description: "List saved recipes as markdown (title + id, newest first). Empty when the recipes feature is disabled.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in struct{}) (*mcp.CallToolResult, any, error) {
+		_ = ctx
+		_ = req
+		_ = in
+		var b strings.Builder
+		b.WriteString("**Recipes**\n\n")
+		if app.recipeStore == nil {
+			b.WriteString("_Recipes feature is disabled._\n")
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
+			}, nil, nil
+		}
+		metas, err := app.recipeStore.List()
+		if err != nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: "failed to list recipes"}},
+				IsError: true,
+			}, nil, nil
+		}
+		if len(metas) == 0 {
+			b.WriteString("_No saved recipes yet._\n")
+		}
+		for _, m := range metas {
+			_, _ = fmt.Fprintf(&b, "- **%s** `%s` (saved %s)\n",
+				m.Title, m.ID, m.CreatedAt.Format(time.RFC3339))
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
+		}, nil, nil
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "foodlist_recipe_get",
+		Description: "Render a single recipe (title, ingredients with optional amount/unit, numbered instructions) as markdown. Use foodlist_recipes_list to discover recipe IDs.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in recipeRefIn) (*mcp.CallToolResult, any, error) {
+		_ = ctx
+		_ = req
+		if app.recipeStore == nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: "Recipes feature is disabled."}},
+				IsError: true,
+			}, nil, nil
+		}
+		// UUID validation happens inside Get; surface a generic message
+		// for unknown ids so we don't leak whether the path was rejected
+		// by the parser or by the filesystem layer.
+		recipe, err := app.recipeStore.Get(in.RecipeID)
+		if err != nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: "Recipe not found."}},
+				IsError: true,
+			}, nil, nil
+		}
+		var b strings.Builder
+		_, _ = fmt.Fprintf(&b, "# %s\n\n", recipe.Title)
+		b.WriteString("## Ingredients\n\n")
+		if len(recipe.Ingredients) == 0 {
+			b.WriteString("_None._\n")
+		}
+		for i, ing := range recipe.Ingredients {
+			line := ing.Name
+			if ing.Amount != nil {
+				if ing.Unit != "" {
+					line = fmt.Sprintf("%g %s %s", *ing.Amount, ing.Unit, ing.Name)
+				} else {
+					line = fmt.Sprintf("%g %s", *ing.Amount, ing.Name)
+				}
+			} else if ing.Unit != "" {
+				line = fmt.Sprintf("%s %s", ing.Unit, ing.Name)
+			}
+			_, _ = fmt.Fprintf(&b, "%d. %s\n", i, line)
+		}
+		b.WriteString("\n## Instructions\n\n")
+		if len(recipe.Instructions) == 0 {
+			b.WriteString("_None._\n")
+		}
+		for i, step := range recipe.Instructions {
+			_, _ = fmt.Fprintf(&b, "%d. %s\n", i+1, step)
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
+		}, nil, nil
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "foodlist_recipe_add_ingredients",
+		Description: "Add a recipe's ingredients to the shopping list as todo items. When 'indexes' is empty, every ingredient is added; otherwise only the listed 0-based indexes (use foodlist_recipe_get to inspect them first). Each item carries its structured count/unit so the bottom-of-list parser is bypassed.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in recipeAddIngredientsIn) (*mcp.CallToolResult, any, error) {
+		_ = ctx
+		_ = req
+		if app.recipeStore == nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: "Recipes feature is disabled."}},
+				IsError: true,
+			}, nil, nil
+		}
+		recipe, err := app.recipeStore.Get(in.RecipeID)
+		if err != nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: "Recipe not found."}},
+				IsError: true,
+			}, nil, nil
+		}
+		// Resolve which ingredient rows to add. We deliberately reject
+		// out-of-range indexes here so a typo in agent input does not
+		// silently skip ingredients.
+		targets := in.Indexes
+		if len(targets) == 0 {
+			targets = make([]int, len(recipe.Ingredients))
+			for i := range recipe.Ingredients {
+				targets[i] = i
+			}
+		} else {
+			seen := make(map[int]struct{}, len(targets))
+			for _, idx := range targets {
+				if idx < 0 || idx >= len(recipe.Ingredients) {
+					return &mcp.CallToolResult{
+						Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("ingredient index %d out of range", idx)}},
+						IsError: true,
+					}, nil, nil
+				}
+				seen[idx] = struct{}{}
+			}
+			// Deduplicate while preserving order.
+			deduped := targets[:0]
+			used := make(map[int]struct{}, len(seen))
+			for _, idx := range targets {
+				if _, ok := used[idx]; ok {
+					continue
+				}
+				used[idx] = struct{}{}
+				deduped = append(deduped, idx)
+			}
+			targets = deduped
+		}
+
+		added := 0
+		var firstErr error
+		for _, idx := range targets {
+			ing := recipe.Ingredients[idx]
+			name := strings.TrimSpace(ing.Name)
+			if name == "" {
+				continue
+			}
+			cmd := CreateTodoCommand{
+				BaseCommand: BaseCommand{Type: "CreateTodo", CommandID: uuid.NewString()},
+				ID:          uuid.NewString(),
+				Name:        name,
+				CategoryID:  in.CategoryID,
+			}
+			// Honor the structured-input precedence: when both count
+			// and a unit are present, the server skips ParseIngredientInput
+			// and trusts these values. Mirroring the frontend "+ button".
+			if ing.Amount != nil && ing.Unit != "" {
+				amt := *ing.Amount
+				unit := ing.Unit
+				cmd.Count = &amt
+				cmd.Unit = &unit
+				cmd.OriginalInput = formatIngredientLine(ing)
+			}
+			if err := app.ExecuteCommand(cmd); err != nil {
+				if firstErr == nil {
+					firstErr = err
+				}
+				continue
+			}
+			added++
+		}
+		if firstErr != nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Added %d ingredient(s); first error: %v", added, firstErr)}},
+				IsError: true,
+			}, nil, nil
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Added %d ingredient(s) from \"%s\".", added, recipe.Title)}},
+		}, nil, nil
+	})
+
+	s.AddResource(&mcp.Resource{
+		URI:         mcpResourceRecipes,
+		Name:        "recipes",
+		Description: "Saved recipes (id, title, image URL, timestamps) as a JSON array. Empty when the recipes feature is disabled.",
+		MIMEType:    "application/json",
+	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		if req.Params.URI != mcpResourceRecipes {
+			return nil, mcp.ResourceNotFoundError(req.Params.URI)
+		}
+		if app.recipeStore == nil {
+			return writeResourceJSON(mcpResourceRecipes, []RecipeMeta{})
+		}
+		metas, err := app.recipeStore.List()
+		if err != nil {
+			return nil, err
+		}
+		if metas == nil {
+			metas = []RecipeMeta{}
+		}
+		return writeResourceJSON(mcpResourceRecipes, metas)
+	})
+}
+
+// formatIngredientLine builds the "2 dl mjölk"-style display string used
+// as the originalInput on TodoCreated when the structured count/unit
+// path is taken.
+func formatIngredientLine(ing Ingredient) string {
+	parts := make([]string, 0, 3)
+	if ing.Amount != nil {
+		parts = append(parts, fmt.Sprintf("%g", *ing.Amount))
+	}
+	if ing.Unit != "" {
+		parts = append(parts, ing.Unit)
+	}
+	if name := strings.TrimSpace(ing.Name); name != "" {
+		parts = append(parts, name)
+	}
+	return strings.Join(parts, " ")
 }
