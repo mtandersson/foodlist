@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 # The syntax directive enables BuildKit `--mount=type=cache` so the Go module
 # cache and Go build cache (which contains compiled cgo C objects from
 # goheif's vendored libde265/dav1d) survive across image builds.
