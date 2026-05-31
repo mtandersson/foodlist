@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -49,11 +50,13 @@ func TestRecipeStore_Save_Get_Delete(t *testing.T) {
 	r := Recipe{
 		ID:    uuid.NewString(),
 		Title: "Pannkakor",
-		Ingredients: []Ingredient{
-			{Name: "Mjölk", Unit: "dl", Amount: ptrFloat(3)},
-			{Name: "Mjöl", Unit: "dl", Amount: ptrFloat(2)},
-		},
-		Instructions: []string{"Vispa", "Stek"},
+		Sections: []RecipeSection{{
+			Ingredients: []Ingredient{
+				{Name: "Mjölk", Unit: "dl", Amount: ptrFloat(3)},
+				{Name: "Mjöl", Unit: "dl", Amount: ptrFloat(2)},
+			},
+			Instructions: []string{"Vispa", "Stek"},
+		}},
 	}
 
 	saved, err := store.Save(r, imgBytes, mime)
@@ -191,24 +194,35 @@ func TestRecipeStore_PixelCap(t *testing.T) {
 func TestValidateAndNormalize(t *testing.T) {
 	r := Recipe{
 		Title: " Pannkakor  ",
-		Ingredients: []Ingredient{
-			{Name: " "}, // empty after trim, dropped
-			{Name: "Mjölk", Unit: "dl"},
-		},
-		Instructions: []string{"  Vispa  ", "", "Stek"},
+		Sections: []RecipeSection{{
+			Name: "  ",
+			Ingredients: []Ingredient{
+				{Name: " "}, // empty after trim, dropped
+				{Name: "Mjölk", Unit: "dl"},
+			},
+			Instructions: []string{"  Vispa  ", "", "Stek"},
+		}},
 	}
 	cleaned, err := ValidateAndNormalize(r)
 	require.NoError(t, err)
 	require.Equal(t, "Pannkakor", cleaned.Title)
-	require.Len(t, cleaned.Ingredients, 1)
-	require.Equal(t, []string{"Vispa", "Stek"}, cleaned.Instructions)
+	require.Len(t, cleaned.Sections, 1)
+	require.Len(t, cleaned.Sections[0].Ingredients, 1)
+	require.Equal(t, []string{"Vispa", "Stek"}, cleaned.Sections[0].Instructions)
+	require.Equal(t, "", cleaned.Sections[0].Name)
 
 	// Title required.
 	_, err = ValidateAndNormalize(Recipe{Title: "  "})
 	require.ErrorIs(t, err, ErrRecipeInvalid)
 
-	// Too many ingredients.
-	tooMany := Recipe{Title: "ok", Ingredients: make([]Ingredient, maxRecipeIngredients+1)}
+	// Too many ingredients across sections (summed).
+	tooMany := Recipe{Title: "ok", Sections: []RecipeSection{{
+		Ingredients: make([]Ingredient, maxRecipeIngredients+1),
+	}}}
+	// Fill names so the empty-name filter doesn't drop them silently.
+	for i := range tooMany.Sections[0].Ingredients {
+		tooMany.Sections[0].Ingredients[i] = Ingredient{Name: fmt.Sprintf("ing-%d", i)}
+	}
 	_, err = ValidateAndNormalize(tooMany)
 	require.ErrorIs(t, err, ErrRecipeInvalid)
 }
@@ -304,9 +318,13 @@ func TestRecipeAPI_CreateGetDelete(t *testing.T) {
 	imgBytes := makeTestPNG(t, 64, 48)
 
 	req, err := multipartCreate(t, imgBytes, map[string]any{
-		"title":        "Min rätt",
-		"ingredients":  []any{map[string]any{"name": "Salt", "unit": "tsk", "amount": 1}},
-		"instructions": []string{"Krydda"},
+		"title": "Min rätt",
+		"sections": []any{
+			map[string]any{
+				"ingredients":  []any{map[string]any{"name": "Salt", "unit": "tsk", "amount": 1}},
+				"instructions": []string{"Krydda"},
+			},
+		},
 	})
 	require.NoError(t, err)
 	rr := httptest.NewRecorder()
@@ -508,9 +526,14 @@ func TestRecipeAPI_AcceptsHEIC(t *testing.T) {
 	require.NoError(t, err)
 
 	req, err := multipartCreate(t, heicBytes, map[string]any{
-		"title":        "Foto från iPhone",
-		"ingredients":  []any{},
-		"instructions": []string{},
+		"title": "Foto från iPhone",
+		"sections": []any{
+			map[string]any{
+				"name":         "",
+				"ingredients":  []any{map[string]any{"name": "Salt"}},
+				"instructions": []string{"Smaka av"},
+			},
+		},
 	})
 	require.NoError(t, err)
 	rr := httptest.NewRecorder()

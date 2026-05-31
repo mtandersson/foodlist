@@ -306,10 +306,15 @@ func (a *RecipeAPI) create(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// recipePatchBody uses pointers so that a PATCH carrying only
+// {description:"x"} cannot silently wipe sections - nil means
+// "not provided", *T means "set to this value". The Ingredients
+// and Instructions fields from the flat shape are no longer
+// accepted; clients send sections instead.
 type recipePatchBody struct {
-	Title        *string       `json:"title,omitempty"`
-	Ingredients  *[]Ingredient `json:"ingredients,omitempty"`
-	Instructions *[]string     `json:"instructions,omitempty"`
+	Title       *string          `json:"title,omitempty"`
+	Description *string          `json:"description,omitempty"`
+	Sections    *[]RecipeSection `json:"sections,omitempty"`
 }
 
 func (a *RecipeAPI) update(w http.ResponseWriter, r *http.Request, id string) {
@@ -330,11 +335,11 @@ func (a *RecipeAPI) update(w http.ResponseWriter, r *http.Request, id string) {
 		if patch.Title != nil {
 			curr.Title = *patch.Title
 		}
-		if patch.Ingredients != nil {
-			curr.Ingredients = *patch.Ingredients
+		if patch.Description != nil {
+			curr.Description = *patch.Description
 		}
-		if patch.Instructions != nil {
-			curr.Instructions = *patch.Instructions
+		if patch.Sections != nil {
+			curr.Sections = *patch.Sections
 		}
 		return curr, nil
 	})
@@ -355,10 +360,11 @@ func (a *RecipeAPI) update(w http.ResponseWriter, r *http.Request, id string) {
 	// If the new step list shrank, prune any out-of-range cook session
 	// indices. PruneAbove fires the cook broadcast hook itself when
 	// the step list changes, so the explicit enqueueBroadcast that
-	// used to live here would have produced a duplicate message.
+	// used to live here would have produced a duplicate message. The
+	// total is summed across sections because cook indices are flat.
 	if a.server != nil {
 		if sessions := a.server.CookSessions(); sessions != nil {
-			sessions.PruneAbove(id, len(updated.Instructions))
+			sessions.PruneAbove(id, recipeTotalSteps(updated.Sections))
 		}
 	}
 

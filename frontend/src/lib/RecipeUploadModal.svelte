@@ -2,7 +2,9 @@
   import { onDestroy } from 'svelte';
   import { fade } from 'svelte/transition';
   import { normalizeImage, parseRecipeImage, saveRecipe } from './recipes';
-  import type { Recipe, Ingredient } from './types';
+  import type { Recipe, RecipeSection } from './types';
+  import { renderMarkdown } from './markdown';
+  import RecipeSectionEditor from './RecipeSectionEditor.svelte';
 
   interface Props {
     onClose: () => void;
@@ -26,8 +28,8 @@
   let imageUrl: string | null = $state(null);
 
   let title = $state('');
-  let ingredients: Ingredient[] = $state([]);
-  let instructions: string[] = $state([]);
+  let description = $state('');
+  let sections: RecipeSection[] = $state([]);
 
   let parseAbort: AbortController | null = null;
   let saveAbort: AbortController | null = null;
@@ -40,14 +42,18 @@
 
   function setRecipeFromParsed(parsed: Recipe) {
     title = parsed.title || '';
-    ingredients = parsed.ingredients?.length
-      ? parsed.ingredients.map((i) => ({
-          amount: i.amount ?? null,
-          unit: i.unit ?? '',
-          name: i.name ?? '',
+    description = parsed.description ?? '';
+    sections = parsed.sections?.length
+      ? parsed.sections.map((s) => ({
+          name: s.name ?? '',
+          ingredients: (s.ingredients ?? []).map((i) => ({
+            amount: i.amount ?? null,
+            unit: i.unit ?? '',
+            name: i.name ?? '',
+          })),
+          instructions: [...(s.instructions ?? [])],
         }))
-      : [{ amount: null, unit: '', name: '' }];
-    instructions = parsed.instructions?.length ? [...parsed.instructions] : [''];
+      : [];
   }
 
   async function handleFile(file: File) {
@@ -83,10 +89,10 @@
       parseError = (e as Error).message || 'Kunde inte tolka receptet';
       step = { kind: 'review', image: blob };
       // Fall back to manual entry on parse failure: empty form, user
-      // can still save without re-uploading the image.
-      if (!title && ingredients.length === 0 && instructions.length === 0) {
-        ingredients = [{ amount: null, unit: '', name: '' }];
-        instructions = [''];
+      // can still save without re-uploading the image. The section
+      // editor seeds an empty section if sections is empty.
+      if (!title && sections.length === 0) {
+        sections = [];
       }
     }
   }
@@ -95,65 +101,56 @@
     parseAbort?.abort();
     if ('image' in step) {
       step = { kind: 'review', image: step.image };
-      ingredients = ingredients.length ? ingredients : [{ amount: null, unit: '', name: '' }];
-      instructions = instructions.length ? instructions : [''];
     } else {
       step = { kind: 'pick' };
     }
   }
 
-  function addIngredient() {
-    ingredients = [...ingredients, { amount: null, unit: '', name: '' }];
-  }
-
-  function removeIngredient(idx: number) {
-    ingredients = ingredients.filter((_, i) => i !== idx);
-  }
-
-  function addInstruction() {
-    instructions = [...instructions, ''];
-  }
-
-  function removeInstruction(idx: number) {
-    instructions = instructions.filter((_, i) => i !== idx);
-  }
-
-  function moveInstruction(idx: number, delta: number) {
-    const target = idx + delta;
-    if (target < 0 || target >= instructions.length) return;
-    const next = [...instructions];
-    [next[idx], next[target]] = [next[target], next[idx]];
-    instructions = next;
-  }
-
   async function handleSave() {
     if (!imageBlob) return;
+    saveError = null;
     if (!title.trim()) {
-      saveError = 'Titel krävs';
+      saveError = 'Titel krävs.';
       return;
     }
-    saveError = null;
+    // Drop sections that wound up empty after trimming. The backend
+    // would do the same, but pruning client-side keeps the wire
+    // payload tight AND lets us produce a Swedish error inline
+    // instead of waiting for a 400 "recipe invalid" round-trip.
+    const trimmedSections = sections
+      .map((s) => ({
+        name: s.name?.trim() ?? '',
+        ingredients: s.ingredients
+          .filter((i) => i.name?.trim())
+          .map((i) => ({
+            amount: i.amount,
+            unit: i.unit?.trim() || '',
+            name: i.name.trim(),
+          })),
+        instructions: s.instructions
+          .filter((line) => line.trim())
+          .map((line) => line.trim()),
+      }))
+      .filter((s) => s.ingredients.length > 0 || s.instructions.length > 0);
+    if (trimmedSections.length === 0) {
+      saveError = 'Lägg till minst en ingrediens eller ett steg innan du sparar.';
+      return;
+    }
     saveAbort = new AbortController();
     step = { kind: 'saving', image: imageBlob };
     try {
       const resp = await saveRecipe(
         {
           title: title.trim(),
-          ingredients: ingredients
-            .filter((i) => i.name.trim())
-            .map((i) => ({
-              amount: i.amount,
-              unit: i.unit?.trim() || '',
-              name: i.name.trim(),
-            })),
-          instructions: instructions.filter((s) => s.trim()).map((s) => s.trim()),
+          description: description.trim(),
+          sections: trimmedSections,
         },
         imageBlob,
         saveAbort.signal
       );
       onSaved(resp.recipe.id);
     } catch (e) {
-      saveError = (e as Error).message || 'Kunde inte spara receptet';
+      saveError = (e as Error).message || 'Kunde inte spara receptet.';
       step = { kind: 'review', image: imageBlob };
     }
   }
@@ -237,85 +234,23 @@
           <input type="text" bind:value={title} maxlength={200} />
         </label>
 
-        <fieldset>
-          <legend>Ingredienser</legend>
-          {#each ingredients as ing, i}
-            <div class="ing-row">
-              <input
-                type="number"
-                step="any"
-                placeholder="Mängd"
-                bind:value={ing.amount}
-                aria-label="Mängd"
-              />
-              <input
-                type="text"
-                placeholder="Enhet (dl, g…)"
-                bind:value={ing.unit}
-                aria-label="Enhet"
-                maxlength={32}
-              />
-              <input
-                type="text"
-                placeholder="Ingrediens"
-                bind:value={ing.name}
-                aria-label="Ingrediens"
-                maxlength={2000}
-              />
-              <button
-                type="button"
-                class="icon-btn"
-                aria-label="Ta bort ingrediens"
-                onclick={() => removeIngredient(i)}
-              >
-                ×
-              </button>
-            </div>
-          {/each}
-          <button type="button" class="secondary" onclick={addIngredient}>
-            + Lägg till ingrediens
-          </button>
-        </fieldset>
+        <label>
+          Beskrivning
+          <textarea
+            bind:value={description}
+            rows="4"
+            maxlength={4000}
+            placeholder="Intro, portioner, källa… Markdown: **fet**, *kursiv*, listor, > citat, [länkar](https://…). Bilder och tabeller stöds inte."
+          ></textarea>
+        </label>
+        {#if description.trim()}
+          <div class="md-preview" aria-label="Förhandsvisning av beskrivning">
+            <span class="md-preview-label">Förhandsvisning</span>
+            <div class="recipe-description">{@html renderMarkdown(description)}</div>
+          </div>
+        {/if}
 
-        <fieldset>
-          <legend>Steg</legend>
-          {#each instructions as _, i}
-            <div class="step-row">
-              <span class="step-num">{i + 1}.</span>
-              <textarea
-                bind:value={instructions[i]}
-                rows="2"
-                aria-label={`Steg ${i + 1}`}
-                maxlength={2000}
-              ></textarea>
-              <div class="step-controls">
-                <button
-                  type="button"
-                  class="icon-btn"
-                  aria-label="Flytta upp"
-                  onclick={() => moveInstruction(i, -1)}
-                  disabled={i === 0}
-                >↑</button>
-                <button
-                  type="button"
-                  class="icon-btn"
-                  aria-label="Flytta ner"
-                  onclick={() => moveInstruction(i, 1)}
-                  disabled={i === instructions.length - 1}
-                >↓</button>
-                <button
-                  type="button"
-                  class="icon-btn"
-                  aria-label="Ta bort steg"
-                  onclick={() => removeInstruction(i)}
-                >×</button>
-              </div>
-            </div>
-          {/each}
-          <button type="button" class="secondary" onclick={addInstruction}>
-            + Lägg till steg
-          </button>
-        </fieldset>
+        <RecipeSectionEditor bind:sections />
 
         {#if saveError}
           <p class="error">{saveError}</p>
@@ -446,44 +381,63 @@
     padding: 0 var(--spacing-sm);
   }
 
-  .ing-row {
-    display: grid;
-    grid-template-columns: 70px 90px 1fr 32px;
-    gap: var(--spacing-xs);
-    align-items: center;
-  }
-
-  .step-row {
-    display: grid;
-    grid-template-columns: 28px 1fr auto;
-    gap: var(--spacing-xs);
-    align-items: start;
-  }
-
-  .step-num {
-    font-weight: var(--font-weight-semibold);
-    padding-top: var(--spacing-sm);
-  }
-
-  .step-controls {
+  /* The preview sits INSIDE the modal/card surface, so it must NOT
+     paint a fill. --surface-muted is white-glass tuned for the
+     colored page background and renders invisible on the white light
+     card and bright-on-dark on the dark card. Dashed border + label
+     is enough visual affordance. */
+  .md-preview {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-  }
-
-  .icon-btn {
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-md);
     background: transparent;
-    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
-    border-radius: var(--radius-sm);
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
     color: var(--text-primary);
   }
 
-  .icon-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  .md-preview-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Scoped description styling shared with RecipeDetailView.
+     Headings are intentionally subdued so they don't compete with
+     the page title (h1) or section labels (h2). */
+  .recipe-description :global(p) {
+    margin: 0 0 var(--spacing-xs);
+  }
+  .recipe-description :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .recipe-description :global(h3),
+  .recipe-description :global(h4),
+  .recipe-description :global(h5),
+  .recipe-description :global(h6) {
+    margin: var(--spacing-xs) 0;
+    font-size: var(--font-size-base);
+    color: var(--text-secondary, var(--text-muted));
+  }
+  .recipe-description :global(blockquote) {
+    margin: 0;
+    padding-left: var(--spacing-sm);
+    border-left: 3px solid var(--border-color, rgba(0, 0, 0, 0.15));
+    color: var(--text-secondary, var(--text-muted));
+  }
+  .recipe-description :global(ul),
+  .recipe-description :global(ol) {
+    margin: 0;
+    padding-left: var(--spacing-md);
+  }
+  .recipe-description :global(a) {
+    color: var(--primary-color);
+  }
+  .recipe-description :global(a)::after {
+    content: ' \2197';
+    font-size: 0.85em;
   }
 
   input,

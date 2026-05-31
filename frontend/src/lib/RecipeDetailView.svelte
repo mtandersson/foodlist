@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
   import { getRecipe, updateRecipe } from './recipes';
-  import type { Recipe } from './types';
+  import type { Recipe, RecipeSection, Ingredient } from './types';
   import type { TodoStore } from './store';
   import { recipeDetailModeStore } from './recipesState';
   import RecipeImageLightbox from './RecipeImageLightbox.svelte';
+  import RecipeSectionEditor from './RecipeSectionEditor.svelte';
+  import { renderMarkdown } from './markdown';
 
   interface Props {
     recipeId: string;
@@ -21,39 +23,53 @@
   let loading = $state(true);
   let error: string | null = $state(null);
 
-  // Normal/Cook is shared, persisted state - bound to the
-  // module-scoped recipeDetailModeStore so the toggle survives a
-  // tab switch with no special handling at the call site. The
-  // store's subscriber writes to localStorage synchronously when
-  // .set() is called, so even a "click Cook -> click Inköp" gesture
-  // can't unmount this component before the save is durable.
-  // See ./recipesState.ts for the rationale.
-
-  // Fullscreen, pinch-zoomable image viewer. Opens on a tap of the
-  // hero image. The user lands back on the same scroll position when
-  // closing because we never unmount the detail view itself.
   let lightboxOpen = $state(false);
   let editing = $state(false);
   let editTitle = $state('');
-  let editIngredients = $state<{amount: number | null; unit: string; name: string}[]>([]);
-  let editInstructions = $state<string[]>([]);
+  let editDescription = $state('');
+  let editSections: RecipeSection[] = $state([]);
+  let saveError: string | null = $state(null);
 
   // Subscribe to the cook session for this recipe so checkboxes reflect
-  // other clients' state in real time.
+  // other clients' state in real time. Indices are FLAT across sections
+  // matching the backend's recipeTotalSteps contract. The subscriptions
+  // live inside $effect so Svelte 5 re-reads `store` and `recipeId`
+  // through their reactive proxies rather than capturing the initial
+  // values once at module evaluation.
   let checkedSet = $state<Set<number>>(new Set());
-  const unsubCook = store.cookSessions.subscribe((m) => {
-    checkedSet = new Set(m.get(recipeId) ?? []);
+  $effect(() => {
+    const unsub = store.cookSessions.subscribe((m) => {
+      checkedSet = new Set(m.get(recipeId) ?? []);
+    });
+    return unsub;
   });
 
-  // Re-fetch when something changes server-side (PATCH from another tab,
-  // step pruning after edit, etc.).
   let lastVersion = -1;
-  const unsubVersion = store.recipesVersion.subscribe((v) => {
-    if (v !== lastVersion) {
-      lastVersion = v;
-      if (lastVersion >= 0) refresh();
-    }
+  $effect(() => {
+    const unsub = store.recipesVersion.subscribe((v) => {
+      if (v !== lastVersion) {
+        lastVersion = v;
+        if (lastVersion >= 0) refresh();
+      }
+    });
+    return unsub;
   });
+
+  // `stepOffsets[i]` is the global zero-based index of the first
+  // step in section i, which keeps the cook checkboxes and the
+  // visual step numbering in sync with the backend's flat
+  // recipeTotalSteps model. Ingredient flattening is not needed in
+  // the UI because the +add button always operates on the row's
+  // direct reference - the MCP server handles 1-based global
+  // ingredient indexing on its own.
+  let sections = $derived<RecipeSection[]>(recipe?.sections ?? []);
+  let isSingleUnnamed = $derived(sections.length === 1 && !sections[0].name);
+  let stepOffsets = $derived(
+    sections.reduce<number[]>((acc, _) => {
+      acc.push(acc.length === 0 ? 0 : acc[acc.length - 1] + sections[acc.length - 1].instructions.length);
+      return acc;
+    }, [])
+  );
 
   async function refresh() {
     loading = true;
@@ -70,61 +86,68 @@
   }
 
   onMount(refresh);
-  onDestroy(() => {
-    unsubCook();
-    unsubVersion();
-  });
 
   function startEdit() {
     if (!recipe) return;
     editTitle = recipe.title;
-    editIngredients = recipe.ingredients.map((i) => ({
-      amount: i.amount ?? null,
-      unit: i.unit ?? '',
-      name: i.name ?? '',
+    editDescription = recipe.description ?? '';
+    editSections = (recipe.sections ?? []).map((s) => ({
+      name: s.name ?? '',
+      ingredients: (s.ingredients ?? []).map((i) => ({
+        amount: i.amount ?? null,
+        unit: i.unit ?? '',
+        name: i.name ?? '',
+      })),
+      instructions: [...(s.instructions ?? [])],
     }));
-    editInstructions = [...recipe.instructions];
+    saveError = null;
     editing = true;
   }
 
   async function saveEdit() {
     if (!recipe) return;
-    try {
-      const resp = await updateRecipe(recipe.id, {
-        title: editTitle.trim(),
-        ingredients: editIngredients
-          .filter((i) => i.name.trim())
+    saveError = null;
+    const trimmedSections = editSections
+      .map((s) => ({
+        name: s.name?.trim() ?? '',
+        ingredients: s.ingredients
+          .filter((i) => i.name?.trim())
           .map((i) => ({
             amount: i.amount,
             unit: i.unit?.trim() || '',
             name: i.name.trim(),
           })),
-        instructions: editInstructions.filter((s) => s.trim()).map((s) => s.trim()),
+        instructions: s.instructions
+          .filter((line) => line.trim())
+          .map((line) => line.trim()),
+      }))
+      .filter((s) => s.ingredients.length > 0 || s.instructions.length > 0);
+    // Client-side guards mirror the backend validator so the user gets
+    // a Swedish, inline error instead of a generic "recipe invalid"
+    // string bubbled up from writeAPIError.
+    if (!editTitle.trim()) {
+      saveError = 'Titel krävs.';
+      return;
+    }
+    if (trimmedSections.length === 0) {
+      saveError = 'Receptet behöver minst en sektion med ingredienser eller steg.';
+      return;
+    }
+    try {
+      const resp = await updateRecipe(recipe.id, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        sections: trimmedSections,
       });
       recipe = resp.recipe;
       imageUrl = resp.imageUrl;
       editing = false;
     } catch (e) {
-      alert('Kunde inte spara ändringarna');
+      saveError = (e as Error).message || 'Kunde inte spara ändringarna.';
     }
   }
 
-  function addEditIngredient() {
-    editIngredients = [...editIngredients, { amount: null, unit: '', name: '' }];
-  }
-  function removeEditIngredient(idx: number) {
-    editIngredients = editIngredients.filter((_, i) => i !== idx);
-  }
-  function addEditInstruction() {
-    editInstructions = [...editInstructions, ''];
-  }
-  function removeEditInstruction(idx: number) {
-    editInstructions = editInstructions.filter((_, i) => i !== idx);
-  }
-
-  function addIngredientToList(idx: number) {
-    if (!recipe) return;
-    const ing = recipe.ingredients[idx];
+  function addIngredientToList(ing: Ingredient) {
     if (!ing || !ing.name.trim()) return;
     const original = formatIngredient(ing);
     store.createTodo(ing.name.trim(), null, {
@@ -142,11 +165,11 @@
     return parts.join(' ');
   }
 
-  function toggleStep(idx: number) {
-    if (checkedSet.has(idx)) {
-      store.cookUncheck(recipeId, idx);
+  function toggleStep(globalIdx: number) {
+    if (checkedSet.has(globalIdx)) {
+      store.cookUncheck(recipeId, globalIdx);
     } else {
-      store.cookCheck(recipeId, idx);
+      store.cookCheck(recipeId, globalIdx);
     }
   }
 
@@ -191,6 +214,20 @@
         </button>
       {/if}
 
+      {#if recipe.description && recipe.description.trim()}
+        <!--
+          {@html} is safe here because renderMarkdown() runs the source
+          through marked + DOMPurify with a narrow allowlist and a
+          URL-validating href hook. The SecurityHeadersMiddleware CSP
+          additionally blocks inline script execution as defense in
+          depth. See frontend/src/lib/markdown.ts for the full
+          allowlist and href sanitization rules.
+        -->
+        <section class="description recipe-description">
+          {@html renderMarkdown(recipe.description)}
+        </section>
+      {/if}
+
       <div class="mode-toggle" role="group" aria-label="Visa-läge">
         <button
           type="button"
@@ -206,97 +243,163 @@
         >Kock-läge</button>
       </div>
 
-      <section class="ingredients">
-        <h2>Ingredienser</h2>
-        {#if recipe.ingredients.length === 0}
-          <p class="empty">Inga ingredienser registrerade.</p>
-        {:else}
-          <ul>
-            {#each recipe.ingredients as ing, i}
-              <li class="ing-row">
-                <span class="ing-text">
-                  {#if ing.amount != null}<strong>{ing.amount}</strong>{' '}{/if}
-                  {#if ing.unit}<span class="unit">{ing.unit}</span>{' '}{/if}
-                  <span class="name">{ing.name}</span>
-                </span>
-                {#if $recipeDetailModeStore === 'normal'}
-                  <button
-                    type="button"
-                    class="add-btn"
-                    aria-label={`Lägg till ${ing.name} i listan`}
-                    onclick={() => addIngredientToList(i)}
-                  >
-                    +
-                  </button>
-                {/if}
-              </li>
-            {/each}
-          </ul>
-        {/if}
-      </section>
-
-      <section class="instructions">
-        <div class="section-header">
-          <h2>Instruktioner</h2>
-          {#if $recipeDetailModeStore === 'cook'}
-            <button type="button" class="secondary" onclick={resetCook}>
-              Återställ
-            </button>
+      {#if isSingleUnnamed}
+        <!-- Single unnamed section renders with the old h2 labels so
+             a recipe with no logical grouping looks identical to the
+             pre-sections layout the user is used to. -->
+        <section class="ingredients">
+          <h2>Ingredienser</h2>
+          {#if sections[0].ingredients.length === 0}
+            <p class="empty">Inga ingredienser registrerade.</p>
+          {:else}
+            <ul>
+              {#each sections[0].ingredients as ing, i}
+                <li class="ing-row">
+                  <span class="ing-text">
+                    {#if ing.amount != null}<strong>{ing.amount}</strong>{' '}{/if}
+                    {#if ing.unit}<span class="unit">{ing.unit}</span>{' '}{/if}
+                    <span class="name">{ing.name}</span>
+                  </span>
+                  {#if $recipeDetailModeStore === 'normal'}
+                    <button
+                      type="button"
+                      class="add-btn"
+                      aria-label={`Lägg till ${ing.name} i listan`}
+                      onclick={() => addIngredientToList(ing)}
+                    >+</button>
+                  {/if}
+                </li>
+              {/each}
+            </ul>
           {/if}
-        </div>
-        {#if recipe.instructions.length === 0}
-          <p class="empty">Inga instruktioner registrerade.</p>
-        {:else}
-          <ol>
-            {#each recipe.instructions as step, i}
-              <li class="step-row" class:checked={$recipeDetailModeStore === 'cook' && checkedSet.has(i)}>
-                {#if $recipeDetailModeStore === 'cook'}
-                  <label class="step-check">
-                    <input
-                      type="checkbox"
-                      checked={checkedSet.has(i)}
-                      onchange={() => toggleStep(i)}
-                      aria-label={`Steg ${i + 1}`}
-                    />
+        </section>
+
+        <section class="instructions">
+          <div class="section-header">
+            <h2>Instruktioner</h2>
+            {#if $recipeDetailModeStore === 'cook'}
+              <button type="button" class="secondary" onclick={resetCook}>Återställ</button>
+            {/if}
+          </div>
+          {#if sections[0].instructions.length === 0}
+            <p class="empty">Inga instruktioner registrerade.</p>
+          {:else}
+            <ol>
+              {#each sections[0].instructions as step, i}
+                <li class="step-row" class:checked={$recipeDetailModeStore === 'cook' && checkedSet.has(i)}>
+                  {#if $recipeDetailModeStore === 'cook'}
+                    <label class="step-check">
+                      <input
+                        type="checkbox"
+                        checked={checkedSet.has(i)}
+                        onchange={() => toggleStep(i)}
+                        aria-label={`Steg ${i + 1}`}
+                      />
+                      <span>{step}</span>
+                    </label>
+                  {:else}
                     <span>{step}</span>
-                  </label>
-                {:else}
-                  <span>{step}</span>
-                {/if}
-              </li>
-            {/each}
-          </ol>
+                  {/if}
+                </li>
+              {/each}
+            </ol>
+          {/if}
+        </section>
+      {:else}
+        <!-- Multi-section or named-single layout: one card per
+             section, with h3 headings (h2 is reserved for the
+             "Redigera" mode label only). Ingredient + step indices
+             stay GLOBAL across sections because the cook session and
+             the backend bounds check use a flat int. -->
+        {#if $recipeDetailModeStore === 'cook'}
+          <div class="cook-toolbar">
+            <button type="button" class="secondary" onclick={resetCook}>Återställ alla</button>
+          </div>
         {/if}
-      </section>
+        {#each sections as section, sIdx}
+          <section class="section-card">
+            <h3>{section.name || `Sektion ${sIdx + 1}`}</h3>
+            {#if section.ingredients.length > 0}
+              <div class="subblock">
+                <h4>Ingredienser</h4>
+                <ul>
+                  {#each section.ingredients as ing}
+                    <li class="ing-row">
+                      <span class="ing-text">
+                        {#if ing.amount != null}<strong>{ing.amount}</strong>{' '}{/if}
+                        {#if ing.unit}<span class="unit">{ing.unit}</span>{' '}{/if}
+                        <span class="name">{ing.name}</span>
+                      </span>
+                      {#if $recipeDetailModeStore === 'normal'}
+                        <button
+                          type="button"
+                          class="add-btn"
+                          aria-label={`Lägg till ${ing.name} i listan`}
+                          onclick={() => addIngredientToList(ing)}
+                        >+</button>
+                      {/if}
+                    </li>
+                  {/each}
+                </ul>
+              </div>
+            {/if}
+            {#if section.instructions.length > 0}
+              <div class="subblock">
+                <h4>Steg</h4>
+                <ol class="manual-numbers">
+                  {#each section.instructions as step, iIdx}
+                    {@const globalIdx = stepOffsets[sIdx] + iIdx}
+                    <li
+                      class="step-row"
+                      class:checked={$recipeDetailModeStore === 'cook' && checkedSet.has(globalIdx)}
+                    >
+                      <span class="step-num">{globalIdx + 1}.</span>
+                      {#if $recipeDetailModeStore === 'cook'}
+                        <label class="step-check">
+                          <input
+                            type="checkbox"
+                            checked={checkedSet.has(globalIdx)}
+                            onchange={() => toggleStep(globalIdx)}
+                            aria-label={`Steg ${globalIdx + 1}`}
+                          />
+                          <span>{step}</span>
+                        </label>
+                      {:else}
+                        <span>{step}</span>
+                      {/if}
+                    </li>
+                  {/each}
+                </ol>
+              </div>
+            {/if}
+          </section>
+        {/each}
+      {/if}
     {:else}
       <h2>Redigera recept</h2>
       <label>
         Titel
         <input type="text" bind:value={editTitle} maxlength={200} />
       </label>
-      <fieldset>
-        <legend>Ingredienser</legend>
-        {#each editIngredients as ing, i}
-          <div class="ing-edit">
-            <input type="number" step="any" placeholder="Mängd" bind:value={ing.amount} />
-            <input type="text" placeholder="Enhet" bind:value={ing.unit} maxlength={32} />
-            <input type="text" placeholder="Ingrediens" bind:value={ing.name} maxlength={2000} />
-            <button type="button" class="icon-btn" onclick={() => removeEditIngredient(i)} aria-label="Ta bort">×</button>
-          </div>
-        {/each}
-        <button type="button" class="secondary" onclick={addEditIngredient}>+ Ingrediens</button>
-      </fieldset>
-      <fieldset>
-        <legend>Steg</legend>
-        {#each editInstructions as _, i}
-          <div class="step-edit">
-            <span class="step-num">{i + 1}.</span>
-            <textarea bind:value={editInstructions[i]} rows="2" maxlength={2000}></textarea>
-            <button type="button" class="icon-btn" onclick={() => removeEditInstruction(i)} aria-label="Ta bort">×</button>
-          </div>
-        {/each}
-        <button type="button" class="secondary" onclick={addEditInstruction}>+ Steg</button>
-      </fieldset>
+      <label>
+        Beskrivning
+        <textarea
+          bind:value={editDescription}
+          rows="4"
+          maxlength={4000}
+          placeholder="Intro, portioner, källa… Markdown: **fet**, *kursiv*, listor, > citat, [länkar](https://…)."
+        ></textarea>
+      </label>
+      {#if editDescription.trim()}
+        <div class="md-preview" aria-label="Förhandsvisning av beskrivning">
+          <span class="md-preview-label">Förhandsvisning</span>
+          <div class="recipe-description">{@html renderMarkdown(editDescription)}</div>
+        </div>
+      {/if}
+      <RecipeSectionEditor bind:sections={editSections} />
+      {#if saveError}
+        <p class="error" role="alert">{saveError}</p>
+      {/if}
       <div class="actions">
         <button type="button" class="secondary" onclick={() => (editing = false)}>Avbryt</button>
         <button type="button" class="primary" onclick={saveEdit}>Spara</button>
@@ -428,6 +531,107 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
+  }
+
+  /* Scoped description styling shared with RecipeUploadModal.
+     Headings stay subdued so they cannot compete with the page
+     title (h1) or section labels (h2/h3). */
+  .description {
+    /* `section` rule above already gives background + padding. */
+  }
+  .recipe-description :global(p) {
+    margin: 0 0 var(--spacing-xs);
+  }
+  .recipe-description :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .recipe-description :global(h3),
+  .recipe-description :global(h4),
+  .recipe-description :global(h5),
+  .recipe-description :global(h6) {
+    margin: var(--spacing-xs) 0;
+    font-size: var(--font-size-base);
+    color: var(--text-secondary, var(--text-muted));
+  }
+  .recipe-description :global(blockquote) {
+    margin: 0;
+    padding-left: var(--spacing-sm);
+    border-left: 3px solid var(--border-color, rgba(0, 0, 0, 0.15));
+    color: var(--text-secondary, var(--text-muted));
+  }
+  .recipe-description :global(ul),
+  .recipe-description :global(ol) {
+    margin: 0;
+    padding-left: var(--spacing-md);
+  }
+  .recipe-description :global(a) {
+    color: var(--primary-color);
+  }
+  .recipe-description :global(a)::after {
+    content: ' \2197';
+    font-size: 0.85em;
+  }
+
+  /* Multi-section card layout. h3 is the section heading; h4 labels
+     the ingredients/steps subblocks. Manual numbering is used in
+     <ol class="manual-numbers"> so the per-section <ol> doesn't
+     reset numbering when we want the GLOBAL step index visible to
+     match the cook session model. */
+  .section-card {
+    /* Inherits the .section base style. */
+  }
+  .section-card h3 {
+    margin: 0 0 var(--spacing-sm);
+    color: var(--text-primary);
+  }
+  .section-card h4 {
+    margin: var(--spacing-sm) 0 var(--spacing-xs);
+    font-size: var(--font-size-base);
+    color: var(--text-secondary, var(--text-muted));
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .subblock {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  .manual-numbers {
+    list-style: none;
+    padding-left: 0;
+  }
+  .manual-numbers .step-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--spacing-xs);
+    align-items: start;
+  }
+  .cook-toolbar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* The preview sits INSIDE the .modal/.card surface, so it must NOT
+     paint a fill. --surface-muted is white-glass tuned for the
+     colored page background and renders invisible on the white light
+     card and bright-on-dark on the dark card. The dashed border plus
+     the "Förhandsvisning" label is enough to separate the preview
+     visually without re-introducing a theme bug. */
+  .md-preview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .md-preview-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .ing-row {
@@ -581,6 +785,11 @@
 
   .status.error {
     color: var(--error-color, #ffb3b3);
+  }
+
+  .error {
+    color: var(--error-color, #c0392b);
+    margin: 0;
   }
 
   .empty {

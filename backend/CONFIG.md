@@ -127,16 +127,44 @@ endpoints kept for AppleScript/HTTP integrations.
 - **Logging**: API key, image bytes, request body, and LLM response body
   are never logged. Only model name, image size, and HTTP status are
   emitted (success or failure).
-- **Stored XSS**: the frontend renders LLM-derived strings via text
-  bindings only; `{@html}` is not used in any `Recipe*.svelte` view.
+- **Stored XSS**: recipe ingredient/instruction/section text is
+  rendered via Svelte text bindings only. The recipe `description`
+  field is the only `{@html}` site in the recipe views; it routes
+  through `frontend/src/lib/markdown.ts`, which parses with `marked`
+  (gfm + breaks, no mangle/headerIds extensions) and sanitizes with
+  `DOMPurify` using a narrow tag allowlist (no `<script>`, `<img>`,
+  `<iframe>`, `<style>`, `<object>`, `<svg>`, no `on*` attributes).
+  Anchor `href` values are validated through `URL` parsing and must
+  begin with `http://`, `https://`, or `mailto:`; user-info, control
+  characters, and protocol-relative URLs are stripped. Links are
+  forced to `target="_blank" rel="noopener noreferrer"`. Tested in
+  `frontend/src/lib/markdown.test.ts`.
+- **Content-Security-Policy**: `SecurityHeadersMiddleware` in
+  `backend/middleware.go` sets a baseline policy on every response:
+  `default-src 'self'`, `script-src 'self'` (no inline, no eval),
+  `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'`,
+  plus `X-Content-Type-Options: nosniff` and
+  `Referrer-Policy: strict-origin-when-cross-origin`. Even if the
+  marked + DOMPurify pipeline ever regressed and emitted an inline
+  `<script>` tag, the browser would refuse to execute it.
+- **MCP untrusted-content banner**: `foodlist_recipe_get` prefixes
+  every response with an explicit warning that the title,
+  description, and steps are user-supplied and must not be treated
+  as agent instructions. This is the prompt-injection mitigation
+  documented in the recipe-sections security review.
 
 **Cook mode** (the shared "check off each step" workflow) is purely
 WebSocket and ephemeral: `Cook*` commands are dispatched by a dedicated
 handler that does NOT touch the event store. Cook session state survives
 multi-client edits but is dropped on server restart and on recipe DELETE,
-and is pruned when a recipe's instructions list shrinks via PATCH. New
-clients receive a `CookStateRollup` snapshot on connect so they sync up
-with whatever any other tab has already checked off.
+and is pruned when a recipe's total step count (summed across all
+sections, via `recipeTotalSteps`) shrinks below a previously-checked
+index after a PATCH. New clients receive a `CookStateRollup` snapshot
+on connect so they sync up with whatever any other tab has already
+checked off. Cook step indices are flat: section 0 contributes 0..N-1,
+section 1 picks up at N, etc. The same flat indexing is exposed to
+the MCP `foodlist_recipe_add_ingredients` tool as a 1-based global
+ingredient index across sections.
 
 MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when the backend runs. It is not behind `SHARED_SECRET`; with `CIDR_WHITELIST` set, `/mcp` is still reachable for whitelisted clients (same idea as public PWA assets). Protect access at the network or reverse-proxy layer if the server is exposed.
 
@@ -157,13 +185,17 @@ JSON array (so an MCP client can still introspect the server).
 - **Tool `foodlist_recipes_list`** — markdown list of saved recipes
   (title + id), newest first.
 - **Tool `foodlist_recipe_get`** — markdown view of a single recipe
-  (title, ingredients with optional amount/unit, numbered instructions).
-  Argument: `recipe_id` (UUID).
+  (title, optional description, one heading per section, ingredients
+  with optional amount/unit, globally numbered instructions). Output
+  always begins with an untrusted-content banner so the calling agent
+  does not treat embedded text as instructions. Argument: `recipe_id`
+  (UUID).
 - **Tool `foodlist_recipe_add_ingredients`** — adds a recipe's ingredients
   to the shopping list as todo items via the same `CreateTodo` event the
-  UI emits. Arguments: `recipe_id`, optional `indexes` (0-based; empty
-  means "all"), optional `category_id`. When an ingredient row carries
-  both `amount` and `unit`, the structured-input precedence kicks in so
+  UI emits. Arguments: `recipe_id`, optional `indexes` (**1-based and
+  global across sections**; empty means "all"), optional `category_id`.
+  When an ingredient row carries both `amount` and `unit`, the
+  structured-input precedence kicks in so
   the server skips `ParseIngredientInput` and trusts those values.
 - **Resource `foodlist://recipes`** — JSON array of recipe metadata
   (id, title, image filename, timestamps).

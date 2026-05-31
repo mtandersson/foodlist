@@ -739,7 +739,10 @@ func (s *Server) handleCookCommand(client *Client, message []byte) bool {
 			s.sendCommandResponse(client, cmd.CommandID, false, "recipe not found")
 			return true
 		}
-		if cmd.StepIndex < 0 || cmd.StepIndex >= len(recipe.Instructions) {
+		// Step indices are flat across all sections - see
+		// recipeTotalSteps and the cook session indexing notes on
+		// CookSessions. Same bound is used for Uncheck below.
+		if cmd.StepIndex < 0 || cmd.StepIndex >= recipeTotalSteps(recipe.Sections) {
 			s.sendCommandResponse(client, cmd.CommandID, false, "step index out of range")
 			return true
 		}
@@ -758,7 +761,7 @@ func (s *Server) handleCookCommand(client *Client, message []byte) bool {
 			s.sendCommandResponse(client, cmd.CommandID, false, "recipe not found")
 			return true
 		}
-		if cmd.StepIndex < 0 || cmd.StepIndex >= len(recipe.Instructions) {
+		if cmd.StepIndex < 0 || cmd.StepIndex >= recipeTotalSteps(recipe.Sections) {
 			s.sendCommandResponse(client, cmd.CommandID, false, "step index out of range")
 			return true
 		}

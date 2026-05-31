@@ -367,6 +367,13 @@ func runHTTPServer() {
 		slog.Warn("shared secret configured but no CIDR whitelist - security features partially disabled")
 	}
 
+	// Apply baseline CSP and security headers. Sits BELOW the access
+	// log so the log line still reports the real status code, but
+	// ABOVE the whitelist + secret-path checks so even 404s and
+	// redirects carry the headers. See SecurityHeadersMiddleware for
+	// the policy rationale (compatible with marked + DOMPurify).
+	handler = SecurityHeadersMiddleware(handler)
+
 	// Wrap with HTTP logging middleware (outermost - logs all requests)
 	handler = HTTPLoggingMiddleware(handler)
 

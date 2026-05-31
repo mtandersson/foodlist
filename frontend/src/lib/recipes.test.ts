@@ -177,8 +177,7 @@ describe("imageUrl rewriting in API responses", () => {
           recipe: {
             id: "abc",
             title: "t",
-            ingredients: [],
-            instructions: [],
+            sections: [],
             imageFilename: "abc.jpg",
             imageMime: "image/jpeg",
             createdAt: "2026-01-01T00:00:00Z",
