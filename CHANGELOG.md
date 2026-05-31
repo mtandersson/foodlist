@@ -1,3 +1,17 @@
+## [1.20.0](https://github.com/mtandersson/foodlist/compare/v1.19.0...v1.20.0) (2026-05-31)
+
+### Features
+
+* **recipes:** multi-section recipes + markdown description ([c11e53d](https://github.com/mtandersson/foodlist/commit/c11e53d0dc9b4fb9c613b3765bae6b3f35a6ce15))
+
+### Bug Fixes
+
+* **ci:** satisfy strict svelte-check + gofmt ([3d4442c](https://github.com/mtandersson/foodlist/commit/3d4442c69c2da267a7e14cd0ff8fd31e96d54179))
+
+### Chores
+
+* **deps:** update docker/dockerfile Docker tag to v1.24 ([9363bf6](https://github.com/mtandersson/foodlist/commit/9363bf6965f6733c215a4996bb1a9886aff5dd22))
+
 ## [1.19.0](https://github.com/mtandersson/foodlist/compare/v1.18.14...v1.19.0) (2026-05-31)
 
 ### Features
