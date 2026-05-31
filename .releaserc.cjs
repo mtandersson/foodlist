@@ -52,37 +52,10 @@ module.exports = {
       "@semantic-release/exec",
       {prepareCmd: "echo ${nextRelease.version} > VERSION"},
     ],
-    [
-      "@semantic-release/github",
-      {
-        assets: [
-          {
-            path: "dist/foodlist-linux-amd64.tar.gz",
-            label: "FoodList for Linux (x64)",
-          },
-          {
-            path: "dist/foodlist-linux-arm64.tar.gz",
-            label: "FoodList for Linux (ARM64)",
-          },
-          {
-            path: "dist/foodlist-darwin-amd64.tar.gz",
-            label: "FoodList for macOS (Intel)",
-          },
-          {
-            path: "dist/foodlist-darwin-arm64.tar.gz",
-            label: "FoodList for macOS (Apple Silicon)",
-          },
-          {
-            path: "dist/foodlist-windows-amd64.zip",
-            label: "FoodList for Windows (x64)",
-          },
-          {
-            path: "dist/foodlist-full.tar.gz",
-            label: "FoodList Complete Package (Linux x64 + Frontend)",
-          },
-        ],
-      },
-    ],
+    // No release assets: the deployable artifact is the multi-arch Docker
+    // image published by the build-and-push job in release.yml. The GitHub
+    // release just carries the tag + changelog.
+    "@semantic-release/github",
     [
       "@semantic-release/git",
       {
