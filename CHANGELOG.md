@@ -1,3 +1,13 @@
+## [1.20.1](https://github.com/mtandersson/foodlist/compare/v1.20.0...v1.20.1) (2026-06-01)
+
+### Bug Fixes
+
+* **deps:** weekly dependency release ([f69a75d](https://github.com/mtandersson/foodlist/commit/f69a75df477bfe035c35658c90ba1c39e51c249e))
+
+### Chores
+
+* **deps:** update marked to v18 ([e863ce8](https://github.com/mtandersson/foodlist/commit/e863ce8a8f9312c4418118145fa3680eaddfc36f))
+
 ## [1.20.0](https://github.com/mtandersson/foodlist/compare/v1.19.0...v1.20.0) (2026-05-31)
 
 ### Features
