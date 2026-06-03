@@ -28,7 +28,7 @@
     "vitest": "^4.1.8"
   },
   "dependencies": {
-    "dompurify": "^3.4.7",
+    "dompurify": "^3.4.8",
     "marked": "^18.0.4"
   }
 }
