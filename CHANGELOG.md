@@ -1,3 +1,26 @@
+## [1.20.2](https://github.com/mtandersson/foodlist/compare/v1.20.1...v1.20.2) (2026-06-08)
+
+### Bug Fixes
+
+* **deps:** weekly dependency release ([be10155](https://github.com/mtandersson/foodlist/commit/be10155f718867e2ada709ce5061e95c1cb7b939))
+
+### Chores
+
+* **deps:** update @types/node to ^24.13.0 ([b76bdba](https://github.com/mtandersson/foodlist/commit/b76bdba66791b7467cda8f9847be48dd222a448a))
+* **deps:** update @types/node to ^24.13.1 ([f6f42bb](https://github.com/mtandersson/foodlist/commit/f6f42bb5cbbf562122a004d5d43eee4b2fb4ab64))
+* **deps:** update azure-sdk-for-go monorepo to v1.22.0 ([0bc7681](https://github.com/mtandersson/foodlist/commit/0bc7681cd300f3336e87be9d767d3bfca1aeb9d6))
+* **deps:** update codecov/codecov-action action to v7 ([ca136ef](https://github.com/mtandersson/foodlist/commit/ca136ef98fb9bab8956ab40688f5fb10e62633a8))
+* **deps:** update dompurify to ^3.4.8 ([084fe4b](https://github.com/mtandersson/foodlist/commit/084fe4ba2946bc8201963ad01319ffed39966636))
+* **deps:** update go module directive to v1.26.4 ([87940d8](https://github.com/mtandersson/foodlist/commit/87940d8a9bf8de12abb625d67bb0f8a6a75730b3))
+* **deps:** update golang Docker tag to v1.26.4 ([7566ac9](https://github.com/mtandersson/foodlist/commit/7566ac9741a52bd0e24b9381159e0c34a32ef269))
+* **deps:** update marked to ^18.0.5 ([6ffb787](https://github.com/mtandersson/foodlist/commit/6ffb787c18c3c051e3850047902e67965e44d25b))
+* **deps:** update svelte to ^5.56.1 ([c78e3ed](https://github.com/mtandersson/foodlist/commit/c78e3edcb7ebd025ac802d391b35c5b4ba4f3cf7))
+* **deps:** update svelte to ^5.56.2 ([cac191d](https://github.com/mtandersson/foodlist/commit/cac191da7c4a8cefca405f1ab27067a750cf63cb))
+* **deps:** update svelte to ^5.56.3 ([211770c](https://github.com/mtandersson/foodlist/commit/211770c99c7663c682e7fe50c6ba9f82ef69d00c))
+* **deps:** update svelte-check to ^4.5.0 ([8152a54](https://github.com/mtandersson/foodlist/commit/8152a54e3572216a63fe3c27385d16b56e88dee1))
+* **deps:** update svelte-check to ^4.6.0 ([82e57c4](https://github.com/mtandersson/foodlist/commit/82e57c4332dcda1cc9c8deb2b690357d7c6b3685))
+* **deps:** update vitest monorepo to ^4.1.8 ([48fcdaa](https://github.com/mtandersson/foodlist/commit/48fcdaa79d4738089188e1c27e2e625f09912817))
+
 ## [1.20.1](https://github.com/mtandersson/foodlist/compare/v1.20.0...v1.20.1) (2026-06-01)
 
 ### Bug Fixes
