@@ -166,7 +166,7 @@ section 1 picks up at N, etc. The same flat indexing is exposed to
 the MCP `foodlist_recipe_add_ingredients` tool as a 1-based global
 ingredient index across sections.
 
-MCP (Model Context Protocol) streamable HTTP is always served at **`/mcp`** when the backend runs. It is not behind `SHARED_SECRET`; with `CIDR_WHITELIST` set, `/mcp` is still reachable for whitelisted clients (same idea as public PWA assets). Protect access at the network or reverse-proxy layer if the server is exposed.
+MCP (Model Context Protocol) streamable HTTP is served at **`/mcp`** and, when `SHARED_SECRET` is configured, also at **`/<secret>/mcp`**. With `CIDR_WHITELIST` active, `/mcp` is reachable only by whitelisted IPs (same posture as `/ws`), while `/<secret>/mcp` remains accessible to any client that knows the shared secret. Protect access at the network or reverse-proxy layer if the server is exposed.
 
 ### MCP: resources vs tools (protocol)
 

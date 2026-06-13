@@ -112,6 +112,20 @@ func TestIPWhitelistMiddleware_WhitelistedIPRedirects(t *testing.T) {
 			wantPath:   "",
 		},
 		{
+			name:       "mcp path allowed for whitelisted IP",
+			path:       "/mcp",
+			ip:         "10.0.0.5:12345",
+			wantStatus: http.StatusOK,
+			wantPath:   "",
+		},
+		{
+			name:       "mcp sub-path allowed for whitelisted IP",
+			path:       "/mcp/message",
+			ip:         "192.168.1.10:54321",
+			wantStatus: http.StatusOK,
+			wantPath:   "",
+		},
+		{
 			name:       "other path returns 404",
 			path:       "/api/test",
 			ip:         "10.0.1.5:12345",
@@ -344,6 +358,9 @@ func TestIPWhitelistMiddleware_NonPWAFilesRestricted(t *testing.T) {
 		"/assets/index.js",
 		"/api/data",
 		"/something.json",
+		"/mcp",
+		"/mcp/message",
+		"/mcp/sse",
 	}
 
 	for _, path := range restrictedPaths {
