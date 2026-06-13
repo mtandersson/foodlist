@@ -51,12 +51,6 @@ func IPWhitelistMiddleware(whitelistCIDRs []string, sharedSecret string, proxyTr
 			return
 		}
 
-		// MCP is mounted at /mcp; allow through whitelist like PWA paths.
-		if isMCPPublicPath(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		// Check if accessing secret path
 		secretPrefix := "/" + sharedSecret + "/"
 		secretRoot := strings.TrimSuffix(secretPrefix, "/") // e.g. "/dev"
@@ -167,6 +161,16 @@ func IPWhitelistMiddleware(whitelistCIDRs []string, sharedSecret string, proxyTr
 			return
 		}
 
+		// MCP streamable HTTP - let through for whitelisted IPs
+		if r.URL.Path == "/mcp" || strings.HasPrefix(r.URL.Path, "/mcp/") {
+			slog.Info("allowing whitelisted IP MCP at root path",
+				"client_ip", clientIP,
+				"path", r.URL.Path,
+			)
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Other paths for whitelisted IPs - return 404 for security
 		slog.Warn("whitelisted IP accessing non-root path without secret",
 			"client_ip", clientIP,
@@ -265,10 +269,6 @@ func isPWAFile(path string) bool {
 	}
 
 	return false
-}
-
-func isMCPPublicPath(path string) bool {
-	return path == mcpHTTPPath || strings.HasPrefix(path, mcpHTTPPath+"/")
 }
 
 // responseWriter wraps http.ResponseWriter to track status code

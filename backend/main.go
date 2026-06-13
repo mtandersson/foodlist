@@ -306,7 +306,11 @@ func runHTTPServer() {
 	mcpHandler := foodlistMCPHandler(server)
 	mux.Handle(mcpHTTPPath, mcpHandler)
 	mux.Handle(mcpHTTPPath+"/", mcpHandler)
-	slog.Info("MCP streamable HTTP", "path", mcpHTTPPath)
+	if cfg.SharedSecret != "" {
+		mux.Handle(pathPrefix+"mcp", mcpHandler)
+		mux.Handle(pathPrefix+"mcp/", mcpHandler)
+	}
+	slog.Info("MCP streamable HTTP", "path", mcpHTTPPath, "secret_path", pathPrefix+"mcp")
 
 	mux.Handle("/api/v1/state", apiBearerAuth(cfg.APIToken, http.HandlerFunc(server.handleAPIState)))
 	mux.Handle("/api/v1/command", apiBearerAuth(cfg.APIToken, http.HandlerFunc(server.handleAPICommand)))
