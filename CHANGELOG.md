@@ -1,3 +1,23 @@
+## [1.20.3](https://github.com/mtandersson/foodlist/compare/v1.20.2...v1.20.3) (2026-06-14)
+
+### Bug Fixes
+
+* **deps:** weekly dependency release ([1e2974e](https://github.com/mtandersson/foodlist/commit/1e2974e57beb25985f50f688ef4501f5d29e3a23))
+
+### Chores
+
+* **deps:** update @types/node to ^24.13.2 ([f594ee5](https://github.com/mtandersson/foodlist/commit/f594ee54dadd08db20c86781cd68227326e757c1))
+* **deps:** update dompurify to ^3.4.10 ([4610d24](https://github.com/mtandersson/foodlist/commit/4610d24539e92742be901305bcd57e2da5dd4d8f))
+* **deps:** update dompurify to ^3.4.9 ([72800a7](https://github.com/mtandersson/foodlist/commit/72800a70fe58301421f81b77246b6ddaf644b9e1))
+* **deps:** update golang:1.26.4-alpine Docker digest to 7a3e500 ([16e8109](https://github.com/mtandersson/foodlist/commit/16e810976bded85097181aa8deb8a6f1571cd355))
+* **deps:** update module golang.org/x/image to v0.42.0 ([69a28c4](https://github.com/mtandersson/foodlist/commit/69a28c47b6205d64abd396c640d1863bf6c7fcc3))
+* **deps:** update module golang.org/x/net to v0.56.0 ([4ee672f](https://github.com/mtandersson/foodlist/commit/4ee672f063b1edb249eee5ac2329286c689262be))
+* **deps:** update module golang.org/x/sync to v0.21.0 ([84e7a65](https://github.com/mtandersson/foodlist/commit/84e7a65592a2322d6f607482ca8e616b0ce840ee))
+* **deps:** update module golang.org/x/sys to v0.46.0 ([a009695](https://github.com/mtandersson/foodlist/commit/a00969548ec384dff7dd7e3dc9e62b3d8a32481e))
+* **deps:** update Node.js to fb71d01 ([9dcd765](https://github.com/mtandersson/foodlist/commit/9dcd765e81b53e92e984665bc1b8ac428de334fd))
+* **deps:** update renovatebot/github-action action to v46.1.15 ([aa9a336](https://github.com/mtandersson/foodlist/commit/aa9a336ac778549f5cacef8fdee2f33b00638236))
+* **deps:** update semantic-release monorepo to ^25.0.5 ([33f3154](https://github.com/mtandersson/foodlist/commit/33f3154aaaa57585cc9a6b5d8cfe719081596214))
+
 ## [1.20.2](https://github.com/mtandersson/foodlist/compare/v1.20.1...v1.20.2) (2026-06-08)
 
 ### Bug Fixes
