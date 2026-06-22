@@ -1,3 +1,23 @@
+## [1.20.4](https://github.com/mtandersson/foodlist/compare/v1.20.3...v1.20.4) (2026-06-22)
+
+### Bug Fixes
+
+* **deps:** weekly dependency release ([eb5da43](https://github.com/mtandersson/foodlist/commit/eb5da4324eed3c9303b619d0dafe49a175400613))
+
+### Chores
+
+* **deps:** update actions/checkout action to v7 ([8b28169](https://github.com/mtandersson/foodlist/commit/8b28169a3b620e5cb4be11a96625a1c16af8f397))
+* **deps:** update docker/dockerfile Docker tag to v1.25 ([1a7ea9a](https://github.com/mtandersson/foodlist/commit/1a7ea9a63f7cc324efb89b94ef9bc9c2a47595c7))
+* **deps:** update dompurify to ^3.4.11 ([36d0f54](https://github.com/mtandersson/foodlist/commit/36d0f54c0db57f4a796323a88af44002facd9203))
+* **deps:** update module github.com/microsoft/kiota-serialization-json-go to v1.1.3 ([939355b](https://github.com/mtandersson/foodlist/commit/939355b31e4d65cd27ce0392502bb50219d4ee44))
+* **deps:** update module golang.org/x/image to v0.43.0 ([ca1e49e](https://github.com/mtandersson/foodlist/commit/ca1e49e6d0b3424a6ea0e934250e3f2d8461887b))
+* **deps:** update node to v24.17.0 ([3d38ae1](https://github.com/mtandersson/foodlist/commit/3d38ae1d16cdac515904c747de9990c74aeb662e))
+* **deps:** update renovatebot/github-action action to v46.1.16 ([207e864](https://github.com/mtandersson/foodlist/commit/207e864c027bd187ecb5487f3ef38d6425b5a0c5))
+* **deps:** update testing-library monorepo to ^5.4.0 ([cf05a0f](https://github.com/mtandersson/foodlist/commit/cf05a0f99dc9881921abca34ab92a7001483f36b))
+* **deps:** update testing-library monorepo to ^5.4.1 ([ca15dbf](https://github.com/mtandersson/foodlist/commit/ca15dbf69c78631f7baedbae38004a1a2b3141d8))
+* **deps:** update uuid to ^14.0.1 ([aebbfa4](https://github.com/mtandersson/foodlist/commit/aebbfa43a5501c14a4c15d3d171ac758748685cb))
+* **deps:** update vitest monorepo to ^4.1.9 ([ba1f6b4](https://github.com/mtandersson/foodlist/commit/ba1f6b4f49140c0e4ece3a96850d5a4adb1def0a))
+
 ## [1.20.3](https://github.com/mtandersson/foodlist/compare/v1.20.2...v1.20.3) (2026-06-14)
 
 ### Bug Fixes
