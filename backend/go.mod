@@ -30,7 +30,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/microsoft/kiota-authentication-azure-go v1.3.1 // indirect
 	github.com/microsoft/kiota-serialization-form-go v1.1.3 // indirect
-	github.com/microsoft/kiota-serialization-json-go v1.1.3 // indirect
+	github.com/microsoft/kiota-serialization-json-go v1.1.4 // indirect
 	github.com/microsoft/kiota-serialization-multipart-go v1.1.2 // indirect
 	github.com/microsoft/kiota-serialization-text-go v1.1.3 // indirect
 	github.com/microsoftgraph/msgraph-sdk-go-core v1.4.1 // indirect
