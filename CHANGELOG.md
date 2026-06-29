@@ -1,3 +1,5 @@
+## [1.20.5](https://github.com/mtandersson/foodlist/compare/v1.20.4...v1.20.5) (2026-06-29)
+
 ## [1.20.4](https://github.com/mtandersson/foodlist/compare/v1.20.3...v1.20.4) (2026-06-22)
 
 ### Bug Fixes
