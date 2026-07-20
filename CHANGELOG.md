@@ -1,3 +1,5 @@
+## [1.20.8](https://github.com/mtandersson/foodlist/compare/v1.20.7...v1.20.8) (2026-07-20)
+
 ## [1.20.7](https://github.com/mtandersson/foodlist/compare/v1.20.6...v1.20.7) (2026-07-13)
 
 ## [1.20.6](https://github.com/mtandersson/foodlist/compare/v1.20.5...v1.20.6) (2026-07-06)
