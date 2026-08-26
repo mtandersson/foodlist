@@ -50,6 +50,7 @@ backend/recipes/
 screenshots/
 backend/.env
 backend/embeddings.jsonl
+backend/secrets/
 
 # Vite PWA dev-server artifacts (regenerated on every `npm run dev`)
 frontend/dev-dist/

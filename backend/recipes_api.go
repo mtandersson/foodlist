@@ -56,7 +56,7 @@ type recipeParseResponse struct {
 // Routes are only mounted when auth is configured (see main.go).
 type RecipeAPI struct {
 	store     *RecipeStore
-	llm       *RecipeLLMClient
+	llm       RecipeImageParser
 	server    *Server
 	pathBase  string
 	parseRate *rateLimiter
@@ -65,7 +65,7 @@ type RecipeAPI struct {
 // NewRecipeAPI constructs the handler. The server is required so that
 // successful Save/Update/Delete (which the store now hooks) and PATCH
 // step-pruning can broadcast WS messages.
-func NewRecipeAPI(store *RecipeStore, llm *RecipeLLMClient, server *Server, pathBase string, parseRPM int) *RecipeAPI {
+func NewRecipeAPI(store *RecipeStore, llm RecipeImageParser, server *Server, pathBase string, parseRPM int) *RecipeAPI {
 	if parseRPM <= 0 {
 		parseRPM = 10
 	}
@@ -243,12 +243,33 @@ func (a *RecipeAPI) parse(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	parsed, err := a.llm.ParseImage(ctx, imgBytes, mime)
 	if err != nil {
-		// The LLM client already logged the error class without leaking
-		// upstream content; emit a generic message to the user.
-		writeAPIError(w, http.StatusUnprocessableEntity, "kunde inte tolka receptet")
+		writeRecipeParseError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, recipeParseResponse{Parsed: parsed})
+}
+
+func writeRecipeParseError(w http.ResponseWriter, err error) {
+	llmErr, ok := asRecipeLLMError(err)
+	if !ok {
+		writeAPIError(w, http.StatusUnprocessableEntity, "kunde inte tolka receptet")
+		return
+	}
+	switch llmErr.Kind {
+	case LLMErrorAuth:
+		writeAPIError(w, http.StatusServiceUnavailable, "OpenAI-inloggningen har gått ut; uppdatera autentiseringsfilen")
+	case LLMErrorQuota:
+		if llmErr.RetryAfterSeconds > 0 {
+			w.Header().Set("Retry-After", fmt.Sprintf("%d", llmErr.RetryAfterSeconds))
+		}
+		writeAPIError(w, http.StatusTooManyRequests, "modellens användningsgräns är tillfälligt nådd")
+	case LLMErrorTimeout:
+		writeAPIError(w, http.StatusGatewayTimeout, "recepttolkningen tog för lång tid")
+	case LLMErrorUpstream, LLMErrorConfig:
+		writeAPIError(w, http.StatusBadGateway, "recepttjänsten är tillfälligt otillgänglig")
+	default:
+		writeAPIError(w, http.StatusUnprocessableEntity, "kunde inte tolka receptet")
+	}
 }
 
 func (a *RecipeAPI) create(w http.ResponseWriter, r *http.Request) {
