@@ -53,6 +53,13 @@ type RecipeLLMClient struct {
 	http    *http.Client
 }
 
+// RecipeImageParser is the provider-neutral dependency used by RecipeAPI.
+// Implementations may use Chat Completions, Responses, or another compatible
+// transport, but must return the same validated Recipe shape.
+type RecipeImageParser interface {
+	ParseImage(ctx context.Context, imageBytes []byte, mime string) (Recipe, error)
+}
+
 // NewRecipeLLMClient validates the configured base URL and returns a
 // client ready to call the LLM. An empty baseURL/apiKey/model returns
 // ErrLLMConfigInvalid so the caller can disable the feature flag.
@@ -74,7 +81,7 @@ func NewRecipeLLMClient(baseURL, apiKey, model string) (*RecipeLLMClient, error)
 		baseURL: u.String(),
 		apiKey:  apiKey,
 		model:   model,
-		http:    &http.Client{Timeout: recipeLLMTimeout},
+		http:    noRedirectHTTPClient(recipeLLMTimeout),
 	}, nil
 }
 
@@ -159,18 +166,8 @@ func rawToRecipe(raw rawRecipeResponse) Recipe {
 	}
 }
 
-// ParseImage uploads imageBytes to the LLM and returns the validated
-// recipe (without ID/timestamps; caller fills those). The function never
-// logs API key, request body, or response body; only model, image size,
-// and HTTP status are emitted.
-func (c *RecipeLLMClient) ParseImage(ctx context.Context, imageBytes []byte, mime string) (Recipe, error) {
-	if _, ok := allowedImageMimes[mime]; !ok {
-		return Recipe{}, ErrUnsupportedImage
-	}
-
-	dataURL := "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(imageBytes)
-
-	systemPrompt := strings.Join([]string{
+func recipeSystemPrompt() string {
+	return strings.Join([]string{
 		"Du är en assistent som tolkar recept från en bild.",
 		"Svara på svenska. Använd metriska enheter (dl, ml, l, g, kg, st, msk, tsk, krm).",
 		"Returnera ENDAST giltig JSON i exakt detta format (utan kommentarer):",
@@ -183,8 +180,20 @@ func (c *RecipeLLMClient) ParseImage(ctx context.Context, imageBytes []byte, mim
 		"Exempel (enkelt): {\"description\":\"\",\"sections\":[{\"name\":\"\",\"ingredients\":[…],\"instructions\":[…]}]}",
 		"Exempel (rikt intro): {\"description\":\"**4 portioner** · ca 30 min\\n\\n> Ett enkelt vardagsrecept.\",\"sections\":[…]}",
 	}, "\n")
+}
 
-	userPrompt := "Extrahera receptet från bilden."
+const recipeUserPrompt = "Extrahera receptet från bilden."
+
+// ParseImage uploads imageBytes to the LLM and returns the validated
+// recipe (without ID/timestamps; caller fills those). The function never
+// logs API key, request body, or response body; only model, image size,
+// and HTTP status are emitted.
+func (c *RecipeLLMClient) ParseImage(ctx context.Context, imageBytes []byte, mime string) (Recipe, error) {
+	if _, ok := allowedImageMimes[mime]; !ok {
+		return Recipe{}, ErrUnsupportedImage
+	}
+
+	dataURL := "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(imageBytes)
 
 	body := llmChatRequest{
 		Model:          c.model,
@@ -195,13 +204,13 @@ func (c *RecipeLLMClient) ParseImage(ctx context.Context, imageBytes []byte, mim
 			{
 				Role: "system",
 				Content: []llmMessageContent{
-					{Type: "text", Text: systemPrompt},
+					{Type: "text", Text: recipeSystemPrompt()},
 				},
 			},
 			{
 				Role: "user",
 				Content: []llmMessageContent{
-					{Type: "text", Text: userPrompt},
+					{Type: "text", Text: recipeUserPrompt},
 					{Type: "image_url", ImageURL: &llmImageURL{URL: dataURL}},
 				},
 			},

@@ -91,11 +91,15 @@ type Config struct {
 
 	// Recipes feature. Storage is enabled when auth is configured (token or
 	// shared-secret + CIDR whitelist) and the directory is writable.
-	// LLM upload/parse is enabled separately when all RECIPE_LLM_* are set.
+	// LLM upload/parse is enabled separately when the selected provider has
+	// complete credentials. An unset provider preserves the legacy three-var
+	// OpenAI-compatible behavior.
 	RecipeDir            string `env:"RECIPE_DIR" envDefault:""`
+	RecipeLLMProvider    string `env:"RECIPE_LLM_PROVIDER" envDefault:""`
 	RecipeLLMBaseURL     string `env:"RECIPE_LLM_BASE_URL" envDefault:""`
 	RecipeLLMAPIKey      string `env:"RECIPE_LLM_API_KEY" envDefault:""`
 	RecipeLLMModel       string `env:"RECIPE_LLM_MODEL" envDefault:""`
+	RecipeLLMAuthFile    string `env:"RECIPE_LLM_AUTH_FILE" envDefault:""`
 	RecipeParseRPM       int    `env:"RECIPE_PARSE_RPM" envDefault:"10"`
 	RecipeMaxImagePixels int    `env:"RECIPE_MAX_IMAGE_PIXELS" envDefault:"24000000"`
 }
@@ -334,18 +338,26 @@ func runHTTPServer() {
 		slog.Error("recipe store init failed", "error", err)
 	} else {
 		server.SetRecipeStore(recipeStore)
-		var llmClient *RecipeLLMClient
-		if cfg.RecipeLLMBaseURL != "" || cfg.RecipeLLMAPIKey != "" || cfg.RecipeLLMModel != "" {
-			c, err := NewRecipeLLMClient(cfg.RecipeLLMBaseURL, cfg.RecipeLLMAPIKey, cfg.RecipeLLMModel)
-			if err != nil {
+		var selection recipeParserSelection
+		if !recipeLLMSecurityConfigured(cfg) {
+			if recipeLLMRequested(cfg) {
+				slog.Warn("recipe llm disabled: SHARED_SECRET and CIDR_WHITELIST are required", "error_class", "security_config")
+			}
+		} else {
+			var selectionErr error
+			selection, selectionErr = selectRecipeImageParser(cfg)
+			if selectionErr != nil {
 				slog.Warn("recipe llm disabled", "error_class", "config")
-			} else {
-				llmClient = c
-				server.SetRecipeLLMEnabled(true)
-				slog.Info("recipe llm enabled", "model", cfg.RecipeLLMModel)
 			}
 		}
-		recipeAPI := NewRecipeAPI(recipeStore, llmClient, server, strings.TrimSuffix(pathPrefix, "/"), cfg.RecipeParseRPM)
+		if selection.Parser != nil {
+			server.SetRecipeLLMEnabled(true)
+			slog.Info("recipe llm enabled", "provider", selection.Provider, "model", selection.Model)
+			if selection.Provider == recipeProviderCodexOAuth {
+				slog.Warn("experimental codex oauth provider enabled; private upstream contract may change")
+			}
+		}
+		recipeAPI := NewRecipeAPI(recipeStore, selection.Parser, server, strings.TrimSuffix(pathPrefix, "/"), cfg.RecipeParseRPM)
 		// Identity wrap: no bearer/cookie auth on recipe routes by design.
 		// IPWhitelistMiddleware (when SHARED_SECRET + CIDR_WHITELIST is
 		// configured) is applied to the whole mux below, which gives the
@@ -353,7 +365,7 @@ func runHTTPServer() {
 		recipeAPI.Register(mux, func(h http.Handler) http.Handler { return h })
 		slog.Info("recipes enabled",
 			"path_base", strings.TrimSuffix(pathPrefix, "/")+"/api/v1/recipes",
-			"llm_enabled", llmClient != nil,
+			"llm_enabled", selection.Parser != nil,
 		)
 	}
 

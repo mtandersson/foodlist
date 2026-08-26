@@ -100,11 +100,41 @@ endpoints kept for AppleScript/HTTP integrations.
 | Variable                   | Default                | Description                                                                                |
 | -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
 | `RECIPE_DIR`               | `<DATA_DIR>/recipes`   | Storage directory. Validated to live inside `DATA_DIR`.                                    |
-| `RECIPE_LLM_BASE_URL`      | _empty_                | OpenAI-compatible base URL (e.g. `https://api.opencode.ai/v1`). Only http(s).              |
-| `RECIPE_LLM_API_KEY`       | _empty_                | Bearer token sent to the LLM. **Never logged**, even on error paths.                       |
-| `RECIPE_LLM_MODEL`         | _empty_                | Vision-capable model name. The frontend `recipesParse` flag goes true only with all three. |
+| `RECIPE_LLM_PROVIDER`      | _empty_                | `openai_compatible`, `openai_api`, or `experimental_codex_oauth`. Empty preserves legacy configuration detection. |
+| `RECIPE_LLM_BASE_URL`      | _empty_                | Base URL used only by `openai_compatible` (e.g. `https://api.opencode.ai/v1`). Only http(s). |
+| `RECIPE_LLM_API_KEY`       | _empty_                | API key for `openai_compatible` or `openai_api`. **Never logged**, even on error paths.     |
+| `RECIPE_LLM_MODEL`         | `gpt-5.6-sol`          | Vision-capable model. The default applies to the two OpenAI providers; compatible mode requires an explicit model. |
+| `RECIPE_LLM_AUTH_FILE`     | `<DATA_DIR>/secrets/recipe-openai-auth.json` | Codex/ChatGPT OAuth JSON used only by the experimental provider. Must be inside `DATA_DIR`, regular, and mode `0600`. |
 | `RECIPE_PARSE_RPM`         | `10`                   | Per-process rate limit on `POST /recipes/parse`. 429 on overflow.                          |
 | `RECIPE_MAX_IMAGE_PIXELS`  | `24000000`             | Decompression-bomb cap; uploads decoded to more pixels are rejected.                       |
+
+Provider setup:
+
+- `openai_compatible`: set provider, base URL, API key, and model. If the
+  provider is omitted, the historical behavior remains: a complete legacy
+  base/key/model triplet enables this mode.
+- `openai_api`: set provider and `RECIPE_LLM_API_KEY`; model defaults to
+  `gpt-5.6-sol`. A ChatGPT subscription does not supply API credits, so this
+  mode requires a separately billed OpenAI Platform API key.
+- `experimental_codex_oauth`: set provider and copy a Codex `auth.json` to
+  `RECIPE_LLM_AUTH_FILE`. The server refreshes and atomically persists tokens.
+  The file and parent directory must be private to the service account with
+  modes `0600` and `0700`; only one FoodList process may lock the file.
+
+LLM parsing is disabled unless both `SHARED_SECRET` and `CIDR_WHITELIST` are
+configured. Recipe storage and editing remain available, but this gate prevents
+an accidentally public deployment from spending provider quota.
+
+The OAuth mode uses an undocumented ChatGPT/Codex backend and can stop working
+without notice. It is deliberately opt-in and never falls back to a billable
+API-key provider. Use a dedicated copied authorization rather than sharing a
+live token file: refresh-token rotation by another Codex/OpenClaw process can
+invalidate FoodList's copy and require copying a newly authenticated file.
+
+The credentialed live test is excluded from normal builds. Run it deliberately
+with `go test -tags=live -run '^TestLiveCodexRecipe$' -v` after setting
+`RECIPE_LLM_AUTH_FILE` and `FOODLIST_LIVE_RECIPE_IMAGE`; it uploads that image
+and may refresh the supplied OAuth file.
 
 **Security properties**:
 
