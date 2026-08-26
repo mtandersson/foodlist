@@ -1,3 +1,31 @@
+## [1.21.0](https://github.com/mtandersson/foodlist/compare/v1.20.12...v1.21.0) (2026-08-26)
+
+### Features
+
+* **recipes:** add OpenAI and Codex OAuth providers ([cc5aab8](https://github.com/mtandersson/foodlist/commit/cc5aab8e47557af0e0cf87c933fc24092f7ecb55))
+
+### Bug Fixes
+
+* **ci:** restore semantic release compatibility ([0cb6409](https://github.com/mtandersson/foodlist/commit/0cb640909e243ada2afdeee91ee015858e4c33dc))
+* **deps:** weekly dependency release ([72293be](https://github.com/mtandersson/foodlist/commit/72293bebffd29afd4db6b08de0427d84fbf4006b))
+
+### Chores
+
+* **deps:** update conventional-changelog-conventionalcommits to ^10.4.0 ([6695462](https://github.com/mtandersson/foodlist/commit/66954622dcc0a55f63bcb9ea38f9e57f80a352d5))
+* **deps:** update dompurify to ^3.4.14 ([64b0918](https://github.com/mtandersson/foodlist/commit/64b0918bd617a326c627dbf8f25fdcf99a43b1bf))
+* **deps:** update gcr.io/distroless/static-debian13:nonroot Docker digest to 1c2c046 ([3d1a958](https://github.com/mtandersson/foodlist/commit/3d1a95842471b4347acd6d0bccf41c341ef29839))
+* **deps:** update go module directive to v1.27.0 ([5ee53f7](https://github.com/mtandersson/foodlist/commit/5ee53f7e396a20e2867e1fcfb2e29f4de22407ef))
+* **deps:** update golang Docker tag to v1.27.0 ([3af2cb1](https://github.com/mtandersson/foodlist/commit/3af2cb1e3128d76c238c4592e6c8687e4a9da37d))
+* **deps:** update marked to ^18.0.10 ([8fa9d00](https://github.com/mtandersson/foodlist/commit/8fa9d0046f806d6f5f092b088e6578df828cc4ca))
+* **deps:** update marked to ^18.0.11 ([55286d8](https://github.com/mtandersson/foodlist/commit/55286d836b9241467a85b269793ae2da6cecd309))
+* **deps:** update module github.com/stretchr/testify to v1.12.0 ([da602c2](https://github.com/mtandersson/foodlist/commit/da602c20c980d465616618a559a68c2d950a025d))
+* **deps:** update module github.com/stretchr/testify to v1.12.1 ([fa6fca8](https://github.com/mtandersson/foodlist/commit/fa6fca87c3084a3141c5345ac9953e13bdff4387))
+* **deps:** update opentelemetry-go monorepo to v1.46.0 ([b08fdda](https://github.com/mtandersson/foodlist/commit/b08fddad2ce6d03f707d25a9e961ae5291115e3a))
+* **deps:** update renovatebot/github-action action to v46.2.4 ([cd9b9f9](https://github.com/mtandersson/foodlist/commit/cd9b9f9cfb79dd1b3ce60a553e584c6d69aa50b2))
+* **deps:** update svelte to ^5.56.10 ([c65f013](https://github.com/mtandersson/foodlist/commit/c65f0132dcf0c0c8d75f063fb4ceecc6d9a978ee))
+* **deps:** update uuid to ^14.0.2 ([5c4852f](https://github.com/mtandersson/foodlist/commit/5c4852f66dc6af4a74673e9ef99b4ff9ac0487d3))
+* **deps:** update vitest monorepo to ^4.1.11 ([2badd43](https://github.com/mtandersson/foodlist/commit/2badd43d99cc1aaf576d870c1b259d78974e4f79))
+
 ## [1.20.12](https://github.com/mtandersson/foodlist/compare/v1.20.11...v1.20.12) (2026-08-17)
 
 ## [1.20.11](https://github.com/mtandersson/foodlist/compare/v1.20.10...v1.20.11) (2026-08-10)
