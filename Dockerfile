@@ -4,7 +4,7 @@
 # goheif's vendored libde265/dav1d) survive across image builds.
 
 # Stage 1: Build Frontend (Svelte/TypeScript)
-FROM node:24.19.0-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS frontend-builder
+FROM node:24.20.0-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS frontend-builder
 
 # Accept VERSION build arg
 ARG VERSION
