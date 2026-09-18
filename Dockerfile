@@ -28,7 +28,7 @@ RUN if [ -n "$VERSION" ]; then \
     fi
 
 # Stage 2: Build Backend (Go)
-FROM golang:1.27.1-alpine@sha256:3f6d04dc61331ee3c2fbbaad62d54412a84680f6a041d269a20a5270a078515b AS backend-builder
+FROM golang:1.27.1-alpine@sha256:4cb7ac979db5fcc41cae44b2227ba5ab8a51e8807f40d9ba4dee20a0ad960b5b AS backend-builder
 
 # Accept VERSION build arg
 ARG VERSION
