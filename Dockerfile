@@ -72,7 +72,7 @@ RUN --mount=type=cache,target=/go/pkg/mod,sharing=locked \
 RUN mkdir -p /app/data
 
 # Stage 3: Final Runtime Image
-FROM gcr.io/distroless/static-debian13:nonroot@sha256:1c2c046bc09ed40fad370b599a0b1ae7987f55b01e247cf27a7c27cd97e5bbc7
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3
 
 WORKDIR /app
 
