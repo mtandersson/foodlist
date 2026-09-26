@@ -211,4 +211,17 @@ describe("imageUrl rewriting in API responses", () => {
       expect(r.imageUrl).toMatch(/\/api\/v1\/recipes\/[ab]\/image$/)
     }
   })
+
+  it("keeps text-only recipes free of image requests", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
+      recipes: [{id: "plain", title: "Plain", imageUrl: "", createdAt: "x", updatedAt: "x"}],
+    }), {status: 200}))
+    expect((await listRecipes()).recipes[0].imageUrl).toBe("")
+
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
+      recipe: {id: "plain", title: "Plain", sections: [], imageFilename: "", imageMime: "", createdAt: "x", updatedAt: "x"},
+      imageUrl: "",
+    }), {status: 200}))
+    expect((await getRecipe("plain")).imageUrl).toBe("")
+  })
 })

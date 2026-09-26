@@ -68,7 +68,7 @@ describe("RecipeDetailView", () => {
     // mutating call (PATCH) chain mockResolvedValueOnce on top.
     fetchMock.mockImplementation(async () =>
       new Response(
-        JSON.stringify({recipe, imageUrl: `/api/v1/recipes/${recipe.id}/image`}),
+        JSON.stringify({recipe, imageUrl: recipe.imageFilename ? `/api/v1/recipes/${recipe.id}/image` : ""}),
         {status: 200, headers: {"Content-Type": "application/json"}}
       )
     )
@@ -93,6 +93,14 @@ describe("RecipeDetailView", () => {
     expect(screen.getByRole("heading", {level: 2, name: "Instruktioner"})).toBeInTheDocument()
     // And it does NOT add a "Sektion 1" placeholder heading.
     expect(screen.queryByText(/Sektion 1/)).not.toBeInTheDocument()
+  })
+
+  it("shows text-only recipes without an image", async () => {
+    mockGet(makeRecipe({imageFilename: "", imageMime: ""}))
+    const {store} = makeStub()
+    render(RecipeDetailView, {props: {recipeId: "r1", store, onBack: vi.fn(), onDelete: vi.fn()}})
+    await waitFor(() => expect(screen.getByText("Tacos")).toBeInTheDocument())
+    expect(screen.queryByRole("img")).not.toBeInTheDocument()
   })
 
   it("multi-section recipe renders one card per section with h3 headings", async () => {

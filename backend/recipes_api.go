@@ -165,7 +165,7 @@ func (a *RecipeAPI) list(w http.ResponseWriter, r *http.Request) {
 		items = append(items, recipeListItem{
 			ID:        m.ID,
 			Title:     m.Title,
-			ImageURL:  a.imageURL(r, m.ID),
+			ImageURL:  a.imageURLForRecipe(r, m.ID, m.ImageFilename),
 			CreatedAt: m.CreatedAt,
 			UpdatedAt: m.UpdatedAt,
 		})
@@ -185,7 +185,7 @@ func (a *RecipeAPI) get(w http.ResponseWriter, r *http.Request, id string) {
 	}
 	writeJSON(w, http.StatusOK, recipeDetailResponse{
 		Recipe:   recipe,
-		ImageURL: a.imageURL(r, id),
+		ImageURL: a.imageURLForRecipe(r, id, recipe.ImageFilename),
 	})
 }
 
@@ -229,12 +229,8 @@ func (a *RecipeAPI) parse(w http.ResponseWriter, r *http.Request) {
 	// the bounds check, the LLM call, and any future storage step all
 	// see a browser-renderable mime. The helper is a passthrough for
 	// already-storable mimes.
-	imgBytes, mime, err = transcodeForStorage(imgBytes, mime)
+	imgBytes, mime, err = prepareRecipeImage(a.store, imgBytes)
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "unsupported image type")
-		return
-	}
-	if _, err := a.store.CheckImageBounds(imgBytes); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid image")
 		return
 	}
@@ -281,12 +277,8 @@ func (a *RecipeAPI) create(w http.ResponseWriter, r *http.Request) {
 	// See parse(): HEIC uploads are transcoded to JPEG before any
 	// downstream step touches the bytes, so the sidecar saved on disk
 	// is always one of the browser-renderable storable mimes.
-	imgBytes, mime, err = transcodeForStorage(imgBytes, mime)
+	imgBytes, mime, err = prepareRecipeImage(a.store, imgBytes)
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "unsupported image type")
-		return
-	}
-	if _, err := a.store.CheckImageBounds(imgBytes); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid image")
 		return
 	}
@@ -323,7 +315,7 @@ func (a *RecipeAPI) create(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusCreated, recipeDetailResponse{
 		Recipe:   saved,
-		ImageURL: a.imageURL(r, saved.ID),
+		ImageURL: a.imageURLForRecipe(r, saved.ID, saved.ImageFilename),
 	})
 }
 
@@ -336,6 +328,19 @@ type recipePatchBody struct {
 	Title       *string          `json:"title,omitempty"`
 	Description *string          `json:"description,omitempty"`
 	Sections    *[]RecipeSection `json:"sections,omitempty"`
+}
+
+func applyRecipePatch(curr Recipe, patch recipePatchBody) Recipe {
+	if patch.Title != nil {
+		curr.Title = *patch.Title
+	}
+	if patch.Description != nil {
+		curr.Description = *patch.Description
+	}
+	if patch.Sections != nil {
+		curr.Sections = *patch.Sections
+	}
+	return curr
 }
 
 func (a *RecipeAPI) update(w http.ResponseWriter, r *http.Request, id string) {
@@ -353,16 +358,7 @@ func (a *RecipeAPI) update(w http.ResponseWriter, r *http.Request, id string) {
 	}
 
 	updated, err := a.store.Update(id, func(curr Recipe) (Recipe, error) {
-		if patch.Title != nil {
-			curr.Title = *patch.Title
-		}
-		if patch.Description != nil {
-			curr.Description = *patch.Description
-		}
-		if patch.Sections != nil {
-			curr.Sections = *patch.Sections
-		}
-		return curr, nil
+		return applyRecipePatch(curr, patch), nil
 	})
 	if err != nil {
 		if errors.Is(err, ErrRecipeNotFound) {
@@ -391,7 +387,7 @@ func (a *RecipeAPI) update(w http.ResponseWriter, r *http.Request, id string) {
 
 	writeJSON(w, http.StatusOK, recipeDetailResponse{
 		Recipe:   updated,
-		ImageURL: a.imageURL(r, id),
+		ImageURL: a.imageURLForRecipe(r, id, updated.ImageFilename),
 	})
 }
 
@@ -413,6 +409,33 @@ func (a *RecipeAPI) delete(w http.ResponseWriter, r *http.Request, id string) {
 // not redirected away from the secret prefix when one is configured.
 func (a *RecipeAPI) imageURL(_ *http.Request, id string) string {
 	return a.pathBase + "/api/v1/recipes/" + id + "/image"
+}
+
+func (a *RecipeAPI) imageURLForRecipe(r *http.Request, id, filename string) string {
+	if filename == "" {
+		return ""
+	}
+	return a.imageURL(r, id)
+}
+
+// prepareRecipeImage is shared by HTTP and MCP writes. Only sniffed bytes
+// determine the stored MIME and sidecar extension.
+func prepareRecipeImage(store *RecipeStore, imgBytes []byte) ([]byte, string, error) {
+	if len(imgBytes) == 0 || len(imgBytes) > recipeUploadMaxBytes {
+		return nil, "", ErrUnsupportedImage
+	}
+	mime, err := SniffImageMIME(imgBytes)
+	if err != nil {
+		return nil, "", err
+	}
+	imgBytes, mime, err = transcodeForStorage(imgBytes, mime)
+	if err != nil {
+		return nil, "", err
+	}
+	if _, err := store.CheckImageBounds(imgBytes); err != nil {
+		return nil, "", err
+	}
+	return imgBytes, mime, nil
 }
 
 // readImageMultipart reads a single "image" multipart field within the

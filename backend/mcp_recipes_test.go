@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"image"
+	"image/jpeg"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -10,6 +15,232 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
+
+func initRecipeMCP(t *testing.T, srv *Server) string {
+	t.Helper()
+	ts := httptest.NewServer(foodlistMCPHandler(srv))
+	t.Cleanup(ts.Close)
+	require.NoError(t, mcpOK(t, ts.URL, 1, "initialize", map[string]any{
+		"protocolVersion": "2025-06-18",
+		"capabilities":    map[string]any{},
+		"clientInfo":      map[string]any{"name": "recipe-test", "version": "1"},
+	}))
+	return ts.URL
+}
+
+func recipeArgs(title string) map[string]any {
+	return map[string]any{
+		"title": title,
+		"sections": []any{
+			map[string]any{
+				"name": "",
+				"ingredients": []any{
+					map[string]any{"name": " Salt ", "amount": 2, "unit": " tsk "},
+					map[string]any{"name": " ", "unit": "g"},
+				},
+				"instructions": []string{" Cook ", "Serve"},
+			},
+		},
+	}
+}
+
+func TestMCP_RecipeCreateUpdate_TextOnly(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	base := initRecipeMCP(t, srv)
+	args := recipeArgs("  Soup  ")
+	created := toolCall(t, base, 2, "foodlist_recipe_create", args)
+	require.NotEqual(t, true, created["isError"], "%v", created)
+	output := created["structuredContent"].(map[string]any)
+	id := output["id"].(string)
+	require.Equal(t, "Soup", output["recipe"].(map[string]any)["title"])
+	require.Equal(t, false, output["has_image"])
+
+	saved, err := srv.RecipeStore().Get(id)
+	require.NoError(t, err)
+	require.Empty(t, saved.ImageFilename)
+	require.Empty(t, saved.ImageMIME)
+	require.Len(t, saved.Sections[0].Ingredients, 1)
+	require.Equal(t, "Salt", saved.Sections[0].Ingredients[0].Name)
+	require.Equal(t, "tsk", saved.Sections[0].Ingredients[0].Unit)
+	require.Equal(t, "Cook", saved.Sections[0].Instructions[0])
+	require.NotZero(t, saved.CreatedAt)
+	_, _, err = srv.RecipeStore().ReadImage(id)
+	require.ErrorIs(t, err, ErrRecipeNotFound)
+
+	get := toolCall(t, base, 3, "foodlist_recipe_get", map[string]any{"recipe_id": id})
+	require.Contains(t, firstTextContent(t, get), "Soup")
+	require.Contains(t, firstTextContent(t, toolCall(t, base, 4, "foodlist_recipes_list", map[string]any{})), id)
+	require.Contains(t, resourceText(t, base, 5, mcpResourceRecipes), id)
+	added := toolCall(t, base, 6, "foodlist_recipe_add_ingredients", map[string]any{"recipe_id": id})
+	require.NotEqual(t, true, added["isError"])
+
+	srv.CookSessions().Check(id, 1)
+	updated := toolCall(t, base, 7, "foodlist_recipe_update", map[string]any{
+		"recipe_id":   id,
+		"description": "  Hot  ",
+	})
+	require.NotEqual(t, true, updated["isError"], "%v", updated)
+	got, err := srv.RecipeStore().Get(id)
+	require.NoError(t, err)
+	require.Equal(t, "Hot", got.Description)
+	require.Equal(t, saved.Title, got.Title)
+	require.Equal(t, saved.Sections, got.Sections)
+	require.Equal(t, saved.CreatedAt, got.CreatedAt)
+	require.True(t, got.UpdatedAt.After(saved.UpdatedAt))
+
+	updated = toolCall(t, base, 8, "foodlist_recipe_update", map[string]any{
+		"recipe_id": id,
+		"sections": []any{map[string]any{
+			"name": "Finish", "ingredients": []any{}, "instructions": []string{" Eat "},
+		}},
+	})
+	require.NotEqual(t, true, updated["isError"])
+	require.Empty(t, srv.CookSessions().Snapshot()[id])
+	got, err = srv.RecipeStore().Get(id)
+	require.NoError(t, err)
+	require.Equal(t, "Eat", got.Sections[0].Instructions[0])
+
+	reloaded, err := NewRecipeStore(srv.RecipeStore().baseDir, filepath.Dir(srv.RecipeStore().baseDir), 1_000_000)
+	require.NoError(t, err)
+	got, err = reloaded.Get(id)
+	require.NoError(t, err)
+	require.Equal(t, "Hot", got.Description)
+}
+
+func TestMCP_RecipeCreate_ImageFormatsAndMIMEHint(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	srv.RecipeStore().maxPixels = 24_000_000
+	base := initRecipeMCP(t, srv)
+	var jpg bytes.Buffer
+	require.NoError(t, jpeg.Encode(&jpg, image.NewRGBA(image.Rect(0, 0, 2, 2)), nil))
+	heic, err := os.ReadFile(filepath.Join("testdata", "sample.heic"))
+	require.NoError(t, err)
+	webp, err := base64.StdEncoding.DecodeString("UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA")
+	require.NoError(t, err)
+	for i, tc := range []struct {
+		name, wantMIME string
+		bytes          []byte
+	}{
+		{"PNG", "image/png", makeTestPNG(t, 2, 2)},
+		{"JPEG", "image/jpeg", jpg.Bytes()},
+		{"WebP", "image/webp", webp},
+		{"HEIC", "image/jpeg", heic},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			args := recipeArgs(tc.name)
+			args["image"] = map[string]any{
+				"data_base64": base64.StdEncoding.EncodeToString(tc.bytes),
+				"mime_type":   "image/gif", // deliberately wrong; bytes win
+			}
+			out := toolCall(t, base, 10+i, "foodlist_recipe_create", args)
+			require.NotEqual(t, true, out["isError"], "%v", out)
+			result := out["structuredContent"].(map[string]any)
+			require.Equal(t, true, result["has_image"])
+			id := result["id"].(string)
+			stored, err := srv.RecipeStore().Get(id)
+			require.NoError(t, err)
+			require.Equal(t, tc.wantMIME, stored.ImageMIME)
+			data, mime, err := srv.RecipeStore().ReadImage(id)
+			require.NoError(t, err)
+			require.Equal(t, tc.wantMIME, mime)
+			require.NotEmpty(t, data)
+			update := toolCall(t, base, 20+i, "foodlist_recipe_update", map[string]any{"recipe_id": id, "title": "Changed"})
+			require.NotEqual(t, true, update["isError"])
+			after, afterMIME, err := srv.RecipeStore().ReadImage(id)
+			require.NoError(t, err)
+			require.Equal(t, data, after)
+			require.Equal(t, mime, afterMIME)
+		})
+	}
+}
+
+func TestMCP_RecipeCreate_MultiSectionAndIngredientShapes(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	base := initRecipeMCP(t, srv)
+	args := map[string]any{
+		"title": "Dinner",
+		"sections": []any{
+			map[string]any{"name": "Main", "ingredients": []any{
+				map[string]any{"name": "Rice", "amount": 2},
+				map[string]any{"name": "Water", "unit": "dl"},
+			}, "instructions": []string{"Boil"}},
+			map[string]any{"name": "Finish", "ingredients": []any{
+				map[string]any{"name": "Salt"},
+			}, "instructions": []string{"Season"}},
+		},
+	}
+	out := toolCall(t, base, 2, "foodlist_recipe_create", args)
+	require.NotEqual(t, true, out["isError"])
+	id := out["structuredContent"].(map[string]any)["id"].(string)
+	got, err := srv.RecipeStore().Get(id)
+	require.NoError(t, err)
+	require.Len(t, got.Sections, 2)
+	require.Equal(t, "Main", got.Sections[0].Name)
+	require.Equal(t, float64(2), *got.Sections[0].Ingredients[0].Amount)
+	require.Empty(t, got.Sections[0].Ingredients[0].Unit)
+	require.Nil(t, got.Sections[0].Ingredients[1].Amount)
+	require.Equal(t, "dl", got.Sections[0].Ingredients[1].Unit)
+	require.Nil(t, got.Sections[1].Ingredients[0].Amount)
+	require.Empty(t, got.Sections[1].Ingredients[0].Unit)
+}
+
+func TestMCP_RecipeWrite_InvalidInputs(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	base := initRecipeMCP(t, srv)
+	for i, args := range []map[string]any{
+		recipeArgs(" "),
+		{"title": "Empty", "sections": []any{}},
+		{"title": "Bad image", "sections": recipeArgs("x")["sections"], "image": map[string]any{"data_base64": base64.StdEncoding.EncodeToString([]byte("not an image"))}},
+		{"title": "Bad base64", "sections": recipeArgs("x")["sections"], "image": map[string]any{"data_base64": "!!!"}},
+		{"title": "Large", "sections": recipeArgs("x")["sections"], "image": map[string]any{"data_base64": strings.Repeat("A", base64.StdEncoding.EncodedLen(recipeUploadMaxBytes)+1)}},
+		{"title": "Decoded large", "sections": recipeArgs("x")["sections"], "image": map[string]any{"data_base64": base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0}, recipeUploadMaxBytes+1))}},
+	} {
+		out := toolCall(t, base, 30+i, "foodlist_recipe_create", args)
+		require.Equal(t, true, out["isError"], "%v", out)
+	}
+	metas, err := srv.RecipeStore().List()
+	require.NoError(t, err)
+	require.Empty(t, metas)
+	badUpdate := toolCall(t, base, 40, "foodlist_recipe_update", map[string]any{"recipe_id": "not-a-uuid", "title": "x"})
+	require.Equal(t, true, badUpdate["isError"])
+}
+
+func TestMCP_RecipeCreate_RejectsExcessiveImageDimensions(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	srv.RecipeStore().maxPixels = 3
+	base := initRecipeMCP(t, srv)
+	args := recipeArgs("Too many pixels")
+	args["image"] = map[string]any{"data_base64": base64.StdEncoding.EncodeToString(makeTestPNG(t, 2, 2))}
+	out := toolCall(t, base, 2, "foodlist_recipe_create", args)
+	require.Equal(t, true, out["isError"])
+	metas, err := srv.RecipeStore().List()
+	require.NoError(t, err)
+	require.Empty(t, metas)
+}
+
+func TestMCP_RecipeWritesBroadcastChanges(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	base := initRecipeMCP(t, srv)
+	created := toolCall(t, base, 2, "foodlist_recipe_create", recipeArgs("Soup"))
+	require.NotEqual(t, true, created["isError"])
+	id := created["structuredContent"].(map[string]any)["id"].(string)
+	assertRecipeChanged := func() {
+		t.Helper()
+		select {
+		case data := <-srv.broadcast:
+			var event RecipeChanged
+			require.NoError(t, json.Unmarshal(data, &event))
+			require.Equal(t, "RecipeChanged", event.Type)
+			require.Equal(t, id, event.ID)
+		default:
+			t.Fatal("missing RecipeChanged broadcast")
+		}
+	}
+	assertRecipeChanged()
+	updated := toolCall(t, base, 3, "foodlist_recipe_update", map[string]any{"recipe_id": id, "title": "New soup"})
+	require.NotEqual(t, true, updated["isError"])
+	assertRecipeChanged()
+}
 
 // helper that wires a Server with a recipe store so the recipe MCP
 // surface is enabled. Uses an in-memory state and a temp recipe dir.
@@ -63,6 +294,10 @@ func TestMCP_Recipes_DisabledByDefault(t *testing.T) {
 		"recipe_id": uuid.NewString(),
 	})
 	require.Equal(t, true, addRes["isError"])
+	require.Equal(t, true, toolCall(t, base, 6, "foodlist_recipe_create", recipeArgs("Soup"))["isError"])
+	require.Equal(t, true, toolCall(t, base, 7, "foodlist_recipe_update", map[string]any{
+		"recipe_id": uuid.NewString(), "title": "Soup",
+	})["isError"])
 }
 
 func TestMCP_Recipes_ListGetAdd(t *testing.T) {
