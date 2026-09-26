@@ -80,6 +80,67 @@ func TestRecipeStore_Save_Get_Delete(t *testing.T) {
 	require.ErrorIs(t, err, ErrRecipeNotFound)
 }
 
+func TestRecipeStore_SaveWithoutImageAndHTTPURLs(t *testing.T) {
+	api, mux, store := newTestRecipeAPI(t)
+	saved, err := store.Save(Recipe{
+		ID: uuid.NewString(), Title: "Soup",
+		Sections: []RecipeSection{{Ingredients: []Ingredient{{Name: "Salt"}}}},
+	}, nil, "")
+	require.NoError(t, err)
+	require.Empty(t, saved.ImageFilename)
+	require.Empty(t, saved.ImageMIME)
+	entries, err := os.ReadDir(store.baseDir)
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	require.Equal(t, saved.ID+".json", entries[0].Name())
+
+	for _, path := range []string{"/api/v1/recipes", "/api/v1/recipes/" + saved.ID} {
+		rr := httptest.NewRecorder()
+		mux.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, path, nil))
+		require.Equal(t, http.StatusOK, rr.Code)
+		require.Contains(t, rr.Body.String(), `"imageUrl":""`)
+	}
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/api/v1/recipes/"+saved.ID+"/image", nil))
+	require.Equal(t, http.StatusNotFound, rr.Code)
+
+	reloaded, err := NewRecipeStore(store.baseDir, filepath.Dir(store.baseDir), api.store.maxPixels)
+	require.NoError(t, err)
+	got, err := reloaded.Get(saved.ID)
+	require.NoError(t, err)
+	require.Equal(t, saved, got)
+}
+
+func TestRecipeStore_SaveRollsBackImageWhenMetadataWriteFails(t *testing.T) {
+	tmp := t.TempDir()
+	store, err := NewRecipeStore(filepath.Join(tmp, "recipes"), tmp, 1_000_000)
+	require.NoError(t, err)
+	id := uuid.NewString()
+	require.NoError(t, os.Mkdir(filepath.Join(store.baseDir, id+".json.tmp"), 0o755))
+	_, err = store.Save(Recipe{
+		ID: id, Title: "Soup", Sections: []RecipeSection{{Ingredients: []Ingredient{{Name: "Salt"}}}},
+	}, makeTestPNG(t, 2, 2), "image/png")
+	require.Error(t, err)
+	_, err = os.Stat(filepath.Join(store.baseDir, id+".png"))
+	require.ErrorIs(t, err, os.ErrNotExist)
+	_, err = os.Stat(filepath.Join(store.baseDir, id+".json"))
+	require.ErrorIs(t, err, os.ErrNotExist)
+}
+
+func TestRecipeStore_SaveDoesNotWriteMetadataWhenImageWriteFails(t *testing.T) {
+	tmp := t.TempDir()
+	store, err := NewRecipeStore(filepath.Join(tmp, "recipes"), tmp, 1_000_000)
+	require.NoError(t, err)
+	id := uuid.NewString()
+	require.NoError(t, os.Mkdir(filepath.Join(store.baseDir, id+".png.tmp"), 0o755))
+	_, err = store.Save(Recipe{
+		ID: id, Title: "Soup", Sections: []RecipeSection{{Ingredients: []Ingredient{{Name: "Salt"}}}},
+	}, makeTestPNG(t, 2, 2), "image/png")
+	require.Error(t, err)
+	_, err = os.Stat(filepath.Join(store.baseDir, id+".json"))
+	require.ErrorIs(t, err, os.ErrNotExist)
+}
+
 func TestRecipeStore_PathTraversal(t *testing.T) {
 	tmp := t.TempDir()
 	store, err := NewRecipeStore(filepath.Join(tmp, "recipes"), tmp, 1_000_000)

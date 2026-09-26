@@ -207,13 +207,23 @@ MCP (Model Context Protocol) streamable HTTP is served at **`/mcp`** and, when `
 
 ### MCP: recipes
 
-The recipes MCP surface is read-mostly and mirrors the HTTP API. It is
+The recipes MCP surface mirrors the HTTP API. It is
 mounted automatically; when the recipes feature is disabled the tools
 return graceful "_disabled_" responses and the resource returns an empty
 JSON array (so an MCP client can still introspect the server).
 
 - **Tool `foodlist_recipes_list`** — markdown list of saved recipes
   (title + id), newest first.
+- **Tool `foodlist_recipe_create`** — saves a structured recipe with
+  `title`, optional `description`, and `sections`. Optional
+  `image.data_base64` uploads the original image in the same call;
+  `image.mime_type` is only a hint and is not trusted. Returns the
+  generated ID and normalized recipe as structured output. Images are
+  limited to 10 MiB after decoding; accepted formats match HTTP uploads.
+- **Tool `foodlist_recipe_update`** — updates an existing recipe using
+  `recipe_id` and optional `title`, `description`, or `sections`. Omitted
+  fields remain unchanged; supplied fields replace existing values.
+  The image is preserved. Returns the normalized recipe.
 - **Tool `foodlist_recipe_get`** — markdown view of a single recipe
   (title, optional description, one heading per section, ingredients
   with optional amount/unit, globally numbered instructions). Output
@@ -230,9 +240,9 @@ JSON array (so an MCP client can still introspect the server).
 - **Resource `foodlist://recipes`** — JSON array of recipe metadata
   (id, title, image filename, timestamps).
 
-Image uploads, the LLM parse path, and `PATCH`/`DELETE` are intentionally
-HTTP-only because they are either binary, costly, or destructive in ways
-that don't fit the JSON-RPC tool surface.
+The LLM parse path, recipe deletion, and replacing an existing recipe image
+remain HTTP-only. MCP creation accepts image bytes from the client and never
+fetches an image URL.
 
 ## Usage
 

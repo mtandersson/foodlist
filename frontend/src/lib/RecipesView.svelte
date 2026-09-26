@@ -117,7 +117,7 @@
       <p class="status error">Kunde inte ladda recept: {error}</p>
     {:else if recipes.length === 0}
       <div class="empty-state">
-        <p>Inga recept än — lägg till ett med en bild.</p>
+        <p>Inga recept än.</p>
       </div>
     {:else}
       <div class="recipe-grid" role="list">
@@ -129,12 +129,16 @@
             onclick={() => openDetail(recipe.id)}
           >
             <div class="thumb">
-              <img
-                src={recipe.imageUrl}
-                alt=""
-                loading="lazy"
-                decoding="async"
-              />
+              {#if recipe.imageUrl}
+                <img
+                  src={recipe.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              {:else}
+                <span class="no-image">Ingen bild</span>
+              {/if}
             </div>
             <div class="title">{recipe.title}</div>
           </button>
@@ -234,6 +238,13 @@
     aspect-ratio: 4 / 3;
     background: var(--surface-muted);
     overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  .no-image {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
   }
 
   .thumb img {

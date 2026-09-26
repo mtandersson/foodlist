@@ -606,11 +606,15 @@ func (s *RecipeStore) Get(id string) (Recipe, error) {
 	return s.readUnlocked(id)
 }
 
-// Save writes a new recipe with id, atomically writing both the JSON
-// metadata and the image sidecar. On any error mid-write, both temp files
-// are cleaned up so the directory never contains a half-saved recipe.
+// Save writes a new recipe with an optional image. An image-backed save
+// writes the sidecar first and removes it if the JSON write fails.
 func (s *RecipeStore) Save(r Recipe, imageBytes []byte, mime string) (Recipe, error) {
-	if _, ok := allowedImageMimes[mime]; !ok {
+	hasImage := len(imageBytes) > 0
+	if hasImage {
+		if _, ok := allowedImageMimes[mime]; !ok {
+			return Recipe{}, ErrUnsupportedImage
+		}
+	} else if mime != "" {
 		return Recipe{}, ErrUnsupportedImage
 	}
 	if _, err := uuid.Parse(r.ID); err != nil {
@@ -625,31 +629,44 @@ func (s *RecipeStore) Save(r Recipe, imageBytes []byte, mime string) (Recipe, er
 		cleaned.CreatedAt = now
 	}
 	cleaned.UpdatedAt = now
-	cleaned.ImageMIME = mime
-	cleaned.ImageFilename = cleaned.ID + allowedImageMimes[mime]
+	cleaned.ImageMIME = ""
+	cleaned.ImageFilename = ""
+	if hasImage {
+		cleaned.ImageMIME = mime
+		cleaned.ImageFilename = cleaned.ID + allowedImageMimes[mime]
+	}
 
 	jsonPath, err := s.resolveJSON(cleaned.ID)
 	if err != nil {
 		return Recipe{}, err
 	}
-	imagePath, err := s.resolveImage(cleaned.ID, mime)
-	if err != nil {
-		return Recipe{}, err
+	var imagePath string
+	if hasImage {
+		imagePath, err = s.resolveImage(cleaned.ID, mime)
+		if err != nil {
+			return Recipe{}, err
+		}
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if err := writeAtomic(imagePath, imageBytes); err != nil {
-		return Recipe{}, fmt.Errorf("write image: %w", err)
+	if hasImage {
+		if err := writeAtomic(imagePath, imageBytes); err != nil {
+			return Recipe{}, fmt.Errorf("write image: %w", err)
+		}
 	}
 	jsonBytes, err := json.MarshalIndent(cleaned, "", "  ")
 	if err != nil {
-		_ = os.Remove(imagePath)
+		if hasImage {
+			_ = os.Remove(imagePath)
+		}
 		return Recipe{}, fmt.Errorf("marshal recipe: %w", err)
 	}
 	if err := writeAtomic(jsonPath, jsonBytes); err != nil {
-		_ = os.Remove(imagePath)
+		if hasImage {
+			_ = os.Remove(imagePath)
+		}
 		return Recipe{}, fmt.Errorf("write recipe: %w", err)
 	}
 

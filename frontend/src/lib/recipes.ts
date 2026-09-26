@@ -84,7 +84,7 @@ export async function listRecipes(): Promise<RecipeListResponse> {
   // with one that goes through the dev proxy / same-origin base.
   return {
     ...data,
-    recipes: data.recipes.map((r) => ({...r, imageUrl: recipeImageUrl(r.id)})),
+    recipes: data.recipes.map((r) => ({...r, imageUrl: r.imageUrl ? recipeImageUrl(r.id) : ""})),
   }
 }
 
@@ -93,7 +93,7 @@ export async function getRecipe(id: string): Promise<RecipeDetailResponse> {
     credentials: "same-origin",
   })
   const data = await jsonOrThrow<RecipeDetailResponse>(resp)
-  return {...data, imageUrl: recipeImageUrl(id)}
+  return {...data, imageUrl: data.imageUrl ? recipeImageUrl(id) : ""}
 }
 
 /**
@@ -136,7 +136,7 @@ export async function saveRecipe(
     signal,
   })
   const data = await jsonOrThrow<RecipeDetailResponse>(resp)
-  return {...data, imageUrl: recipeImageUrl(data.recipe.id)}
+  return {...data, imageUrl: data.imageUrl ? recipeImageUrl(data.recipe.id) : ""}
 }
 
 export async function updateRecipe(
@@ -150,7 +150,7 @@ export async function updateRecipe(
     body: JSON.stringify(patch),
   })
   const data = await jsonOrThrow<RecipeDetailResponse>(resp)
-  return {...data, imageUrl: recipeImageUrl(id)}
+  return {...data, imageUrl: data.imageUrl ? recipeImageUrl(id) : ""}
 }
 
 export async function deleteRecipe(id: string): Promise<void> {
