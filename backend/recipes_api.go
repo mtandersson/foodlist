@@ -220,7 +220,7 @@ func (a *RecipeAPI) parse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imgBytes, mime, err := readImageMultipart(w, r)
+	imgBytes, _, err := readImageMultipart(w, r)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
@@ -229,7 +229,7 @@ func (a *RecipeAPI) parse(w http.ResponseWriter, r *http.Request) {
 	// the bounds check, the LLM call, and any future storage step all
 	// see a browser-renderable mime. The helper is a passthrough for
 	// already-storable mimes.
-	imgBytes, mime, err = prepareRecipeImage(a.store, imgBytes)
+	imgBytes, mime, err := prepareRecipeImage(a.store, imgBytes)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid image")
 		return
@@ -269,7 +269,7 @@ func writeRecipeParseError(w http.ResponseWriter, err error) {
 }
 
 func (a *RecipeAPI) create(w http.ResponseWriter, r *http.Request) {
-	imgBytes, mime, metadataBytes, err := readRecipeMultipart(w, r)
+	imgBytes, _, metadataBytes, err := readRecipeMultipart(w, r)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
@@ -277,7 +277,7 @@ func (a *RecipeAPI) create(w http.ResponseWriter, r *http.Request) {
 	// See parse(): HEIC uploads are transcoded to JPEG before any
 	// downstream step touches the bytes, so the sidecar saved on disk
 	// is always one of the browser-renderable storable mimes.
-	imgBytes, mime, err = prepareRecipeImage(a.store, imgBytes)
+	imgBytes, mime, err := prepareRecipeImage(a.store, imgBytes)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid image")
 		return
