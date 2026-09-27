@@ -32,7 +32,7 @@ describe('LocalStorage Persistence', () => {
     localStorageMock = {};
   });
 
-  describe('View Mode Persistence', () =>
+  describe('View Mode Persistence', () => {
     it('should save view mode to localStorage', () => {
       localStorage.setItem('viewMode', 'categories');
       expect(localStorage.getItem('viewMode')).toBe('categories');
@@ -50,7 +50,7 @@ describe('LocalStorage Persistence', () => {
     });
   });
 
-  describe('Completed Section Persistence', () =>
+  describe('Completed Section Persistence', () => {
     it('should save completed expanded state to localStorage', () => {
       localStorage.setItem('completedExpanded', 'false');
       expect(localStorage.getItem('completedExpanded')).toBe('false');
@@ -76,7 +76,7 @@ describe('LocalStorage Persistence', () => {
     });
   });
 
-  describe('Expanded Categories Persistence', () =>
+  describe('Expanded Categories Persistence', () => {
     it('should save expanded categories to localStorage', () => {
       const expandedCategories = new Set(['cat1', 'cat2', null]);
       localStorage.setItem('expandedCategories', JSON.stringify(Array.from(expandedCategories)));
@@ -111,7 +111,7 @@ describe('LocalStorage Persistence', () => {
     });
   });
 
-  describe('Combined State Persistence', () =>
+  describe('Combined State Persistence', () => {
     it('should maintain all app state in localStorage', () => {
       localStorage.setItem('viewMode', 'categories');
       localStorage.setItem('completedExpanded', 'false');
