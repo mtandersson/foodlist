@@ -23,12 +23,31 @@ const (
 	mcpResourceCategories  = "foodlist://categories"
 	mcpResourceSuggestions = "foodlist://suggestions"
 	mcpResourceRecipes     = "foodlist://recipes"
+	mcpShoppingAppURI      = "ui://foodlist/shopping-list"
 	// Legacy URI kept for compatibility with existing MCP clients.
 	mcpResourceTodos = "foodlist://todos"
 )
 
 type foodlistListIn struct {
 	IncludeCompleted *bool `json:"include_completed,omitempty"`
+}
+
+type shoppingItem struct {
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	CategoryID *string  `json:"categoryId"`
+	Count      *float64 `json:"count"`
+	Unit       *string  `json:"unit"`
+	Completed  bool     `json:"completed"`
+	Starred    bool     `json:"starred"`
+	SortOrder  int      `json:"sortOrder"`
+}
+
+type shoppingList struct {
+	Title            string         `json:"title"`
+	IncludeCompleted bool           `json:"includeCompleted"`
+	Categories       []Category     `json:"categories"`
+	Items            []shoppingItem `json:"items"`
 }
 
 type foodlistAddIn struct {
@@ -52,7 +71,8 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_list",
-		Description: "List grocery items as markdown, grouped by category (only categories that appear on at least one shown item). For every defined category ID, use foodlist_categories or the foodlist://categories resource.",
+		Description: "List grocery items by category with quantities and state. Returns text and structured data for the shopping-list view.",
+		Meta:        mcp.Meta{"ui": map[string]any{"resourceUri": mcpShoppingAppURI}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistListIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
@@ -60,43 +80,84 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 		if in.IncludeCompleted != nil {
 			includeCompleted = *in.IncludeCompleted
 		}
-		cats := app.state.GetCategories()
+		title, cats, todos := app.state.GetShoppingSnapshot()
+		out := shoppingList{Title: title, IncludeCompleted: includeCompleted, Categories: cats, Items: []shoppingItem{}}
 		catName := make(map[string]string, len(cats))
 		for _, c := range cats {
 			catName[c.ID] = c.Name
 		}
 		var b strings.Builder
-		_, _ = fmt.Fprintf(&b, "**%s**\n\n", app.state.GetListTitle())
-		n := 0
-		for _, t := range app.state.GetTodos() {
+		_, _ = fmt.Fprintf(&b, "**%s**\n\n", title)
+		groups := make(map[string][]shoppingItem)
+		for _, t := range todos {
 			if !includeCompleted && t.CompletedAt != nil {
 				continue
 			}
-			n++
-			catLabel := "(uncategorized)"
+			item := shoppingItem{ID: t.ID, Name: t.Name, CategoryID: t.CategoryID, Count: t.Count, Unit: t.Unit, Completed: t.CompletedAt != nil, Starred: t.Starred, SortOrder: t.SortOrder}
+			out.Items = append(out.Items, item)
+			key := ""
 			if t.CategoryID != nil {
-				if name, ok := catName[*t.CategoryID]; ok {
-					catLabel = name
-				} else {
-					catLabel = *t.CategoryID
-				}
+				key = *t.CategoryID
 			}
-			status := "open"
-			if t.CompletedAt != nil {
-				status = "done"
-			}
-			star := ""
-			if t.Starred {
-				star = " ★"
-			}
-			_, _ = fmt.Fprintf(&b, "- **%s** `%s` — %s%s (%s)\n", t.Name, t.ID, catLabel, star, status)
+			groups[key] = append(groups[key], item)
 		}
-		if n == 0 {
+		writeGroup := func(label string, items []shoppingItem) {
+			if len(items) == 0 {
+				return
+			}
+			_, _ = fmt.Fprintf(&b, "### %s\n", label)
+			for _, item := range items {
+				status := "open"
+				if item.Completed {
+					status = "done"
+				}
+				star := ""
+				if item.Starred {
+					star = " ★"
+				}
+				quantity := ""
+				if item.Count != nil {
+					quantity = fmt.Sprintf(" %g", *item.Count)
+				}
+				if item.Unit != nil && *item.Unit != "" {
+					quantity += " " + *item.Unit
+				}
+				_, _ = fmt.Fprintf(&b, "- **%s**%s `%s`%s (%s)\n", item.Name, quantity, item.ID, star, status)
+			}
+			b.WriteString("\n")
+		}
+		for _, c := range cats {
+			writeGroup(c.Name, groups[c.ID])
+			delete(groups, c.ID)
+		}
+		writeGroup("Uncategorized", groups[""])
+		delete(groups, "")
+		for id, items := range groups {
+			label := catName[id]
+			if label == "" {
+				label = id
+			}
+			writeGroup(label, items)
+		}
+		if len(out.Items) == 0 {
 			b.WriteString("_No matching grocery items._\n")
 		}
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
+			Content:           []mcp.Content{&mcp.TextContent{Text: b.String()}},
+			StructuredContent: out,
 		}, nil, nil
+	})
+
+	s.AddResource(&mcp.Resource{
+		URI: mcpShoppingAppURI, Name: "shopping_list_app", Title: "Shopping list",
+		MIMEType:    "text/html;profile=mcp-app",
+		Description: "Interactive shopping list view.",
+		Meta:        shoppingAppMeta(),
+	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		if req.Params.URI != mcpShoppingAppURI {
+			return nil, mcp.ResourceNotFoundError(req.Params.URI)
+		}
+		return shoppingAppResource(), nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
@@ -182,7 +243,7 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 	})
 
 	writeResourceJSON := func(uri string, v any) (*mcp.ReadResourceResult, error) {
-		b, err := json.MarshalIndent(v, "", "  ")
+		b, err := json.Marshal(v)
 		if err != nil {
 			return nil, err
 		}

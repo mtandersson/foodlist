@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Foodlist shopping list</title>
+    <style>
+      :root { font: 15px/1.45 system-ui, sans-serif; color-scheme: light dark; }
+      body { margin: 0; padding: 18px; background: Canvas; color: CanvasText; }
+      main { max-width: 720px; margin: auto; }
+      h1 { font-size: 1.35rem; margin: 0 0 4px; overflow-wrap: anywhere; }
+      h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; opacity: .65; margin: 22px 0 8px; overflow-wrap: anywhere; }
+      p { margin: 0; }
+      .hint, #message { color: GrayText; font-size: .85rem; }
+      #message { min-height: 1.4em; margin-top: 8px; }
+      ul { list-style: none; padding: 0; margin: 0; border: 1px solid color-mix(in srgb, CanvasText 16%, Canvas); border-radius: 12px; overflow: hidden; }
+      li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid color-mix(in srgb, CanvasText 12%, Canvas); }
+      li:first-child { border-top: 0; }
+      .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+      .done .name { text-decoration: line-through; opacity: .65; }
+      .quantity { color: GrayText; white-space: nowrap; font-size: .85rem; }
+      button { border: 1px solid color-mix(in srgb, CanvasText 25%, Canvas); border-radius: 8px; background: Canvas; color: CanvasText; padding: 5px 8px; cursor: pointer; }
+      button:hover { background: color-mix(in srgb, CanvasText 8%, Canvas); }
+      button:disabled { opacity: .55; cursor: wait; }
+      button[aria-pressed="true"] { color: #b06b00; }
+      .empty { padding: 20px; border: 1px dashed color-mix(in srgb, CanvasText 25%, Canvas); border-radius: 12px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 id="title">Shopping list</h1>
+      <p class="hint" id="summary">Loading…</p>
+      <p id="message" role="status" aria-live="polite"></p>
+      <div id="groups"></div>
+    </main>
+    <script type="module" src="./shopping.ts"></script>
+  </body>
+</html>
