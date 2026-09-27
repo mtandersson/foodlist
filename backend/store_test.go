@@ -97,6 +97,23 @@ func TestEventStore_MultipleEvents(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestEventStore_AppendBatchPreservesOrder(t *testing.T) {
+	store, err := NewEventStore(filepath.Join(t.TempDir(), "events.jsonl"))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, store.Close()) })
+
+	events := []Event{
+		TodoCreated{Type: "TodoCreated", ID: "first", Name: "First", SortOrder: 1000},
+		TodoCreated{Type: "TodoCreated", ID: "second", Name: "Second", SortOrder: 2000},
+	}
+	require.NoError(t, store.AppendBatch(events))
+	got, err := store.ReadAll()
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	assert.Equal(t, "first", got[0].(TodoCreated).ID)
+	assert.Equal(t, "second", got[1].(TodoCreated).ID)
+}
+
 func TestEventStore_PersistenceAcrossRestart(t *testing.T) {
 	tmpDir := t.TempDir()
 	filePath := filepath.Join(tmpDir, "events.jsonl")

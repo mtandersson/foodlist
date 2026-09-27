@@ -36,6 +36,88 @@ func setupTestServer(t *testing.T) (*Server, *httptest.Server, string) {
 	return server, ts, wsURL
 }
 
+func TestExecuteCreateTodosBatch_PartialSuccessAndOrder(t *testing.T) {
+	store, err := NewEventStore(filepath.Join(t.TempDir(), "events.jsonl"))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = store.Close() })
+	srv := NewServer(store)
+	commands := []CreateTodoCommand{
+		{ID: "second", Name: "Second"},
+		{ID: "invalid", Name: "  "},
+		{ID: "first", Name: "First"},
+	}
+	added, batchErr := srv.ExecuteCreateTodosBatch(commands)
+	require.Equal(t, 2, added)
+	require.ErrorContains(t, batchErr, "todo name cannot be empty")
+	require.Len(t, srv.state.GetTodos(), 2)
+	stored, err := store.ReadAll()
+	require.NoError(t, err)
+	require.Len(t, stored, 2)
+	for i, id := range []string{"second", "first"} {
+		created := stored[i].(TodoCreated)
+		require.Equal(t, id, created.ID)
+		require.Equal(t, (i+1)*1000, created.SortOrder)
+		var wire TodoCreated
+		require.NoError(t, json.Unmarshal(<-srv.broadcast, &wire))
+		require.Equal(t, id, wire.ID)
+	}
+	require.Empty(t, srv.broadcast)
+}
+
+func TestExecuteCreateTodosBatch_PersistenceFailureDoesNotApply(t *testing.T) {
+	store, err := NewEventStore(filepath.Join(t.TempDir(), "events.jsonl"))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = store.Close() })
+	srv := NewServer(store)
+	require.NoError(t, store.file.Close())
+	added, batchErr := srv.ExecuteCreateTodosBatch([]CreateTodoCommand{{ID: "one", Name: "One"}})
+	require.Zero(t, added)
+	require.ErrorContains(t, batchErr, "failed to persist")
+	require.Empty(t, srv.state.GetTodos())
+	require.Empty(t, srv.broadcast)
+}
+
+func TestExecuteCreateTodosBatch_ReconcilesSuggestions(t *testing.T) {
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	dir := t.TempDir()
+	store, err := NewEventStore(filepath.Join(dir, "events.jsonl"))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = store.Close() })
+	cache, err := NewEmbeddingCache(filepath.Join(dir, "embeddings.jsonl"))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = cache.Close() })
+	srv := NewServer(store)
+	srv.SetEmbeddingCache(cache)
+	srv.SetSuggestionEngine(NewSuggestionEngine(SuggestionEngineConfig{Now: func() time.Time { return now }}))
+	for i, days := range []int{26, 19, 12, 7} {
+		id := fmt.Sprintf("past-%d", i)
+		completed := now.Add(-time.Duration(days) * 24 * time.Hour)
+		srv.state.ApplyEvents([]Event{
+			TodoCreated{Type: "TodoCreated", ID: id, Name: "Milk", CreatedAt: completed.Add(-time.Hour)},
+			TodoCompleted{Type: "TodoCompleted", ID: id, CompletedAt: completed},
+		})
+	}
+	srv.RecomputeSuggestions()
+	require.Len(t, srv.suggestions.Snapshot(), 1)
+	<-srv.broadcast // initial SuggestionAdded
+
+	added, batchErr := srv.ExecuteCreateTodosBatch([]CreateTodoCommand{
+		{ID: "new-1", Name: "Bread"},
+		{ID: "new-2", Name: "Milk"},
+	})
+	require.NoError(t, batchErr)
+	require.Equal(t, 2, added)
+	require.Empty(t, srv.suggestions.Snapshot())
+	for _, typ := range []string{"TodoCreated", "TodoCreated", "SuggestionRemoved"} {
+		var msg struct {
+			Type string `json:"type"`
+		}
+		require.NoError(t, json.Unmarshal(<-srv.broadcast, &msg))
+		require.Equal(t, typ, msg.Type)
+	}
+	require.Empty(t, srv.broadcast)
+}
+
 func connectWS(t *testing.T, wsURL string) *websocket.Conn {
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	require.NoError(t, err)

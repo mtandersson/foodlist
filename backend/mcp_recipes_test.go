@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"image"
 	"image/jpeg"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -500,12 +501,19 @@ func TestMCP_RecipeAddIngredients_GlobalIndexAcrossSections(t *testing.T) {
 		"clientInfo":      map[string]any{"name": "t", "version": "1"},
 	}))
 
-	// Index 3 falls in the second section (Sallad/Sallad). 1 + 2 = 3.
+	// Index 3 falls in the second section. Selection order is preserved
+	// and a repeated index adds only one item.
 	addRes := toolCall(t, base, 2, "foodlist_recipe_add_ingredients", map[string]any{
 		"recipe_id": recipe.ID,
-		"indexes":   []int{3},
+		"indexes":   []int{3, 1, 3},
 	})
 	require.NotEqual(t, true, addRes["isError"])
+	require.Contains(t, firstTextContent(t, addRes), "Added 2 ingredient")
+	events, err := srv.store.ReadAll()
+	require.NoError(t, err)
+	require.Len(t, events, 2)
+	require.Equal(t, "Sallad", events[0].(TodoCreated).Name)
+	require.Equal(t, "Tomat", events[1].(TodoCreated).Name)
 
 	var found bool
 	for _, td := range srv.state.GetTodos() {
@@ -514,4 +522,35 @@ func TestMCP_RecipeAddIngredients_GlobalIndexAcrossSections(t *testing.T) {
 		}
 	}
 	require.True(t, found, "global index 3 must resolve to second-section first ingredient")
+}
+
+func TestMCP_RecipeAddIngredients_WebSocketOrder(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	recipe, err := srv.RecipeStore().Save(Recipe{
+		ID:    uuid.NewString(),
+		Title: "Soup",
+		Sections: []RecipeSection{{Ingredients: []Ingredient{
+			{Name: "Carrot"}, {Name: "Potato"}, {Name: "Onion"},
+		}}},
+	}, nil, "")
+	require.NoError(t, err)
+	go srv.Run()
+	wsServer := httptest.NewServer(http.HandlerFunc(srv.HandleWebSocket))
+	defer wsServer.Close()
+	ws := connectWS(t, "ws"+strings.TrimPrefix(wsServer.URL, "http"))
+	defer ws.Close()
+	readInitialMessages(t, ws)
+
+	base := initRecipeMCP(t, srv)
+	result := toolCall(t, base, 2, "foodlist_recipe_add_ingredients", map[string]any{
+		"recipe_id": recipe.ID,
+		"indexes":   []int{3, 1, 3},
+	})
+	require.NotEqual(t, true, result["isError"])
+	for _, name := range []string{"Onion", "Carrot"} {
+		var msg TodoCreated
+		require.NoError(t, json.Unmarshal(readMessageOfType(t, ws, "TodoCreated", 8), &msg))
+		require.Equal(t, "TodoCreated", msg.Type)
+		require.Equal(t, name, msg.Name)
+	}
 }

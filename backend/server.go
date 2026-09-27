@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -26,6 +27,7 @@ type Client struct {
 
 // Server manages WebSocket connections and event broadcasting
 type Server struct {
+	commandMu  sync.Mutex
 	store      *EventStore
 	state      *State
 	clients    map[*Client]bool
@@ -575,8 +577,10 @@ func (s *Server) readPump(client *Client) {
 		// Log received command
 		slog.Info("command received", "type", cmd.GetType(), "commandId", cmd.GetCommandID(), "message", string(message))
 
+		s.commandMu.Lock()
 		event, eventData, err := s.applyCommand(cmd)
 		if err != nil {
+			s.commandMu.Unlock()
 			slog.Error("command failed", "error", err, "command_type", cmd.GetType(), "commandId", cmd.GetCommandID())
 			response := CommandResponse{
 				Type:      "CommandResponse",
@@ -607,6 +611,7 @@ func (s *Server) readPump(client *Client) {
 		// Update suggestion engine after the originating event has
 		// already been queued for broadcast.
 		s.maybeUpdateSuggestionsForEvent(event)
+		s.commandMu.Unlock()
 	}
 }
 
@@ -642,6 +647,8 @@ func (s *Server) applyCommand(cmd Command) (Event, []byte, error) {
 // so any follow-up TodoCategorized always arrives strictly after the
 // originating TodoCreated on the wire.
 func (s *Server) ExecuteCommand(cmd Command) error {
+	s.commandMu.Lock()
+	defer s.commandMu.Unlock()
 	event, eventData, err := s.applyCommand(cmd)
 	if err != nil {
 		return err
@@ -650,6 +657,55 @@ func (s *Server) ExecuteCommand(cmd Command) error {
 	s.maybeStartAutoCategorize(event)
 	s.maybeUpdateSuggestionsForEvent(event)
 	return nil
+}
+
+// ExecuteCreateTodosBatch validates each command, then persists all valid
+// events in one sync. A persistence error leaves state and broadcasts alone.
+// Invalid commands are skipped and reported alongside the successful count.
+func (s *Server) ExecuteCreateTodosBatch(commands []CreateTodoCommand) (int, error) {
+	s.commandMu.Lock()
+	defer s.commandMu.Unlock()
+
+	events := make([]Event, 0, len(commands))
+	wires := make([][]byte, 0, len(commands))
+	nextSortOrder := s.state.GetHighestSortOrder()
+	var firstErr error
+	for _, cmd := range commands {
+		if cmd.SortOrder == 0 {
+			cmd.SortOrder = float64(nextSortOrder + 1000)
+		}
+		event, err := s.commandToEvent(cmd)
+		if err == nil {
+			var wire []byte
+			wire, err = MarshalEvent(event)
+			if err == nil {
+				events = append(events, event)
+				wires = append(wires, wire)
+				if created, ok := event.(TodoCreated); ok && created.SortOrder > nextSortOrder {
+					nextSortOrder = created.SortOrder
+				}
+				continue
+			}
+		}
+		if firstErr == nil {
+			firstErr = err
+		}
+	}
+	if len(events) == 0 {
+		return 0, firstErr
+	}
+	if err := s.store.AppendBatch(events); err != nil {
+		return 0, fmt.Errorf("failed to persist event batch: %w", err)
+	}
+	s.state.ApplyEvents(events)
+	for i, event := range events {
+		s.broadcast <- wires[i]
+		s.maybeStartAutoCategorize(event)
+	}
+	// One reconciliation reflects the final projected list. It also removes
+	// matching suggestions that individual TodoCreated hooks used to remove.
+	s.RecomputeSuggestions()
+	return len(events), firstErr
 }
 
 // handleAutocompleteRequest checks if the message is an autocomplete request and handles it

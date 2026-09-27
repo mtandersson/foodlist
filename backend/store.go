@@ -3,20 +3,23 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
+	"sync/atomic"
 )
 
 // EventStore handles append-only event storage using a JSONL file.
 // Concurrency is handled via channels - a single goroutine owns the file.
 type EventStore struct {
-	filePath string
-	file     *os.File
-	writeCh  chan writeRequest
-	done     chan struct{}
+	filePath  string
+	file      *os.File
+	writeCh   chan writeRequest
+	done      chan struct{}
+	syncCount atomic.Uint64
 }
 
 type writeRequest struct {
-	event    Event
+	events   []Event
 	resultCh chan error
 }
 
@@ -48,7 +51,7 @@ func (s *EventStore) writerLoop() {
 	for {
 		select {
 		case req := <-s.writeCh:
-			err := s.writeEvent(req.event)
+			err := s.writeEvents(req.events)
 			req.resultCh <- err
 		case <-s.done:
 			return
@@ -56,33 +59,59 @@ func (s *EventStore) writerLoop() {
 	}
 }
 
-// writeEvent performs the actual write to the file.
+// writeEvents performs one durable write for a sequence of events.
 // This should only be called from the writerLoop goroutine.
-func (s *EventStore) writeEvent(event Event) error {
-	data, err := MarshalEvent(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal event: %w", err)
+func (s *EventStore) writeEvents(events []Event) error {
+	data := make([]byte, 0, len(events)*128)
+	for _, event := range events {
+		line, err := MarshalEvent(event)
+		if err != nil {
+			return fmt.Errorf("failed to marshal event: %w", err)
+		}
+		data = append(data, line...)
+		data = append(data, '\n')
 	}
-
-	// Write JSON followed by newline
-	_, err = s.file.Write(append(data, '\n'))
+	start, err := s.file.Stat()
 	if err != nil {
+		return fmt.Errorf("failed to stat event store: %w", err)
+	}
+	n, err := s.file.Write(data)
+	if err == nil && n != len(data) {
+		err = io.ErrShortWrite
+	}
+	if err != nil {
+		// Keep a partial JSONL line from corrupting replay after a short write.
+		_ = s.file.Truncate(start.Size())
 		return fmt.Errorf("failed to write event: %w", err)
 	}
-
-	// Sync to ensure durability
+	s.syncCount.Add(1)
 	if err := s.file.Sync(); err != nil {
+		// Best effort rollback avoids replaying an event the caller was told
+		// failed. The sync error still means durability cannot be guaranteed.
+		_ = s.file.Truncate(start.Size())
+		s.syncCount.Add(1)
+		_ = s.file.Sync()
 		return fmt.Errorf("failed to sync event store: %w", err)
 	}
-
 	return nil
 }
+
+// SyncCount returns the number of fsync attempts made by this store.
+func (s *EventStore) SyncCount() uint64 { return s.syncCount.Load() }
 
 // Append adds an event to the store.
 // This is safe to call from multiple goroutines - writes are serialized via channels.
 func (s *EventStore) Append(event Event) error {
+	return s.AppendBatch([]Event{event})
+}
+
+// AppendBatch persists all events in order with one sync before returning.
+func (s *EventStore) AppendBatch(events []Event) error {
+	if len(events) == 0 {
+		return nil
+	}
 	resultCh := make(chan error, 1)
-	s.writeCh <- writeRequest{event: event, resultCh: resultCh}
+	s.writeCh <- writeRequest{events: events, resultCh: resultCh}
 	return <-resultCh
 }
 
