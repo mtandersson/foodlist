@@ -159,6 +159,24 @@ func (s *State) GetTodos() []Todo {
 	return todos
 }
 
+// GetShoppingSnapshot copies the title, categories, and items under one lock.
+// MCP list text and structured content must describe the same projection.
+func (s *State) GetShoppingSnapshot() (string, []Category, []Todo) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	cats := make([]Category, 0, len(s.categories))
+	for _, c := range s.categories {
+		cats = append(cats, *c)
+	}
+	todos := make([]Todo, 0, len(s.todos))
+	for _, t := range s.todos {
+		todos = append(todos, *t)
+	}
+	sort.Slice(cats, func(i, j int) bool { return cats[i].SortOrder > cats[j].SortOrder })
+	sort.Slice(todos, func(i, j int) bool { return todos[i].SortOrder > todos[j].SortOrder })
+	return s.listTitle, cats, todos
+}
+
 // GetTodo returns a single todo by ID
 func (s *State) GetTodo(id string) (*Todo, bool) {
 	s.mu.RLock()
