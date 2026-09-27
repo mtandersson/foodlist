@@ -91,14 +91,13 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 		"foodlist_categories",
 		"foodlist_categorize",
 		"foodlist_list",
-		"foodlist_mark_done",
-		"foodlist_mark_starred",
 		"foodlist_recipe_add_ingredients",
 		"foodlist_recipe_create",
 		"foodlist_recipe_get",
 		"foodlist_recipe_update",
 		"foodlist_recipes_list",
 		"foodlist_suggestions",
+		"foodlist_update_item",
 	}, names)
 
 	// --- foodlist_categories (JSON matches resource + schema shape) ---
@@ -160,23 +159,23 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 	require.Contains(t, listTxt, todoID)
 	require.Contains(t, listTxt, "Dairy")
 
-	// --- foodlist_mark_starred ---
-	star := toolCall(t, base, 26, "foodlist_mark_starred", map[string]any{"todo_id": todoID, "starred": true})
+	// --- foodlist_update_item starred ---
+	star := toolCall(t, base, 26, "foodlist_update_item", map[string]any{"todo_id": todoID, "starred": true})
 	require.NotEqual(t, true, star["isError"])
 	listStar := firstTextContent(t, toolCall(t, base, 27, "foodlist_list", map[string]any{}))
 	require.Contains(t, listStar, "★")
 
-	unstar := toolCall(t, base, 28, "foodlist_mark_starred", map[string]any{"todo_id": todoID, "starred": false})
+	unstar := toolCall(t, base, 28, "foodlist_update_item", map[string]any{"todo_id": todoID, "starred": false})
 	require.NotEqual(t, true, unstar["isError"])
 
-	// --- foodlist_mark_done + foodlist_list include_completed ---
-	done := toolCall(t, base, 29, "foodlist_mark_done", map[string]any{"todo_id": todoID, "done": true})
+	// --- foodlist_update_item done + foodlist_list include_completed ---
+	done := toolCall(t, base, 29, "foodlist_update_item", map[string]any{"todo_id": todoID, "done": true})
 	require.NotEqual(t, true, done["isError"])
 
 	openOnly := firstTextContent(t, toolCall(t, base, 30, "foodlist_list", map[string]any{"include_completed": false}))
 	require.Contains(t, openOnly, "No matching grocery items")
 
-	undo := toolCall(t, base, 31, "foodlist_mark_done", map[string]any{"todo_id": todoID, "done": false})
+	undo := toolCall(t, base, 31, "foodlist_update_item", map[string]any{"todo_id": todoID, "done": false})
 	require.NotEqual(t, true, undo["isError"])
 
 	// --- foodlist_categorize clear (null category_id) ---
