@@ -35,7 +35,6 @@
       "automergeType": "pr",
       "automergeStrategy": "rebase",
       "ignoreTests": true
-    }
     },
     {
       "matchManagers": ["npm"],
