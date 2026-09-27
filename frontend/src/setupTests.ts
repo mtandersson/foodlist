@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // jsdom doesn't implement Element.animate; Svelte transitions
 // (fade/slide/etc.) call it during mount. Stub a no-op so component
