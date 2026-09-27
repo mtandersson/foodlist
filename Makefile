@@ -1,4 +1,4 @@
-.PHONY: help build run stop clean logs test docker-build docker-run docker-stop docker-clean dev-json dev-network dev-secure dev-secure-net test-logging
+.PHONY: help build run stop clean logs test test-unit lint mcp-app docker-build docker-run docker-stop docker-clean dev-json dev-network dev-secure dev-secure-net test-logging
 
 # Detect container runtime (prefer podman over docker)
 CONTAINER_RUNTIME := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
@@ -27,6 +27,7 @@ help:
 	@echo "  make dev-secure     - Run secure mode (no hot reload), serves from /dev/"
 	@echo "  make dev-secure-net - Run secure mode (no hot reload) with network access"
 	@echo "  make test           - Run all tests"
+	@echo "  make mcp-app        - Generate HTML embedded by the Go backend"
 	@echo "  make test-logging   - Test structured logging formats"
 	@echo "  make clean          - Clean build artifacts"
 	@echo ""
@@ -39,6 +40,9 @@ help:
 	@echo ""
 
 # Development targets
+mcp-app:
+	cd frontend && npm ci && npm run build:mcp-app
+
 build:
 	@echo "Building frontend..."
 	cd frontend && npm install && npm run build
@@ -64,6 +68,7 @@ dev:
 	@command -v air >/dev/null || { echo "❌ 'air' not installed. Install with: go install github.com/air-verse/air@latest"; exit 1; }
 	@echo "Starting frontend (Vite dev server with auto-reload)..."
 	cd frontend && npm install
+	cd frontend && npm run build:mcp-app
 	cd frontend && npm run dev -- --host --port 5173 &
 	@echo "Starting backend with live-reload (air) - NO SECURITY..."
 	@(sleep 3 && open http://localhost:5173) &
@@ -100,6 +105,7 @@ dev-json:
 	@command -v air >/dev/null || { echo "❌ 'air' not installed. Install with: go install github.com/air-verse/air@latest"; exit 1; }
 	@echo "Starting frontend (Vite dev server with auto-reload)..."
 	cd frontend && npm install
+	cd frontend && npm run build:mcp-app
 	cd frontend && npm run dev -- --host --port 5173 &
 	@echo "Starting backend with live-reload (air) - JSON logging..."
 	@(sleep 3 && open http://localhost:5173) &
@@ -109,6 +115,7 @@ dev-network:
 	@command -v air >/dev/null || { echo "❌ 'air' not installed. Install with: go install github.com/air-verse/air@latest"; exit 1; }
 	@echo "Starting frontend (Vite dev server with network access)..."
 	cd frontend && npm install
+	cd frontend && npm run build:mcp-app
 	cd frontend && npm run dev -- --host 0.0.0.0 --port 5173 &
 	@echo ""
 	@echo "Starting backend with live-reload (air) - network accessible - NO SECURITY..."
@@ -153,22 +160,22 @@ dev-secure-net:
 	@echo ""
 	cd backend && BIND_ADDR=0.0.0.0 ./foodlist
 
-test-logging:
+test-logging: mcp-app
 	@echo "Testing structured logging formats..."
 	./test-logging.sh
 
-lint:
+lint: mcp-app
 	@echo "Running Go linters (golangci-lint)..."
 	@cd backend && golangci-lint run ./...
 
-test:
+test: mcp-app
 	@echo "Running backend tests..."
 	cd backend && go test -v -cover -timeout=30s ./...
 	@echo "Running frontend tests..."
 	cd frontend && npm run test:run
 
 # Fast unit tests only (parser + quantity extraction) - no server/websocket
-test-unit:
+test-unit: mcp-app
 	@echo "Running backend unit parser tests..."
 	cd backend && go test -run TestParseIngredientInput -v -timeout=5s .
 	@echo "Running frontend quantityParser tests..."
@@ -177,6 +184,7 @@ test-unit:
 clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf frontend/dist
+	rm -rf backend/mcp_app_dist
 	rm -rf frontend/node_modules
 	rm -f backend/foodlist
 	rm -f backend/events.jsonl
@@ -219,4 +227,3 @@ quick-start: docker-build docker-run
 	@echo ""
 	@echo "View logs: make docker-logs"
 	@echo "Stop app:  make docker-stop"
-

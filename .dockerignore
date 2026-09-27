@@ -25,6 +25,7 @@ backend/events.jsonl
 backend/*.test
 backend/coverage.out
 backend/coverage.html
+backend/mcp_app_dist
 
 # E2E
 e2e/node_modules

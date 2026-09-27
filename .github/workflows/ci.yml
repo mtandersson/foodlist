@@ -35,6 +35,9 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
+              - 'frontend/mcp-app/**'
+              - 'frontend/vite.mcp-app.config.ts'
+              - 'frontend/package*.json'
               - 'schema/**'
               - '.github/workflows/ci.yml'
             frontend:
@@ -54,6 +57,9 @@ jobs:
               - '.github/workflows/ci.yml'
             lint:
               - 'backend/**'
+              - 'frontend/mcp-app/**'
+              - 'frontend/vite.mcp-app.config.ts'
+              - 'frontend/package*.json'
               - '.golangci.yml'
               - '.github/workflows/ci.yml'
 
@@ -73,6 +79,19 @@ jobs:
           go-version: "1.27.1"
           cache-dependency-path: backend/go.sum
           check-latest: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.21.0"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build MCP App HTML
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build:mcp-app
 
       - name: Install dependencies
         working-directory: backend
@@ -163,6 +182,19 @@ jobs:
           go-version: "1.27.1"
           cache-dependency-path: backend/go.sum
           check-latest: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.21.0"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build MCP App HTML
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build:mcp-app
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9

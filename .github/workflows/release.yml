@@ -44,6 +44,12 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Build MCP App HTML
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build:mcp-app
+
       - name: Run backend tests
         working-directory: backend
         run: |
