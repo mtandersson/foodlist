@@ -259,14 +259,18 @@ fetches an image URL.
 
 2. Edit `.env` with your desired configuration
 
-3. Run the backend:
+3. From the `backend` directory, generate the MCP App HTML, then run the backend:
    ```bash
+   cd ../frontend && npm ci && npm run build:mcp-app
+   cd ../backend
    go run .
    ```
 
 ### With environment variables directly
 
 ```bash
+cd ../frontend && npm ci && npm run build:mcp-app
+cd ../backend
 PORT=3000 BIND_ADDR=0.0.0.0 LOG_FORMAT=json go run .
 ```
 

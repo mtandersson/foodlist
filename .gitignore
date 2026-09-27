@@ -20,6 +20,7 @@ yarn-error.log*
 # Build directories
 dist/
 build/
+backend/mcp_app_dist/
 
 # IDE
 .vscode/

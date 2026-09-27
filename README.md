@@ -246,6 +246,7 @@ foodlist/
 
 ```bash
 # Backend tests
+make mcp-app # Generates the HTML embedded by the Go backend
 cd backend && go test -v -cover ./...
 
 # Frontend tests
