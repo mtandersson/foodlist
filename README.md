@@ -155,11 +155,26 @@ Events are defined in `schema/events.schema.json` and code is generated for both
 
 ## Development
 
+### Nix development environment
+
+The repository includes a Nix flake with the tools used for development and
+CI. With Nix flakes enabled, enter the environment from the repository root:
+
+```bash
+nix develop
+```
+
+The shell provides Go, Node.js 24, Make, Air, golangci-lint, and the native
+libraries needed to build the HEIF image decoder. To enter it automatically
+when changing into the repository, install `direnv` with its shell hook and run
+`direnv allow` once in the repository.
+
 ### Prerequisites
 
-- Go 1.21+
-- Node.js 18+
-- Air (for live reload): `go install github.com/air-verse/air@latest`
+- Go 1.27.1
+- Node.js 24
+- Air for live reload (included in the Nix shell; otherwise install with
+  `go install github.com/air-verse/air@latest`)
 
 ### Development Modes
 
