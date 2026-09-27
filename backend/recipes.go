@@ -102,10 +102,11 @@ var ErrUnsupportedImage = errors.New("unsupported image type")
 // to be UUIDs so a malicious request cannot escape the directory even if
 // the prefix check were bypassed.
 type RecipeStore struct {
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	baseDir   string
 	maxPixels int
 	onChanged func(id string, deleted bool)
+	metas     []RecipeMeta
 }
 
 // NewRecipeStore validates and (if necessary) creates the base directory.
@@ -136,7 +137,11 @@ func NewRecipeStore(baseDir, dataDir string, maxPixels int) (*RecipeStore, error
 	if maxPixels <= 0 {
 		maxPixels = 24_000_000
 	}
-	return &RecipeStore{baseDir: absBase, maxPixels: maxPixels}, nil
+	store := &RecipeStore{baseDir: absBase, maxPixels: maxPixels}
+	if err := store.loadMetas(); err != nil {
+		return nil, err
+	}
+	return store, nil
 }
 
 // SetChangeHook registers a callback fired after a successful Save, Update,
@@ -544,14 +549,12 @@ func (s *RecipeStore) CheckImageBounds(imgBytes []byte) (string, error) {
 	return mime, nil
 }
 
-// List returns all recipe metadata, newest first.
-func (s *RecipeStore) List() ([]RecipeMeta, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
+// loadMetas builds the initial snapshot. As with the former List behavior,
+// unrelated files and unreadable or malformed recipe JSON are skipped.
+func (s *RecipeStore) loadMetas() error {
 	entries, err := os.ReadDir(s.baseDir)
 	if err != nil {
-		return nil, fmt.Errorf("read recipe dir: %w", err)
+		return fmt.Errorf("read recipe dir: %w", err)
 	}
 	metas := make([]RecipeMeta, 0, len(entries))
 	for _, e := range entries {
@@ -566,18 +569,49 @@ func (s *RecipeStore) List() ([]RecipeMeta, error) {
 		if err != nil {
 			continue
 		}
-		metas = append(metas, RecipeMeta{
-			ID:            r.ID,
-			Title:         r.Title,
-			ImageFilename: r.ImageFilename,
-			CreatedAt:     r.CreatedAt,
-			UpdatedAt:     r.UpdatedAt,
-		})
+		metas = append(metas, recipeMeta(r))
 	}
+	sortRecipeMetas(metas)
+	s.metas = metas
+	return nil
+}
+
+func recipeMeta(r Recipe) RecipeMeta {
+	return RecipeMeta{
+		ID:            r.ID,
+		Title:         r.Title,
+		ImageFilename: r.ImageFilename,
+		CreatedAt:     r.CreatedAt,
+		UpdatedAt:     r.UpdatedAt,
+	}
+}
+
+func sortRecipeMetas(metas []RecipeMeta) {
 	sort.Slice(metas, func(i, j int) bool {
+		if metas[i].CreatedAt.Equal(metas[j].CreatedAt) {
+			return metas[i].ID < metas[j].ID
+		}
 		return metas[i].CreatedAt.After(metas[j].CreatedAt)
 	})
-	return metas, nil
+}
+
+// List returns a copy of the sorted metadata snapshot, newest first.
+func (s *RecipeStore) List() ([]RecipeMeta, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return append([]RecipeMeta{}, s.metas...), nil
+}
+
+// upsertMeta runs with s.mu held after a successful disk write.
+func (s *RecipeStore) upsertMeta(r Recipe) {
+	for i, meta := range s.metas {
+		if meta.ID == r.ID {
+			s.metas = append(s.metas[:i], s.metas[i+1:]...)
+			break
+		}
+	}
+	s.metas = append(s.metas, recipeMeta(r))
+	sortRecipeMetas(s.metas)
 }
 
 func (s *RecipeStore) readUnlocked(id string) (Recipe, error) {
@@ -669,6 +703,7 @@ func (s *RecipeStore) Save(r Recipe, imageBytes []byte, mime string) (Recipe, er
 		}
 		return Recipe{}, fmt.Errorf("write recipe: %w", err)
 	}
+	s.upsertMeta(cleaned)
 
 	if s.onChanged != nil {
 		s.onChanged(cleaned.ID, false)
@@ -715,6 +750,7 @@ func (s *RecipeStore) Update(id string, mutate func(Recipe) (Recipe, error)) (Re
 	if err := writeAtomic(jsonPath, jsonBytes); err != nil {
 		return Recipe{}, fmt.Errorf("write recipe: %w", err)
 	}
+	s.upsertMeta(cleaned)
 	if s.onChanged != nil {
 		s.onChanged(id, false)
 	}
@@ -744,6 +780,12 @@ func (s *RecipeStore) Delete(id string) error {
 	}
 	if imagePath, _, ok := s.findExistingImage(id); ok {
 		_ = os.Remove(imagePath)
+	}
+	for i, meta := range s.metas {
+		if meta.ID == id {
+			s.metas = append(s.metas[:i], s.metas[i+1:]...)
+			break
+		}
 	}
 	if s.onChanged != nil {
 		s.onChanged(id, true)
