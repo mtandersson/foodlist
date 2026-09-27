@@ -36,6 +36,7 @@ func TestRecipeStoreListSnapshotAndRestart(t *testing.T) {
 	require.Equal(t, []string{newer.ID, older.ID}, []string{list[0].ID, list[1].ID})
 	list[0].Title = "caller changed title"
 	list = append(list, RecipeMeta{ID: "extra"})
+	require.Len(t, list, 3)
 	unchanged, err := store.List()
 	require.NoError(t, err)
 	require.Len(t, unchanged, 2)
