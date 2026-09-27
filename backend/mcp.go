@@ -612,8 +612,7 @@ func registerRecipeMCP(
 			targets = deduped
 		}
 
-		added := 0
-		var firstErr error
+		commands := make([]CreateTodoCommand, 0, len(targets))
 		for _, oneBased := range targets {
 			ing := flatIng[oneBased-1]
 			name := strings.TrimSpace(ing.Name)
@@ -636,14 +635,9 @@ func registerRecipeMCP(
 				cmd.Unit = &unit
 				cmd.OriginalInput = formatIngredientLine(ing)
 			}
-			if err := app.ExecuteCommand(cmd); err != nil {
-				if firstErr == nil {
-					firstErr = err
-				}
-				continue
-			}
-			added++
+			commands = append(commands, cmd)
 		}
+		added, firstErr := app.ExecuteCreateTodosBatch(commands)
 		if firstErr != nil {
 			return &mcp.CallToolResult{
 				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Added %d ingredient(s); first error: %v", added, firstErr)}},
