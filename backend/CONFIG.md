@@ -204,6 +204,7 @@ MCP (Model Context Protocol) streamable HTTP is served at **`/mcp`** and, when `
 - **Tools** are listed with **`tools/list`** and invoked with **`tools/call`** — this is what the MCP spec defines (plural `tools/...`, not `tool/list`).
 - MCP protocol identifiers keep legacy `todo` naming for compatibility (for example `foodlist://todos` and `todo_id`), but they refer to grocery items.
 - To fetch every defined category (including unused ones), use the **`foodlist_categories`** tool or **`resources/read`** with `uri: "foodlist://categories"`. **`foodlist_list`** only reflects categories that appear on grocery items in that markdown view.
+- **`foodlist_update_item`** sets `done` and/or `starred` for an existing grocery item identified by `todo_id`. At least one state field is required. Omitted fields are unchanged, and the tool returns the resulting item as structured data plus text. Identical updates do not write events.
 
 ### MCP: recipes
 

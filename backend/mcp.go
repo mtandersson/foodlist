@@ -41,14 +41,10 @@ type foodlistCategorizeIn struct {
 	CategoryID *string `json:"category_id,omitempty"`
 }
 
-type foodlistMarkDoneIn struct {
-	TodoID string `json:"todo_id"`
-	Done   bool   `json:"done"`
-}
-
-type foodlistMarkStarredIn struct {
+type foodlistUpdateItemIn struct {
 	TodoID  string `json:"todo_id"`
-	Starred bool   `json:"starred"`
+	Done    *bool  `json:"done,omitempty"`
+	Starred *bool  `json:"starred,omitempty"`
 }
 
 func newFoodlistMCPServer(app *Server) *mcp.Server {
@@ -168,61 +164,21 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
-		Name:        "foodlist_mark_done",
-		Description: "Mark a grocery item completed or reopen it.",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistMarkDoneIn) (*mcp.CallToolResult, any, error) {
+		Name:        "foodlist_update_item",
+		Description: "Set a grocery item's done and/or starred state. Supply at least one state field; omitted fields stay unchanged. Returns the updated item.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistUpdateItemIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
-		var cmd Command
-		if in.Done {
-			cmd = CompleteTodoCommand{
-				BaseCommand: BaseCommand{Type: "CompleteTodo", CommandID: uuid.NewString()},
-				ID:          in.TodoID,
-			}
-		} else {
-			cmd = UncompleteTodoCommand{
-				BaseCommand: BaseCommand{Type: "UncompleteTodo", CommandID: uuid.NewString()},
-				ID:          in.TodoID,
-			}
-		}
-		if err := app.ExecuteCommand(cmd); err != nil {
+		item, err := app.ExecuteUpdateItem(in.TodoID, in.Done, in.Starred)
+		if err != nil {
 			return &mcp.CallToolResult{
 				Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}},
 				IsError: true,
 			}, nil, nil
 		}
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Grocery item %s done=%v.", in.TodoID, in.Done)}},
-		}, nil, nil
-	})
-
-	mcp.AddTool(s, &mcp.Tool{
-		Name:        "foodlist_mark_starred",
-		Description: "Star or unstar a grocery item.",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistMarkStarredIn) (*mcp.CallToolResult, any, error) {
-		_ = ctx
-		_ = req
-		var cmd Command
-		if in.Starred {
-			cmd = StarTodoCommand{
-				BaseCommand: BaseCommand{Type: "StarTodo", CommandID: uuid.NewString()},
-				ID:          in.TodoID,
-			}
-		} else {
-			cmd = UnstarTodoCommand{
-				BaseCommand: BaseCommand{Type: "UnstarTodo", CommandID: uuid.NewString()},
-				ID:          in.TodoID,
-			}
-		}
-		if err := app.ExecuteCommand(cmd); err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}},
-				IsError: true,
-			}, nil, nil
-		}
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Grocery item %s starred=%v.", in.TodoID, in.Starred)}},
-		}, nil, nil
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Grocery item %s (%s): done=%v, starred=%v.", item.ID, item.Name, item.CompletedAt != nil, item.Starred)}},
+		}, item, nil
 	})
 
 	writeResourceJSON := func(uri string, v any) (*mcp.ReadResourceResult, error) {

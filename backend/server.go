@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"golang.org/x/sync/singleflight"
 )
@@ -657,6 +658,74 @@ func (s *Server) ExecuteCommand(cmd Command) error {
 	s.maybeStartAutoCategorize(event)
 	s.maybeUpdateSuggestionsForEvent(event)
 	return nil
+}
+
+// ExecuteUpdateItem applies the requested item state changes as one MCP operation.
+// The command lock keeps validation, durable writes, projection, and the returned
+// item together. Both events are persisted before either is broadcast.
+func (s *Server) ExecuteUpdateItem(id string, done, starred *bool) (Todo, error) {
+	s.commandMu.Lock()
+	defer s.commandMu.Unlock()
+
+	if done == nil && starred == nil {
+		return Todo{}, fmt.Errorf("provide done or starred")
+	}
+	item, ok := s.state.GetTodo(id)
+	if !ok {
+		return Todo{}, fmt.Errorf("grocery item %q not found", id)
+	}
+
+	commands := make([]Command, 0, 2)
+	if done != nil && *done != (item.CompletedAt != nil) {
+		if *done {
+			commands = append(commands, CompleteTodoCommand{
+				BaseCommand: BaseCommand{Type: "CompleteTodo", CommandID: uuid.NewString()}, ID: id,
+			})
+		} else {
+			commands = append(commands, UncompleteTodoCommand{
+				BaseCommand: BaseCommand{Type: "UncompleteTodo", CommandID: uuid.NewString()}, ID: id,
+			})
+		}
+	}
+	if starred != nil && *starred != item.Starred {
+		if *starred {
+			commands = append(commands, StarTodoCommand{
+				BaseCommand: BaseCommand{Type: "StarTodo", CommandID: uuid.NewString()}, ID: id,
+			})
+		} else {
+			commands = append(commands, UnstarTodoCommand{
+				BaseCommand: BaseCommand{Type: "UnstarTodo", CommandID: uuid.NewString()}, ID: id,
+			})
+		}
+	}
+	if len(commands) == 0 {
+		return *item, nil
+	}
+
+	events := make([]Event, 0, len(commands))
+	wires := make([][]byte, 0, len(commands))
+	for _, cmd := range commands {
+		event, err := s.commandToEvent(cmd)
+		if err != nil {
+			return Todo{}, err
+		}
+		wire, err := MarshalEvent(event)
+		if err != nil {
+			return Todo{}, fmt.Errorf("failed to marshal event: %w", err)
+		}
+		events = append(events, event)
+		wires = append(wires, wire)
+	}
+	if err := s.store.AppendBatch(events); err != nil {
+		return Todo{}, fmt.Errorf("failed to persist item update: %w", err)
+	}
+	s.state.ApplyEvents(events)
+	for i, event := range events {
+		s.broadcast <- wires[i]
+		s.maybeUpdateSuggestionsForEvent(event)
+	}
+	updated, _ := s.state.GetTodo(id)
+	return *updated, nil
 }
 
 // ExecuteCreateTodosBatch validates each command, then persists all valid
