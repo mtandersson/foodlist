@@ -1,3 +1,100 @@
+## [2.0.0](https://github.com/mtandersson/foodlist/compare/v1.21.0...v2.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **mcp:** unify grocery item state updates (#499)
+* **mcp:** foodlist_mark_done and foodlist_mark_starred are removed from MCP tool discovery; use foodlist_update_item.
+
+### Features
+
+* **mcp:** add interactive shopping list view ([#506](https://github.com/mtandersson/foodlist/issues/506)) ([8d61894](https://github.com/mtandersson/foodlist/commit/8d6189499db81319a46355535998f138daf54cee))
+* **mcp:** unify grocery item state updates ([11abf04](https://github.com/mtandersson/foodlist/commit/11abf0468744587ab3f01bc0aa1a9c412097341f))
+* **mcp:** unify grocery item state updates ([#499](https://github.com/mtandersson/foodlist/issues/499)) ([4b540fa](https://github.com/mtandersson/foodlist/commit/4b540fa21ba4486d1256d927d4429d61ea54ca9d)), closes [#489](https://github.com/mtandersson/foodlist/issues/489)
+* **recipes:** add MCP create and update with image upload ([f835ed6](https://github.com/mtandersson/foodlist/commit/f835ed60a8836d3c0bd39e24ed755aa72c993b1e))
+
+### Bug Fixes
+
+* **build:** generate embedded MCP app HTML during builds ([#509](https://github.com/mtandersson/foodlist/issues/509)) ([36f30cf](https://github.com/mtandersson/foodlist/commit/36f30cffcc0c24bc3a9cb7d290f564a3747fa0c0))
+* **deps:** weekly dependency release ([9d24245](https://github.com/mtandersson/foodlist/commit/9d24245741b6cd0ff1b6611b40f2d52bf3fec6e6))
+* **deps:** weekly dependency release ([60a80c2](https://github.com/mtandersson/foodlist/commit/60a80c2568733286ee5f423ea2834e2cb0b8b526))
+* **deps:** weekly dependency release ([1ca1b5b](https://github.com/mtandersson/foodlist/commit/1ca1b5ba4af4cda9db63878de24f2b9f7de8ac5b))
+* **deps:** weekly dependency release ([26d5940](https://github.com/mtandersson/foodlist/commit/26d5940896f34440abf238018f36bb3b80758484))
+* **frontend:** correct localStorage test suites ([eaf259e](https://github.com/mtandersson/foodlist/commit/eaf259e152a16e41154635af8cacec2fe78836d5))
+* **frontend:** register jest-dom matchers with Vitest 5 ([04aa08c](https://github.com/mtandersson/foodlist/commit/04aa08c8ccadbd0c01800692b987a0801b5e44dd))
+* **frontend:** stub localStorage in Vitest 5 ([a76fc5b](https://github.com/mtandersson/foodlist/commit/a76fc5b5d42b4b549e8ad33383432c8a99fcd951))
+* **frontend:** support TypeScript 7 in Svelte checks ([6d043e9](https://github.com/mtandersson/foodlist/commit/6d043e95749dcba4711b6127a67ca10842b79144))
+* **recipes:** avoid unused multipart MIME assignments ([4825a7c](https://github.com/mtandersson/foodlist/commit/4825a7c55ffb8ad427ff65bc9d6ef7cb9bb6d6b9))
+* **release:** use changelog preset compatible with writer v8 ([#511](https://github.com/mtandersson/foodlist/issues/511)) ([0bac4d0](https://github.com/mtandersson/foodlist/commit/0bac4d0e4565e131397b606e5eb83c4a5be487a0))
+* **renovate:** cap TypeScript below v7 ([aa707cc](https://github.com/mtandersson/foodlist/commit/aa707cca815aed396d288cfbe6b1e3882a8748ea))
+* **renovate:** correct TypeScript version rule ([8c8539f](https://github.com/mtandersson/foodlist/commit/8c8539fc6d60d311c6d94cd8dfb2d67fa380d295))
+
+### Performance Improvements
+
+* **mcp:** batch recipe ingredient event writes ([#496](https://github.com/mtandersson/foodlist/issues/496)) ([18fbf64](https://github.com/mtandersson/foodlist/commit/18fbf646e99232aa1aa89b6f79661ef49872b38b))
+* **recipes:** cache sorted recipe list metadata ([#505](https://github.com/mtandersson/foodlist/issues/505)) ([ad5da30](https://github.com/mtandersson/foodlist/commit/ad5da308f927a4170e5b118590e3fe258c1df449))
+
+### Styles
+
+* **renovate:** keep config diff focused ([caf4618](https://github.com/mtandersson/foodlist/commit/caf46187f5021e3d6d48d40a4181bb846b01f793))
+
+### Continuous Integration
+
+* filter unrelated changes from workflow ([b2dcdac](https://github.com/mtandersson/foodlist/commit/b2dcdac1e2f5b0d5722073f8c5964723e006083f)), closes [#498](https://github.com/mtandersson/foodlist/issues/498)
+
+### Chores
+
+* add Foodlist ticket workflow skills ([#495](https://github.com/mtandersson/foodlist/issues/495)) ([c9b5df0](https://github.com/mtandersson/foodlist/commit/c9b5df0e752489194d0b19ff97dd6925e013183e))
+* **deps:** update @semantic-release/github to ^12.0.10 ([1bdcd46](https://github.com/mtandersson/foodlist/commit/1bdcd46597bb9cdb6875143e03575ee2bd8c5092))
+* **deps:** update @sveltejs/vite-plugin-svelte to ^7.3.1 ([bb61d9f](https://github.com/mtandersson/foodlist/commit/bb61d9f7e777951497f0a0c07ddb302f94b0be33))
+* **deps:** update @types/node to ^24.13.4 ([2e683c8](https://github.com/mtandersson/foodlist/commit/2e683c8737abcc93047488ee015b7426e5835843))
+* **deps:** update @types/node to ^24.13.5 ([ef3b770](https://github.com/mtandersson/foodlist/commit/ef3b770b0e299eee3040eb3c91430fd0e4bb4855))
+* **deps:** update @types/node to ^24.13.6 ([193c967](https://github.com/mtandersson/foodlist/commit/193c967feff8bda089b22a71ef97ad0a505b08be))
+* **deps:** update @types/node to ^24.19.0 ([b67bf8e](https://github.com/mtandersson/foodlist/commit/b67bf8eec2184b202893fe36610c63dcab23240b))
+* **deps:** update conventional-changelog-conventionalcommits to v10 ([0c21f92](https://github.com/mtandersson/foodlist/commit/0c21f92c9612000cbcfb1835be3073002e56fb2f))
+* **deps:** update docker/dockerfile Docker tag to v1.27 ([0a2c320](https://github.com/mtandersson/foodlist/commit/0a2c320e30aec3ed297faf6c119cc93e733c905d))
+* **deps:** update dompurify to ^3.4.15 ([aedf7bb](https://github.com/mtandersson/foodlist/commit/aedf7bb6b789d60fdb3d1fcc4cbcae122b993104))
+* **deps:** update dompurify to ^3.4.16 ([251a1d2](https://github.com/mtandersson/foodlist/commit/251a1d2d1ab68fd3c4a159b8a743db86a59815d2))
+* **deps:** update dorny/paths-filter action to v4 ([1e7a4f8](https://github.com/mtandersson/foodlist/commit/1e7a4f8dbc8b4f5d6af8ac650987ab9a15084c7b))
+* **deps:** update gcr.io/distroless/static-debian13:nonroot Docker digest to e2e927e ([fb7f0c8](https://github.com/mtandersson/foodlist/commit/fb7f0c80f02a599ba1bc0571c4d8960929486b6e))
+* **deps:** update go module directive to v1.27.1 ([3e33d4c](https://github.com/mtandersson/foodlist/commit/3e33d4c4080776b049322f0bebb377f146e153b4))
+* **deps:** update golang Docker tag to v1.27.1 ([c2e71b0](https://github.com/mtandersson/foodlist/commit/c2e71b026701a4d168baf59c5120a08ed4e2d4dd))
+* **deps:** update golang:1.27.1-alpine Docker digest to 8a5910f ([b8eabe5](https://github.com/mtandersson/foodlist/commit/b8eabe599d320c495048293e95695a5b5cc79c6e))
+* **deps:** update jsdom to ^30.1.0 ([7c06e1a](https://github.com/mtandersson/foodlist/commit/7c06e1a567ae506f33083b97a81d96af53333fca))
+* **deps:** update jsdom to ^30.1.1 ([e834a6d](https://github.com/mtandersson/foodlist/commit/e834a6dc0887cccc037d9e3de9ba9421c905b15c))
+* **deps:** update marked to ^18.0.12 ([ecf5f4c](https://github.com/mtandersson/foodlist/commit/ecf5f4cd9c77aebf950a40371ecd334a428d9b56))
+* **deps:** update marked to ^18.0.13 ([8837ce0](https://github.com/mtandersson/foodlist/commit/8837ce0e2392c25ac3233ad6fb076e0135ea5e1f))
+* **deps:** update marked to ^18.0.14 ([6bedb7a](https://github.com/mtandersson/foodlist/commit/6bedb7ad84ae7e6b204453ba5903d4de83b7007a))
+* **deps:** update module github.com/Azure/azure-sdk-for-go/sdk/azcore to v1.23.1 ([ff6a959](https://github.com/mtandersson/foodlist/commit/ff6a9596dea968d43e8e7978eb7d50eff3eb6a8e))
+* **deps:** update module github.com/microsoft/kiota-abstractions-go to v1.10.0 ([fd5640f](https://github.com/mtandersson/foodlist/commit/fd5640f8f4f168e82bf7ef8bcb8ac076034ad335))
+* **deps:** update module github.com/microsoft/kiota-abstractions-go to v1.10.1 ([8ec672f](https://github.com/mtandersson/foodlist/commit/8ec672fc19a08bed2cf1b67568392c4cbd0eedeb))
+* **deps:** update module github.com/microsoft/kiota-abstractions-go to v1.11.0 ([ca7b70a](https://github.com/mtandersson/foodlist/commit/ca7b70a96aa4ed57fdd1a251487a7a748b3551ee))
+* **deps:** update module github.com/microsoft/kiota-abstractions-go to v1.11.1 ([6981e2c](https://github.com/mtandersson/foodlist/commit/6981e2ccc2c812b3c8b75064d443709829d2576e))
+* **deps:** update module github.com/microsoftgraph/msgraph-sdk-go to v1.102.0 ([4a51bc1](https://github.com/mtandersson/foodlist/commit/4a51bc1b7cbb69aa6fecd93fe22b75e64562913f))
+* **deps:** update module github.com/microsoftgraph/msgraph-sdk-go to v1.103.0 ([76bc916](https://github.com/mtandersson/foodlist/commit/76bc9163bf68f13c7b06def83f9146da31bce6e2))
+* **deps:** update module golang.org/x/image to v0.46.0 ([99f5f0d](https://github.com/mtandersson/foodlist/commit/99f5f0df23514e081aaf5b9e660a08f30ea1cbc8))
+* **deps:** update module golang.org/x/net to v0.59.0 ([2851111](https://github.com/mtandersson/foodlist/commit/2851111ea7e43a68576f503b83689d730fc2206f))
+* **deps:** update module golang.org/x/oauth2 to v0.37.0 ([1d68035](https://github.com/mtandersson/foodlist/commit/1d680355b83d0a3667a81cb360e778a7a101e9ae))
+* **deps:** update module golang.org/x/sync to v0.23.0 ([b696d93](https://github.com/mtandersson/foodlist/commit/b696d9318d85c43a9d5b9dd91ba9ec97b859fb05))
+* **deps:** update module golang.org/x/sys to v0.48.0 ([41f3c93](https://github.com/mtandersson/foodlist/commit/41f3c937a21e55363a87a2fc1a2bc57f13607892))
+* **deps:** update module golang.org/x/time to v0.16.0 ([ff93dfb](https://github.com/mtandersson/foodlist/commit/ff93dfb890c389ffaeab8dcbb26a999e962e1af7))
+* **deps:** update node to v24.20.0 ([a8c81c6](https://github.com/mtandersson/foodlist/commit/a8c81c6c27c3b5b4f07bd314d2e4426d67898cbb))
+* **deps:** update node to v24.21.0 ([bfa1120](https://github.com/mtandersson/foodlist/commit/bfa1120b67cc60ceda261a5eb99899d9c341c3dd))
+* **deps:** update Node.js to ebfe2f9 ([368e55c](https://github.com/mtandersson/foodlist/commit/368e55c77e0ee1bc4362c2390dfeff4e805eb020))
+* **deps:** update Node.js to v24.20.0 ([abaa880](https://github.com/mtandersson/foodlist/commit/abaa880feaf5a3efc89b43a887731f6cfff08c34))
+* **deps:** update Node.js to v24.21.0 ([7c33804](https://github.com/mtandersson/foodlist/commit/7c3380491ad414d4e408c30149e78538d7644665))
+* **deps:** update renovatebot/github-action action to v46.2.5 ([7327033](https://github.com/mtandersson/foodlist/commit/7327033b5ee75d916d6860f56a8af19719301a97))
+* **deps:** update renovatebot/github-action action to v46.2.6 ([d3ec2ab](https://github.com/mtandersson/foodlist/commit/d3ec2ab9979a301cf87413453bbbe065d8b7df95))
+* **deps:** update renovatebot/github-action action to v46.3.0 ([4ad7f48](https://github.com/mtandersson/foodlist/commit/4ad7f48258e792afe790a4c74519347b93a63879))
+* **deps:** update renovatebot/github-action action to v46.3.1 ([220bdf2](https://github.com/mtandersson/foodlist/commit/220bdf21288287139d25b58324bb6cb9bcb1c3d7))
+* **deps:** update renovatebot/github-action action to v46.3.2 ([61b862f](https://github.com/mtandersson/foodlist/commit/61b862ff7b78ddb6b871a2cf3d39e1a59a703d8a))
+* **deps:** update renovatebot/github-action action to v46.3.3 ([47c7e82](https://github.com/mtandersson/foodlist/commit/47c7e8287ec20aef36190dd01b212f46f8e6e26d))
+* **deps:** update renovatebot/github-action action to v46.3.4 ([05c400c](https://github.com/mtandersson/foodlist/commit/05c400ca6da53f5997bb3813db71e5d98cc0664a))
+* **deps:** update svelte to ^5.57.0 ([5851d62](https://github.com/mtandersson/foodlist/commit/5851d62dd0b27122084865a7db9643cb6a4229e5))
+* **deps:** update svelte to ^5.57.1 ([190e596](https://github.com/mtandersson/foodlist/commit/190e596e2910405588f246dea455a63570cf3c0a))
+* **deps:** update typescript to v7 ([8bd7c42](https://github.com/mtandersson/foodlist/commit/8bd7c4278094f3d3331309fa0e19edeca845f9ff))
+* **deps:** update vitest monorepo to v5 ([b869cfe](https://github.com/mtandersson/foodlist/commit/b869cfea4e3d8fd3253747d3b245b21c9f57d8e4))
+* **dev:** add reproducible Nix shell ([#503](https://github.com/mtandersson/foodlist/issues/503)) ([fe53085](https://github.com/mtandersson/foodlist/commit/fe530855ff1c76c14c48d6667a589b2e7720e7e6))
+
 ## [1.21.0](https://github.com/mtandersson/foodlist/compare/v1.20.12...v1.21.0) (2026-08-26)
 
 ### Features
