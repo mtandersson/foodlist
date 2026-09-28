@@ -10,7 +10,6 @@ const releaseRules = [
   {type: "revert", release: "patch"},
   {type: "docs", release: false},
   {type: "style", scope: "ui", release: "patch"},
-  {type: "style", release: false},
   {type: "refactor", release: "patch"},
   {type: "test", release: false},
   {type: "build", release: false},

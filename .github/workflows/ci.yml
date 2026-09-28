@@ -63,6 +63,25 @@ jobs:
               - '.golangci.yml'
               - '.github/workflows/ci.yml'
 
+  release-config:
+    name: Release Configuration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.21.0"
+          cache: "npm"
+
+      - name: Verify release configuration
+        run: |
+          npm ci
+          npm run test:release
+
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
