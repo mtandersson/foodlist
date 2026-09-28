@@ -252,7 +252,7 @@ git push origin main
 
 Watch the release workflow:
 
-- Should create a new patch version
+- Should create a release only if the merged commit changes user-visible behavior
 - Should update CHANGELOG
 - Should publish Docker images
 
@@ -316,9 +316,9 @@ After successful setup:
    - Wait for review
 
 4. **Merge to Main:**
-   - Release happens automatically
-   - Version bumped based on commits
-   - Docker images published
+   - Release workflow checks commits automatically
+   - User-visible changes bump the version and publish Docker images
+   - Maintenance-only changes do not publish a release
 
 ## ✨ Summary
 

@@ -327,11 +327,11 @@ fix:        PATCH       fix(api): resolve timeout issue
 feat!:      MAJOR       feat(api)!: change auth flow
                         0.1.0 → 1.0.0
 
-docs:       PATCH       docs: update README
-                        0.1.0 → 0.1.1
+docs:       NONE        docs: update README
+                        no release
 
-refactor:   PATCH       refactor: simplify store logic
-                        0.1.0 → 0.1.1
+refactor:   NONE        refactor: simplify store logic
+                        no release
 ```
 
 ## 📚 Documentation Files

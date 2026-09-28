@@ -12,14 +12,18 @@
 |------|-------------|--------------|---------|
 | `feat` | New feature | MINOR (0.1.0 → 0.2.0) | `feat(api): add user endpoint` |
 | `fix` | Bug fix | PATCH (0.1.0 → 0.1.1) | `fix(ui): button alignment` |
-| `docs` | Documentation | PATCH | `docs: update README` |
-| `style` | Code formatting | PATCH | `style: fix indentation` |
-| `refactor` | Code restructuring | PATCH | `refactor(store): simplify logic` |
+| `docs` | Documentation | None | `docs: update README` |
+| `style` | Code formatting | None | `style: fix indentation` |
+| `style(ui)` | Visible UI styling | PATCH | `style(ui): improve spacing` |
+| `refactor` | Code restructuring | None | `refactor(store): simplify logic` |
 | `perf` | Performance | PATCH | `perf: optimize queries` |
-| `test` | Tests | PATCH | `test: add unit tests` |
-| `build` | Build system | PATCH | `build: update webpack` |
-| `ci` | CI/CD | PATCH | `ci: add new workflow` |
-| `chore` | Maintenance | PATCH | `chore: update deps` |
+| `test` | Tests | None | `test: add unit tests` |
+| `build` | Build system | None | `build: update webpack` |
+| `ci` | CI/CD | None | `ci: add new workflow` |
+| `chore` | Maintenance | None | `chore: update deps` |
+
+Scopes `deps`, `ci`, `build`, `release`, `test`, and `docs` do not trigger a
+release on their own. An explicit breaking change still triggers a major release.
 
 ## Breaking Changes
 
@@ -108,4 +112,3 @@ Closes #123"
 - `CONTRIBUTING.md` - Full guide
 - `CI_CD_GUIDE.md` - Pipeline details
 - [conventionalcommits.org](https://www.conventionalcommits.org/)
-
