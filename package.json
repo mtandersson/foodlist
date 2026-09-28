@@ -9,7 +9,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "test:release": "node --test test/release.test.mjs"
+    "test:release": "node --test test/release.test.mjs && node test/release-integration.mjs"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^7.0.0",

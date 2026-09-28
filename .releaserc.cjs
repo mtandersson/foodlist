@@ -2,6 +2,11 @@
 // - Dependency maintenance and internal changes do not trigger releases.
 //   Only changes with user-visible release notes create a version and image.
 const internalScopes = "{deps,ci,build,release,test,docs}"
+// semantic-release resolves plugin names from its own node_modules first.
+// Resolve from this config so the release runner uses the plugins installed
+// and tested from the repository lockfile.
+const analyzerPlugin = require.resolve("@semantic-release/commit-analyzer")
+const notesPlugin = require.resolve("@semantic-release/release-notes-generator")
 const releaseRules = [
   {type: "feat", scope: `!${internalScopes}`, release: "minor"},
   {type: "fix", scope: `!${internalScopes}`, release: "patch"},
@@ -27,14 +32,14 @@ module.exports = {
   branches: ["main"],
   plugins: [
     [
-      "@semantic-release/commit-analyzer",
+      analyzerPlugin,
       {
         preset: "conventionalcommits",
         releaseRules,
       },
     ],
     [
-      "@semantic-release/release-notes-generator",
+      notesPlugin,
       {
         preset: "conventionalcommits",
         presetConfig: {
