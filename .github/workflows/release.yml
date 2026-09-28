@@ -93,7 +93,9 @@ jobs:
 
       - name: Create release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v6.0.0
+        # Run from this checkout so semantic-release loads the plugins from
+        # the lockfile verified above, rather than an action's own node_modules.
+        run: node scripts/release.mjs
         env:
           # Use PAT instead of GITHUB_TOKEN so the chore(release) commit
           # semantic-release pushes to `main` can bypass branch protection.
