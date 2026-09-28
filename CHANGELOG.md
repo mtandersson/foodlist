@@ -1,3 +1,29 @@
+## [2.1.0](https://github.com/mtandersson/foodlist/compare/v2.0.0...v2.1.0) (2026-09-28)
+
+### Features
+
+* **mcp:** add recipe cards view and thumbnail resource ([#513](https://github.com/mtandersson/foodlist/issues/513)) ([8330e6b](https://github.com/mtandersson/foodlist/commit/8330e6b593da379c56531694d6757af49c8f3ba9))
+
+### Bug Fixes
+
+* **release:** load checked-in plugin versions ([#521](https://github.com/mtandersson/foodlist/issues/521)) ([f82c168](https://github.com/mtandersson/foodlist/commit/f82c16818eed16c62cb8168b1880685724a4c9e9))
+* **release:** run locked semantic-release plugins ([#519](https://github.com/mtandersson/foodlist/issues/519)) ([2112ab9](https://github.com/mtandersson/foodlist/commit/2112ab91a86668dbf38974f3f9a2854bce3537bf))
+* **release:** support conventional commits preset v10 ([#516](https://github.com/mtandersson/foodlist/issues/516)) ([2c07f98](https://github.com/mtandersson/foodlist/commit/2c07f98e16fde1fd7e35e9c79563aabf3da7777c))
+
+### Documentation
+
+* **release:** align guides with release policy ([e52e595](https://github.com/mtandersson/foodlist/commit/e52e595d89c8886b389195bafb80d99eca0367e6))
+
+### Continuous Integration
+
+* **release:** skip maintenance-only releases ([a461e4a](https://github.com/mtandersson/foodlist/commit/a461e4a204fafa9ec481fa14ddd9803e838abaa9))
+* **renovate:** limit dependency updates to Monday daytime ([#518](https://github.com/mtandersson/foodlist/issues/518)) ([1160c7d](https://github.com/mtandersson/foodlist/commit/1160c7dc42a1dc537a170baa9d28167102725814))
+
+### Chores
+
+* **deps:** update conventional-changelog-conventionalcommits to v10 ([0c7d0b1](https://github.com/mtandersson/foodlist/commit/0c7d0b15f391aac89822e60efc8a8ba5cf1ebc2a))
+* **deps:** update renovatebot/github-action action to v46.3.5 ([5b7aa7c](https://github.com/mtandersson/foodlist/commit/5b7aa7ce60fa6e3f3e7c785e6739a064d8db6cf2))
+
 ## [2.0.0](https://github.com/mtandersson/foodlist/compare/v1.21.0...v2.0.0) (2026-09-27)
 
 ### ⚠ BREAKING CHANGES
