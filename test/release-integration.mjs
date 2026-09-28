@@ -33,7 +33,10 @@ try {
   git(repo, "remote", "add", "origin", `file://${remote}`)
   git(repo, "push", "-u", "origin", "main", "--tags")
 
-  const silent = new Writable({write(_chunk, _encoding, callback) { callback() }})
+  const logs = []
+  const silent = new Writable({write(chunk, _encoding, callback) { logs.push(chunk.toString()); callback() }})
+  // The temporary repository is on main even when the outer CI job checks out a PR ref.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GITHUB_")))
   const result = await semanticRelease(
     {
       branches: ["main"],
@@ -42,9 +45,10 @@ try {
       dryRun: true,
       ci: false,
     },
-    {cwd: repo, env: process.env, stdout: silent, stderr: silent},
+    {cwd: repo, env, stdout: silent, stderr: silent},
   )
 
+  assert.ok(result?.nextRelease, logs.join(""))
   assert.equal(result.nextRelease.version, "1.1.0")
   assert.match(result.nextRelease.notes, /### Features\n[\s\S]*add menu/)
   assert.match(result.nextRelease.notes, /### Bug Fixes\n[\s\S]*repair list/)
