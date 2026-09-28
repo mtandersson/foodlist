@@ -1,16 +1,21 @@
 // Semantic-release configuration
-// - `chore` commits do NOT trigger a release on push to `main`.
-//   They accumulate on `main` and are rolled up into a single patch release
-//   once per week by `.github/workflows/release-weekly.yml`, which creates
-//   an empty `fix(deps): weekly dependency release` commit.
+// - Dependency maintenance and internal changes do not trigger releases.
+//   Only changes with user-visible release notes create a version and image.
+const internalScopes = "{deps,ci,build,release,test,docs}"
 const releaseRules = [
-  {type: "feat", release: "minor"},
-  {type: "fix", release: "patch"},
-  {type: "perf", release: "patch"},
-  {type: "revert", release: "patch"},
+  {type: "feat", scope: `!${internalScopes}`, release: "minor"},
+  {type: "fix", scope: `!${internalScopes}`, release: "patch"},
+  {type: "perf", scope: `!${internalScopes}`, release: "patch"},
+  {type: "revert", scope: `!${internalScopes}`, release: "patch"},
+  {scope: internalScopes, release: false},
+  {revert: true, header: `Revert "*\\(${internalScopes}\\):*`, release: false},
+  {revert: true, header: 'Revert "{chore,docs,refactor,test,build,ci}*:*', release: false},
+  {revert: true, header: 'Revert "style:*', release: false},
+  {revert: true, header: 'Revert "style\\(*\\):*', release: false},
+  {revert: true, header: 'Revert "style\\(ui\\):*', release: "patch"},
   {type: "docs", release: false},
   {type: "style", scope: "ui", release: "patch"},
-  {type: "refactor", release: "patch"},
+  {type: "refactor", release: false},
   {type: "test", release: false},
   {type: "build", release: false},
   {type: "ci", release: false},
