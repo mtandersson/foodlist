@@ -9,9 +9,10 @@ name: Weekly Dependency Release
 
 on:
   schedule:
-    # Monday 06:00 UTC — runs ~3h after Renovate (Mon 03:00 UTC) so any
-    # auto-merges have time to land on `main` before the roll-up.
-    - cron: "0 6 * * 1"
+    # Monday 16:30 Stockholm time, after the Renovate window, allowing time
+    # for CI and merges before the weekly dependency roll-up.
+    - cron: "30 16 * * 1"
+      timezone: "Europe/Stockholm"
   workflow_dispatch:
 
 permissions:

@@ -51,13 +51,13 @@ Choose one authentication method:
 
 **Method A: Using GITHUB_TOKEN (Simple)**
 
-No additional setup needed! Just update the workflow:
+The workflow already uses the built-in token:
 
 Edit `.github/workflows/renovate.yml`:
 
 ```yaml
 - name: Self-hosted Renovate
-  uses: renovatebot/github-action@v40.3.2
+  uses: renovatebot/github-action@v46.3.5
   with:
     configurationFile: renovate.json
     token: ${{ secrets.GITHUB_TOKEN }} # Built-in token
@@ -102,16 +102,9 @@ Better for rate limits and more control:
 5. **The workflow is already configured!**
    - It will use the app credentials automatically
 
-#### Manual Trigger
-
-You can manually trigger Renovate anytime:
-
-```bash
-# Via GitHub UI: Actions → Renovate → Run workflow
-
-# Or via GitHub CLI:
-gh workflow run renovate.yml
-```
+The self-hosted workflow runs hourly on Monday from 10:17 through 14:17
+Europe/Stockholm time. It has no manual trigger so runs stay within the
+configured window.
 
 ## Configuration
 
@@ -133,7 +126,9 @@ The `renovate.json` file controls Renovate's behavior:
 
 ✅ **Smart Scheduling**
 
-- Runs every Monday at 3:00 AM UTC
+- Runs on Monday between 10:00 and 15:00 Europe/Stockholm time
+- Creates, updates, and auto-merges dependency PRs only in that window
+- The weekly dependency release runs Monday at 16:30 after the update window
 - Limits concurrent PRs to avoid noise
 - Groups related updates together
 
@@ -146,7 +141,8 @@ The `renovate.json` file controls Renovate's behavior:
 
 ✅ **Security Updates**
 
-- Vulnerability alerts create PRs immediately
+- Vulnerability alerts can create PRs outside the normal update schedule when
+  the hosted Renovate app runs; Renovate deliberately exempts them from `schedule`
 - Auto-labeled as "security"
 - Can auto-merge security patches
 
@@ -170,15 +166,21 @@ These will:
 
 ### Change Update Schedule
 
-Edit `renovate.json`:
+Update the matching window in `renovate.json` and the cron schedule in
+`.github/workflows/renovate.yml`. The current Renovate settings are:
 
 ```json
 {
-  "schedule": ["before 5am on monday"]  // Current
-  "schedule": ["every weekend"]         // Alternative
-  "schedule": ["after 10pm every weekday"]  // Alternative
+  "schedule": ["* 10-14 * * 1"],
+  "automergeSchedule": ["* 10-14 * * 1"],
+  "timezone": "Europe/Stockholm"
 }
 ```
+
+Renovate's cron schedule uses `*` for minutes; the workflow starts at minute
+17 of each allowed hour. A separately installed hosted Renovate app may still
+check the repository outside this window, but this configuration limits its
+ordinary dependency updates and auto-merges.
 
 ### Disable Auto-merge
 
@@ -239,7 +241,7 @@ Prevent major version updates:
 
 ### What Renovate Does
 
-1. **Scans for outdated dependencies** (weekly)
+1. **Scans for outdated dependencies** (hourly during the Monday window)
 2. **Creates PRs** with updates
 3. **Runs CI tests** on each PR
 4. **Auto-merges** (if configured and tests pass)
@@ -328,7 +330,7 @@ on:
    - Self-hosted: Check GitHub Actions logs
 
 3. **Common issues:**
-   - Schedule hasn't run yet (wait for Monday 3 AM UTC)
+   - Schedule hasn't run yet (Monday 10:17–14:17 Europe/Stockholm)
    - No updates available (all dependencies current)
    - Rate limited (wait or use GitHub App)
 
@@ -404,9 +406,7 @@ foodlist/
 
 ### Option 2: Self-Hosted
 
-1. Update `.github/workflows/renovate.yml` to use `GITHUB_TOKEN`
-2. Push to GitHub
-3. Manually trigger: Actions → Renovate → Run workflow
-4. Or wait for Monday 3 AM UTC
+1. Push the configured `.github/workflows/renovate.yml` to GitHub
+2. Check the scheduled run on Monday 10:17–14:17 Europe/Stockholm
 
 **Current Status:** Configuration ready, choose your setup option!

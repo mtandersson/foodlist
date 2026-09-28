@@ -75,8 +75,7 @@ This project uses GitHub Actions for continuous integration and automated releas
 
 **Triggers:**
 
-- Schedule: Every Monday at 3:00 AM UTC
-- Manual: Via workflow_dispatch
+- Schedule: Hourly on Monday from 10:17 through 14:17 Europe/Stockholm time
 
 **Purpose:** Automated dependency updates
 
@@ -89,6 +88,8 @@ This project uses GitHub Actions for continuous integration and automated releas
 - Labels: `dependencies`, `renovate`
 
 **Note:** You can also use the [Renovate GitHub App](https://github.com/apps/renovate) instead of the self-hosted workflow for zero maintenance.
+The weekly dependency release runs Monday at 16:30 Europe/Stockholm time,
+after the Renovate window.
 
 See `RENOVATE_SETUP.md` for detailed configuration.
 
