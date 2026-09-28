@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [viteSingleFile()],
   build: {
     outDir: '../../backend/mcp_app_dist',
-    emptyOutDir: true,
-    rollupOptions: { input: 'mcp-app/shopping.html' },
+    emptyOutDir: process.env.MCP_APP !== 'recipes',
+    rollupOptions: { input: `mcp-app/${process.env.MCP_APP === 'recipes' ? 'recipes' : 'shopping'}.html` },
   },
 })

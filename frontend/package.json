@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && npm run build:mcp-app",
-    "build:mcp-app": "vite build --config vite.mcp-app.config.ts",
+    "build:mcp-app": "vite build --config vite.mcp-app.config.ts && MCP_APP=recipes vite build --config vite.mcp-app.config.ts",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json --tsgo && node ./node_modules/typescript/bin/tsc -p tsconfig.node.json",
     "test": "vitest",
