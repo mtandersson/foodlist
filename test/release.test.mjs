@@ -4,8 +4,8 @@ import {analyzeCommits} from "@semantic-release/commit-analyzer"
 import {generateNotes} from "@semantic-release/release-notes-generator"
 import config from "../.releaserc.cjs"
 
-const analyzer = config.plugins.find(([name]) => name === "@semantic-release/commit-analyzer")[1]
-const notesGenerator = config.plugins.find(([name]) => name === "@semantic-release/release-notes-generator")[1]
+const analyzer = config.plugins[0][1]
+const notesGenerator = config.plugins[1][1]
 
 function context(messages) {
   return {
