@@ -162,8 +162,8 @@ Step-by-step:
 | `feat:`     | 0.0.1   | **0.1.0** | `feat(ui): add dark mode`   |
 | `fix:`      | 0.0.1   | **0.0.2** | `fix(api): resolve timeout` |
 | `feat!:`    | 0.1.0   | **1.0.0** | `feat(api)!: change format` |
-| `docs:`     | 0.0.1   | **0.0.2** | `docs: update README`       |
-| `chore:`    | 0.0.1   | **0.0.2** | `chore: update deps`        |
+| `docs:`     | 0.0.1   | No release | `docs: update README`       |
+| `chore:`    | 0.0.1   | No release | `chore: update deps`        |
 
 ---
 

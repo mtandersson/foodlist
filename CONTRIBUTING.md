@@ -20,7 +20,7 @@ Must be one of the following:
 
 - **feat**: A new feature (triggers a MINOR version bump, e.g., 1.0.0 → 1.1.0)
 - **fix**: A bug fix (triggers a PATCH version bump, e.g., 1.0.0 → 1.0.1)
-- **docs**: Documentation only changes (triggers a PATCH version bump)
+- **docs**: Documentation only changes (no version bump)
 - **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc.)
 - **refactor**: A code change that neither fixes a bug nor adds a feature
 - **perf**: A code change that improves performance (triggers a PATCH version bump)
@@ -92,7 +92,7 @@ event ordering and debugging.
 BREAKING CHANGE: Clients must be updated to handle the new event structure.
 ```
 
-### Documentation (patch version bump)
+### Documentation (no version bump)
 
 ```
 docs(readme): add network development mode instructions
@@ -101,7 +101,7 @@ Added documentation for the new dev-network make target
 for testing on mobile devices.
 ```
 
-### Chore (patch version bump)
+### Chore (no version bump)
 
 ```
 chore(deps): update Go dependencies
@@ -109,7 +109,7 @@ chore(deps): update Go dependencies
 Updated gorilla/websocket to v1.5.3 and other dependencies.
 ```
 
-### Build System (patch version bump)
+### Build System (no version bump)
 
 ```
 build(docker): optimize multi-stage build
@@ -118,7 +118,7 @@ Reduced final image size by 40% through better layer caching
 and removal of unnecessary build dependencies.
 ```
 
-### CI Changes (patch version bump)
+### CI Changes (no version bump)
 
 ```
 ci: add semantic release workflow
@@ -154,7 +154,11 @@ The caching implementation caused issues with real-time updates.
 
 - **MAJOR** version (X.0.0): Breaking changes (`BREAKING CHANGE:` or `!`)
 - **MINOR** version (0.X.0): New features (`feat:`)
-- **PATCH** version (0.0.X): Bug fixes, docs, performance, and other changes
+- **PATCH** version (0.0.X): User-visible bug fixes, performance changes, and UI styles
+
+Dependency updates and internal documentation, build, CI, release, test, and
+refactor changes do not create a release on their own. An explicit breaking
+change still creates a major release.
 
 ## Tips
 
@@ -179,4 +183,3 @@ Look for the pattern: `type(scope): subject`
 - [Conventional Commits Specification](https://www.conventionalcommits.org/)
 - [Semantic Versioning](https://semver.org/)
 - [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/)
-

@@ -128,7 +128,7 @@ The `renovate.json` file controls Renovate's behavior:
 
 - Runs on Monday between 10:00 and 15:00 Europe/Stockholm time
 - Creates, updates, and auto-merges dependency PRs only in that window
-- The weekly dependency release runs Monday at 16:30 after the update window
+- Dependency-only merges do not trigger a release
 - Limits concurrent PRs to avoid noise
 - Groups related updates together
 
@@ -159,8 +159,8 @@ chore(deps): update actions/checkout to v4.1.2
 These will:
 
 - ✅ Pass conventional commit validation
-- ✅ Trigger PATCH version bumps (via semantic-release)
-- ✅ Appear in changelog under "Chores" section
+- ✅ Remain available in the commit history without an empty release
+- ✅ Can appear in the changelog when a later user-visible change publishes a release
 
 ## Customization
 
@@ -278,8 +278,7 @@ CI Workflow runs (tests, lint, build)
         ↓
     Release workflow runs
         ↓
-    New PATCH version created
-    (e.g., 0.1.0 → 0.1.1)
+    No release for dependency-only changes
 ```
 
 ## Labels

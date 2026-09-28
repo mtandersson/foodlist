@@ -320,17 +320,18 @@ When you push to `main` branch:
 
 2. **Release Pipeline** (after tests pass):
    - Analyzes commit messages since last release
-   - Determines next version based on commit types
-   - Generates changelog automatically
-   - Creates GitHub release with release notes
-   - Builds and pushes Docker images to GitHub Container Registry
-   - Creates binary artifacts for multiple platforms
+   - Skips versioning when changes are limited to dependencies or internal maintenance
+   - Determines the next version and generates release notes for user-visible changes
+   - Creates a GitHub release and publishes Docker images when a version is published
 
 ### Version Bumping
 
 - **MAJOR** (1.0.0 → 2.0.0): Breaking changes (`feat!:` or `BREAKING CHANGE:`)
 - **MINOR** (1.0.0 → 1.1.0): New features (`feat:`)
-- **PATCH** (1.0.0 → 1.0.1): Bug fixes and other changes (`fix:`, `docs:`, etc.)
+- **PATCH** (1.0.0 → 1.0.1): User-visible fixes, performance changes, and UI styles
+
+Dependency, documentation, build, CI, release, test, and refactor commits do not
+create a release on their own. An explicit breaking change still creates a major release.
 
 ### Docker Images
 

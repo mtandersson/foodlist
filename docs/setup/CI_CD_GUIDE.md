@@ -88,8 +88,8 @@ This project uses GitHub Actions for continuous integration and automated releas
 - Labels: `dependencies`, `renovate`
 
 **Note:** You can also use the [Renovate GitHub App](https://github.com/apps/renovate) instead of the self-hosted workflow for zero maintenance.
-The weekly dependency release runs Monday at 16:30 Europe/Stockholm time,
-after the Renovate window.
+Dependency-only merges do not publish a release. The release workflow publishes
+only after a user-visible change.
 
 See `RENOVATE_SETUP.md` for detailed configuration.
 
@@ -110,9 +110,13 @@ Based on conventional commit messages:
 | `feat:`                        | `feat(api): add new endpoint`                   | MINOR (0.1.0 → 0.2.0) | New features     |
 | `fix:`                         | `fix(ui): resolve button bug`                   | PATCH (0.1.0 → 0.1.1) | Bug fixes        |
 | `feat!:` or `BREAKING CHANGE:` | `feat(api)!: change response format`            | MAJOR (0.1.0 → 1.0.0) | Breaking changes |
-| `docs:`                        | `docs: update README`                           | PATCH                 | Documentation    |
+| `docs:`                        | `docs: update README`                           | None                  | Documentation    |
 | `perf:`                        | `perf: optimize query`                          | PATCH                 | Performance      |
-| Other                          | `chore:`, `refactor:`, `test:`, `ci:`, `build:` | PATCH                 | Other changes    |
+| Other                          | `chore:`, `refactor:`, `test:`, `ci:`, `build:` | None                  | Internal changes |
+
+Internal scopes (`deps`, `ci`, `build`, `release`, `test`, and `docs`) do not
+trigger a release on their own, even with a `fix:` type. Visible `style(ui):`
+changes trigger a patch release.
 
 ### Initial Version
 

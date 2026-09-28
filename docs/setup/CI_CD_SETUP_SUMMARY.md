@@ -139,9 +139,9 @@
 | `feat:`     | `feat(api): add endpoint` | 0.0.1 → 0.1.0  | New feature (MINOR)     |
 | `fix:`      | `fix(ui): button bug`     | 0.0.1 → 0.0.2  | Bug fix (PATCH)         |
 | `feat!:`    | `feat(api)!: breaking`    | 0.0.1 → 1.0.0  | Breaking change (MAJOR) |
-| `docs:`     | `docs: update readme`     | 0.0.1 → 0.0.2  | Documentation (PATCH)   |
+| `docs:`     | `docs: update readme`     | No release     | Documentation           |
 | `perf:`     | `perf: optimize query`    | 0.0.1 → 0.0.2  | Performance (PATCH)     |
-| Others      | `chore:`, `test:`, etc.   | 0.0.1 → 0.0.2  | Other changes (PATCH)   |
+| Others      | `chore:`, `test:`, etc.   | No release     | Internal changes        |
 
 ## How It Works
 
