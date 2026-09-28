@@ -32,6 +32,7 @@ try {
   git(repo, "commit", "-m", "feat: add menu")
   git(repo, "remote", "add", "origin", `file://${remote}`)
   git(repo, "push", "-u", "origin", "main", "--tags")
+  git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
 
   const logs = []
   const silent = new Writable({write(chunk, _encoding, callback) { logs.push(chunk.toString()); callback() }})
