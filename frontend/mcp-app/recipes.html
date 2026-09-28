@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Foodlist recipes</title>
+    <style>
+      :root { font: 15px/1.45 system-ui, sans-serif; color-scheme: light dark; }
+      body { margin: 0; padding: 18px; background: Canvas; color: CanvasText; }
+      main { max-width: 850px; margin: auto; }
+      h1 { font-size: 1.4rem; margin: 0 0 12px; }
+      #message { color: GrayText; min-height: 1.5em; }
+      #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+      article { overflow: hidden; border: 1px solid color-mix(in srgb, CanvasText 18%, Canvas); border-radius: 12px; }
+      .image { height: 130px; display: grid; place-items: center; background: color-mix(in srgb, CanvasText 7%, Canvas); color: GrayText; overflow: hidden; }
+      .image img { width: 100%; height: 100%; object-fit: cover; }
+      .body { padding: 12px; }
+      h2 { font-size: 1rem; margin: 0 0 4px; overflow-wrap: anywhere; }
+      .date { font-size: .8rem; color: GrayText; margin: 0 0 10px; }
+      .actions { display: flex; gap: 7px; flex-wrap: wrap; }
+      button { border: 1px solid color-mix(in srgb, CanvasText 24%, Canvas); border-radius: 8px; background: Canvas; color: CanvasText; padding: 6px 9px; cursor: pointer; }
+      button:hover { background: color-mix(in srgb, CanvasText 8%, Canvas); }
+      button:disabled { opacity: .55; cursor: wait; }
+      #detail { margin-top: 22px; border-top: 1px solid color-mix(in srgb, CanvasText 20%, Canvas); padding-top: 12px; }
+      #detail[hidden] { display: none; }
+      #detail pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+      .empty { padding: 20px; border: 1px dashed color-mix(in srgb, CanvasText 25%, Canvas); border-radius: 12px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Recipes</h1>
+      <p id="message" role="status" aria-live="polite">Loading…</p>
+      <div id="cards"></div>
+      <section id="detail" hidden>
+        <button id="close" type="button">Close recipe</button>
+        <pre id="recipe-text"></pre>
+      </section>
+    </main>
+    <script type="module" src="./recipes.ts"></script>
+  </body>
+</html>

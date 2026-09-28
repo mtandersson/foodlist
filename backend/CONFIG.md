@@ -216,7 +216,10 @@ return graceful "_disabled_" responses and the resource returns an empty
 JSON array (so an MCP client can still introspect the server).
 
 - **Tool `foodlist_recipes_list`** — markdown list of saved recipes
-  (title + id), newest first.
+  (title + id), newest first, plus structured metadata for MCP Apps hosts.
+  It advertises the self-contained `ui://foodlist/recipes` cards view through
+  `_meta.ui.resourceUri`. The view opens a card through `foodlist_recipe_get`
+  and adds all ingredients through `foodlist_recipe_add_ingredients`.
 - **Tool `foodlist_recipe_create`** — saves a structured recipe with
   `title`, optional `description`, and `sections`. Optional
   `image.data_base64` uploads the original image in the same call;
@@ -242,6 +245,9 @@ JSON array (so an MCP client can still introspect the server).
   the server skips `ParseIngredientInput` and trusts those values.
 - **Resource `foodlist://recipes`** — JSON array of recipe metadata
   (id, title, image filename, timestamps).
+- **Resource template `foodlist://recipe-thumbnail/{id}`** — a 256 px JPEG
+  thumbnail read on demand when a recipe card becomes visible. The list result
+  contains no image bytes or secret-path HTTP URL.
 
 The LLM parse path, recipe deletion, and replacing an existing recipe image
 remain HTTP-only. MCP creation accepts image bytes from the client and never
