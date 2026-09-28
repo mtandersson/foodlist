@@ -81,6 +81,7 @@ jobs:
         run: |
           npm ci
           npm run test:release
+          node --check scripts/release.mjs
 
   backend-tests:
     name: Backend Tests
