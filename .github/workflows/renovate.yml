@@ -2,20 +2,9 @@ name: Renovate
 
 on:
   schedule:
-    # Run every Monday at 3:00 AM UTC
-    - cron: "0 3 * * 1"
-  workflow_dispatch:
-    inputs:
-      logLevel:
-        description: "Log level"
-        required: false
-        default: "debug"
-        type: choice
-        options:
-          - debug
-          - info
-          - warn
-          - error
+    # Run hourly during the Monday 10:00–15:00 Stockholm window.
+    - cron: "17 10-14 * * 1"
+      timezone: "Europe/Stockholm"
 
 permissions:
   contents: write
@@ -37,7 +26,7 @@ jobs:
           configurationFile: renovate.json
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
-          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
+          LOG_LEVEL: info
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           # Optionally configure Renovate options via env vars
           RENOVATE_GIT_AUTHOR: "Renovate Bot <bot@renovateapp.com>"
