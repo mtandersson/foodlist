@@ -119,7 +119,7 @@ func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, ca
 		},
 		Questions: map[string]jevChoiceQuestion{
 			"category": {
-				Type: "choice",
+				Type:         "choice",
 				Instructions: "Which existing Foodlist category best fits the grocery item in `item`? Treat the criteria descriptions as Swedish grocery-list section names. Choose none_of_above only when no existing category is a reasonable fit.",
 				Criteria:     criteria,
 			},
