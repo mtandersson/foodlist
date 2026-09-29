@@ -43,6 +43,12 @@ Suggestions tab.
 The TypeSafe API key is sent only in the server-side Authorization header and
 is never returned to clients or written to logs.
 
+For each live category, Foodlist also sends at most four grocery names from its
+own projected history as contextual examples. Completed/purchased items are
+preferred, duplicate names and the item currently being categorized are
+excluded, and categories with no suitable history are sent with the category
+name alone. The full shopping history is never sent to TypeSafe.
+
 ### Embeddings + auto-categorize fallback
 
 The server can suggest a category for new todos based on cosine similarity
