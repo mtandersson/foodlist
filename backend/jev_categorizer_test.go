@@ -18,11 +18,22 @@ func TestJevCategorizerDecideCategory(t *testing.T) {
 		{ID: "asian", Name: "Asiatiskt & Taco🌮"},
 	}
 
-	var gotRequest jevSystemOneRequest
+	type observedRequest struct {
+		method string
+		auth   string
+		body   jevSystemOneRequest
+		err    error
+	}
+	observed := make(chan observedRequest, 1)
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, http.MethodPost, r.Method)
-		require.Equal(t, "Bearer test-key", r.Header.Get("Authorization"))
-		require.NoError(t, json.NewDecoder(r.Body).Decode(&gotRequest))
+		var body jevSystemOneRequest
+		decodeErr := json.NewDecoder(r.Body).Decode(&body)
+		observed <- observedRequest{
+			method: r.Method,
+			auth:   r.Header.Get("Authorization"),
+			body:   body,
+			err:    decodeErr,
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
 			"model":"jev-1.13.0",
@@ -49,10 +60,14 @@ func TestJevCategorizerDecideCategory(t *testing.T) {
 	require.Equal(t, 0.93, decision.Probability)
 	require.Equal(t, "jev-1.13.0", decision.Model)
 
-	require.Equal(t, "jev-test", gotRequest.Model)
-	require.Equal(t, "bambuskott", gotRequest.State["item"])
-	require.Equal(t, "sv-SE", gotRequest.State["locale"])
-	q := gotRequest.Questions["category"]
+	got := <-observed
+	require.NoError(t, got.err)
+	require.Equal(t, http.MethodPost, got.method)
+	require.Equal(t, "Bearer test-key", got.auth)
+	require.Equal(t, "jev-test", got.body.Model)
+	require.Equal(t, "bambuskott", got.body.State["item"])
+	require.Equal(t, "sv-SE", got.body.State["locale"])
+	q := got.body.Questions["category"]
 	require.Equal(t, "choice", q.Type)
 	require.Equal(t, "Torrvaror", q.Criteria["category_001"])
 	require.Equal(t, "Asiatiskt & Taco🌮", q.Criteria["category_002"])
