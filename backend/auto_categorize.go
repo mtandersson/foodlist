@@ -72,8 +72,8 @@ func (s *Server) suggestCategory(todoID, name string) error {
 	// none_of_above, or provider error falls through to the embedding scorer
 	// when that legacy provider is available.
 	if s.categoryDecider != nil {
-		categories := s.state.GetCategories()
-		examples := buildCategoryExamples(s.state.GetTodos(), categories, name, defaultJevExamplesPerCategory)
+		_, categories, history := s.state.GetShoppingSnapshot()
+		examples := buildCategoryExamples(history, categories, name, defaultJevExamplesPerCategory)
 		decision, err := s.categoryDecider.DecideCategory(ctx, name, categories, examples)
 		switch {
 		case err != nil:
