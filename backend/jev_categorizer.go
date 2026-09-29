@@ -30,7 +30,7 @@ type CategoryDecision struct {
 // CategoryDecider is the minimal surface required by auto-categorize. Jev is
 // the production implementation; tests can inject a deterministic stub.
 type CategoryDecider interface {
-	DecideCategory(ctx context.Context, itemName string, categories []Category) (*CategoryDecision, error)
+	DecideCategory(ctx context.Context, itemName string, categories []Category, examples map[string][]string) (*CategoryDecision, error)
 }
 
 // JevCategorizer classifies a grocery item with TypeSafe Jev's Choice
@@ -90,7 +90,7 @@ type jevSystemOneResponse struct {
 // DecideCategory asks Jev to pick one live category. Synthetic choice labels
 // keep category IDs out of the model-facing text while still making the
 // returned value trivial to validate and map back to an ID.
-func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, categories []Category) (*CategoryDecision, error) {
+func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, categories []Category, examples map[string][]string) (*CategoryDecision, error) {
 	if j == nil || j.apiKey == "" {
 		return nil, errors.New("jev api key not configured")
 	}
@@ -106,7 +106,11 @@ func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, ca
 	choiceToID := make(map[string]string, len(categories))
 	for i, category := range categories {
 		label := fmt.Sprintf("category_%03d", i+1)
-		criteria[label] = category.Name
+		description := category.Name
+		if categoryExamples := examples[category.ID]; len(categoryExamples) > 0 {
+			description += ". Examples from this Foodlist history: " + strings.Join(categoryExamples, "; ")
+		}
+		criteria[label] = description
 		choiceToID[label] = category.ID
 	}
 	criteria["none_of_above"] = "No existing Foodlist category is a reasonable fit for this grocery item"
@@ -120,7 +124,7 @@ func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, ca
 		Questions: map[string]jevChoiceQuestion{
 			"category": {
 				Type:         "choice",
-				Instructions: "Which existing Foodlist category best fits the grocery item in `item`? Treat the criteria descriptions as Swedish grocery-list section names. Choose none_of_above only when no existing category is a reasonable fit.",
+				Instructions: "Which existing Foodlist category best fits the grocery item in `item`? Treat the criteria descriptions as Swedish grocery-list section names. Historical examples are hints from this Foodlist, not exhaustive category definitions. Choose none_of_above only when no existing category is a reasonable fit.",
 				Criteria:     criteria,
 			},
 		},
