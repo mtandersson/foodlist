@@ -157,7 +157,8 @@ func runHTTPServer() {
 	// Jev is a direct closed-choice classifier and does not depend on the
 	// embedding cache. When both providers are configured, auto-categorize
 	// tries Jev first and falls back to embeddings on errors/low confidence.
-	if cfg.JevCategorizeEnabled && cfg.TypeSafeAPIKey != "" {
+	switch {
+	case cfg.JevCategorizeEnabled && cfg.TypeSafeAPIKey != "":
 		jev := NewJevCategorizer(
 			cfg.TypeSafeAPIKey,
 			cfg.JevBaseURL,
@@ -170,9 +171,9 @@ func runHTTPServer() {
 			"model", cfg.JevModel,
 			"confidence_threshold", cfg.JevCategorizeConfidenceThreshold,
 		)
-	} else if !cfg.JevCategorizeEnabled {
+	case !cfg.JevCategorizeEnabled:
 		slog.Info("jev_auto_categorize_disabled_via_config")
-	} else {
+	default:
 		slog.Info("jev_auto_categorize_disabled_no_api_key")
 	}
 
