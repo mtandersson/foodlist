@@ -152,7 +152,8 @@ func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, ca
 
 	var decoded jevSystemOneResponse
 	dec := json.NewDecoder(resp.Body)
-	dec.DisallowUnknownFields()
+	// Ignore unknown top-level/provider metadata so a backwards-compatible
+	// API addition does not break categorization.
 	if err := dec.Decode(&decoded); err != nil {
 		return nil, fmt.Errorf("decode Jev response: %w", err)
 	}
