@@ -9,9 +9,9 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-// autoCategorizeTimeout caps how long a single suggestion may take,
-// including the embedding round-trip. Generous because Gemini batchEmbed
-// can be ~1s under load, and we never block any user-visible request on it.
+// autoCategorizeTimeout caps the full provider chain for one suggestion.
+// Jev is attempted first when configured, then Gemini embeddings may run as
+// fallback. The work is asynchronous and never blocks todo creation.
 const autoCategorizeTimeout = 10 * time.Second
 
 // errAutoCategorizeMissingDeps is returned from suggestCategory when a
