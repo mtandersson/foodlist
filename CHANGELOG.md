@@ -1,3 +1,9 @@
+## [2.3.0](https://github.com/mtandersson/foodlist/compare/v2.2.0...v2.3.0) (2026-09-29)
+
+### Features
+
+* **categorizer:** seed Jev with Foodlist history examples ([#525](https://github.com/mtandersson/foodlist/issues/525)) ([759a1d4](https://github.com/mtandersson/foodlist/commit/759a1d4a3832fd09ed895e2829e65d17649ae0a8)), closes [#524](https://github.com/mtandersson/foodlist/issues/524)
+
 ## [2.2.0](https://github.com/mtandersson/foodlist/compare/v2.1.0...v2.2.0) (2026-09-29)
 
 ### Features
