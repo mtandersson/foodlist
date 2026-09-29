@@ -19,7 +19,31 @@ All configuration is done via environment variables. The backend will automatica
 | `DATA_DIR`   | `.`                | Directory where `events.jsonl` will be stored                |
 | `LOG_FORMAT` | `logfmt`           | Log format: `logfmt` (human-readable) or `json` (structured) |
 
-### Embeddings + auto-categorize
+### Jev auto-categorize
+
+New uncategorized grocery items can be classified with TypeSafe Jev before the
+legacy embedding scorer runs. Jev is a closed-choice decision model: Foodlist
+sends the item name and the current live category names, and Jev must choose
+one of those categories (or `none_of_above`). Low-confidence answers and
+provider errors fall through to the embedding categorizer when it is
+configured.
+
+This path is independent of Gemini. You can therefore run Jev categorization
+with no `GEMINI_API_KEY`; Gemini embeddings are still required for the
+Suggestions tab.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TYPESAFE_API_KEY` | _empty_ | TypeSafe API key. When empty, Jev auto-categorize is disabled. |
+| `JEV_BASE_URL` | `https://api.typesafe.ai/v1/systemone` | System One endpoint. Keep the API key server-side. |
+| `JEV_MODEL` | `jev-latest` | Jev model name. Pin a version after calibrating a confidence threshold. |
+| `JEV_CATEGORIZE_ENABLED` | `true` | Master switch for Jev categorization. |
+| `JEV_CATEGORIZE_CONFIDENCE_THRESHOLD` | `0.70` | Minimum Jev Choice confidence required for automatic assignment. |
+
+The TypeSafe API key is sent only in the server-side Authorization header and
+is never returned to clients or written to logs.
+
+### Embeddings + auto-categorize fallback
 
 The server can suggest a category for new todos based on cosine similarity
 between their embeddings and the embeddings of existing categorized items.
