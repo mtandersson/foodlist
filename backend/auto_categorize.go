@@ -73,20 +73,21 @@ func (s *Server) suggestCategory(todoID, name string) error {
 	// when that legacy provider is available.
 	if s.categoryDecider != nil {
 		decision, err := s.categoryDecider.DecideCategory(ctx, name, s.state.GetCategories())
-		if err != nil {
+		switch {
+		case err != nil:
 			slog.Warn("auto_categorize_jev_failed",
 				"todo_id", todoID,
 				"error", err.Error(),
 				"duration_ms", time.Since(start).Milliseconds(),
 			)
-		} else if decision != nil {
+		case decision != nil:
 			s.emitAutoCategory(todoID, decision.CategoryID, "jev", start,
 				"confidence", decision.Confidence,
 				"probability", decision.Probability,
 				"model", decision.Model,
 			)
 			return nil
-		} else {
+		default:
 			slog.Info("auto_categorize_jev_no_suggestion",
 				"todo_id", todoID,
 				"duration_ms", time.Since(start).Milliseconds(),
