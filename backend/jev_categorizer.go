@@ -147,7 +147,7 @@ func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, ca
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		// Do not include the upstream body: it may echo user input. The
 		// caller logs only this status-bearing error.
-		return nil, fmt.Errorf("Jev returned HTTP %d", resp.StatusCode)
+		return nil, fmt.Errorf("jev returned HTTP %d", resp.StatusCode)
 	}
 
 	var decoded jevSystemOneResponse
@@ -159,17 +159,17 @@ func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, ca
 	}
 	answer, ok := decoded.Answers["category"]
 	if !ok {
-		return nil, errors.New("Jev response missing category answer")
+		return nil, errors.New("jev response missing category answer")
 	}
 	if answer.Type != "choice" {
-		return nil, fmt.Errorf("Jev category answer has type %q", answer.Type)
+		return nil, fmt.Errorf("jev category answer has type %q", answer.Type)
 	}
 	if answer.Choice == "none_of_above" {
 		return nil, nil
 	}
 	categoryID, ok := choiceToID[answer.Choice]
 	if !ok {
-		return nil, fmt.Errorf("Jev returned unknown category choice %q", answer.Choice)
+		return nil, fmt.Errorf("jev returned unknown category choice %q", answer.Choice)
 	}
 	if answer.Confidence < j.confidenceThreshold {
 		return nil, nil
