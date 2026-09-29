@@ -164,11 +164,15 @@ func TestJevCategorizerHTTPFailure(t *testing.T) {
 func TestJevCategorizerIncludesHistoryExamplesInCriteria(t *testing.T) {
 	t.Parallel()
 
-	observed := make(chan jevSystemOneRequest, 1)
+	type observedExamplesRequest struct {
+		body jevSystemOneRequest
+		err  error
+	}
+	observed := make(chan observedExamplesRequest, 1)
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body jevSystemOneRequest
-		require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
-		observed <- body
+		decodeErr := json.NewDecoder(r.Body).Decode(&body)
+		observed <- observedExamplesRequest{body: body, err: decodeErr}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
 			"model":"jev-1.13.0",
@@ -190,9 +194,10 @@ func TestJevCategorizerIncludesHistoryExamplesInCriteria(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, decision)
 
-	body := <-observed
+	got := <-observed
+	require.NoError(t, got.err)
 	require.Equal(t,
 		"Torrvaror. Examples from this Foodlist history: havregryn; makaroner; maizena",
-		body.Questions["category"].Criteria["category_001"],
+		got.body.Questions["category"].Criteria["category_001"],
 	)
 }
