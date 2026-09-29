@@ -59,7 +59,7 @@ func (m *autoCategorizeMetrics) Snapshot() autoCategorizeSnapshot {
 }
 
 // handleAutoCategorizeMetrics serves a JSON snapshot of the counters.
-// Returns 404 when the feature isn't wired (no categorizer attached) so the
+// Returns 404 when no auto-categorize provider is wired so the
 // endpoint doesn't reveal feature state to unauthenticated callers — bearer
 // auth in main.go already guards it, but layered defaults are cheap.
 func (s *Server) handleAutoCategorizeMetrics(w http.ResponseWriter, r *http.Request) {
