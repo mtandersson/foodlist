@@ -40,8 +40,9 @@ type Server struct {
 	// at startup. Used by the auto-categorize feature.
 	embeddingCache *EmbeddingCache
 
-	// Auto-categorize dependencies. All four fields must be set for the
-	// feature to activate; any nil disables it as a no-op.
+	// Auto-categorize providers. Jev is preferred when categoryDecider is
+	// configured; the existing embedding stack remains the fallback.
+	categoryDecider       CategoryDecider
 	embeddingClient       Embedder
 	categorizer           *Categorizer
 	suggestFlight         *singleflight.Group
@@ -207,8 +208,8 @@ func (s *Server) SetEmbeddingClient(e Embedder) {
 	}
 }
 
-// SetCategorizer attaches the pure scorer used by auto-categorize. Pass nil
-// to leave the feature disabled.
+// SetCategorizer attaches the pure embedding scorer used as the
+// auto-categorize fallback. Pass nil to leave that provider disabled.
 func (s *Server) SetCategorizer(c *Categorizer) {
 	s.categorizer = c
 	if c != nil && s.suggestFlight == nil {
@@ -219,11 +220,24 @@ func (s *Server) SetCategorizer(c *Categorizer) {
 	}
 }
 
-// AutoCategorizeEnabled reports whether every dependency is wired.
-func (s *Server) AutoCategorizeEnabled() bool {
+// SetCategoryDecider attaches a direct category decision provider such as
+// Jev. The direct provider is preferred over the embedding fallback.
+func (s *Server) SetCategoryDecider(d CategoryDecider) {
+	s.categoryDecider = d
+	if d != nil && s.autoCategorizeMetrics == nil {
+		s.autoCategorizeMetrics = &autoCategorizeMetrics{}
+	}
+}
+
+func (s *Server) embeddingAutoCategorizeEnabled() bool {
 	return s.embeddingCache != nil && s.embeddingClient != nil &&
-		s.categorizer != nil && s.suggestFlight != nil &&
-		s.autoCategorizeMetrics != nil
+		s.categorizer != nil && s.suggestFlight != nil
+}
+
+// AutoCategorizeEnabled reports whether at least one provider is wired.
+func (s *Server) AutoCategorizeEnabled() bool {
+	return s.autoCategorizeMetrics != nil &&
+		(s.categoryDecider != nil || s.embeddingAutoCategorizeEnabled())
 }
 
 // SetSuggestionEngine attaches an engine. Pass nil to disable the feature.

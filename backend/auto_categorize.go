@@ -9,9 +9,9 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-// autoCategorizeTimeout caps how long a single suggestion may take,
-// including the embedding round-trip. Generous because Gemini batchEmbed
-// can be ~1s under load, and we never block any user-visible request on it.
+// autoCategorizeTimeout caps the full provider chain for one suggestion.
+// Jev is attempted first when configured, then Gemini embeddings may run as
+// fallback. The work is asynchronous and never blocks todo creation.
 const autoCategorizeTimeout = 10 * time.Second
 
 // errAutoCategorizeMissingDeps is returned from suggestCategory when a
@@ -34,9 +34,7 @@ func (s *Server) maybeStartAutoCategorize(event Event) {
 	if created.CategoryID != nil {
 		return
 	}
-	if s.embeddingCache == nil || s.embeddingClient == nil ||
-		s.categorizer == nil || s.suggestFlight == nil ||
-		s.autoCategorizeMetrics == nil {
+	if !s.AutoCategorizeEnabled() {
 		return
 	}
 	go s.suggestCategoryAsync(created.ID, created.Name)
@@ -56,9 +54,7 @@ func (s *Server) suggestCategoryAsync(todoID, name string) {
 }
 
 func (s *Server) suggestCategory(todoID, name string) error {
-	if s.embeddingCache == nil || s.embeddingClient == nil ||
-		s.categorizer == nil || s.suggestFlight == nil ||
-		s.autoCategorizeMetrics == nil {
+	if !s.AutoCategorizeEnabled() {
 		return errAutoCategorizeMissingDeps
 	}
 
@@ -66,17 +62,55 @@ func (s *Server) suggestCategory(todoID, name string) error {
 	defer cancel()
 
 	start := time.Now()
+	slog.Info("auto_categorize_started",
+		"todo_id", todoID,
+		"jev_configured", s.categoryDecider != nil,
+		"embedding_fallback_configured", s.embeddingAutoCategorizeEnabled(),
+	)
+
+	// Prefer a direct closed-choice decider (Jev). A low-confidence answer,
+	// none_of_above, or provider error falls through to the embedding scorer
+	// when that legacy provider is available.
+	if s.categoryDecider != nil {
+		decision, err := s.categoryDecider.DecideCategory(ctx, name, s.state.GetCategories())
+		switch {
+		case err != nil:
+			slog.Warn("auto_categorize_jev_failed",
+				"todo_id", todoID,
+				"error", err.Error(),
+				"duration_ms", time.Since(start).Milliseconds(),
+			)
+		case decision != nil:
+			s.emitAutoCategory(todoID, decision.CategoryID, "jev", start,
+				"confidence", decision.Confidence,
+				"probability", decision.Probability,
+				"model", decision.Model,
+			)
+			return nil
+		default:
+			slog.Info("auto_categorize_jev_no_suggestion",
+				"todo_id", todoID,
+				"duration_ms", time.Since(start).Milliseconds(),
+			)
+		}
+	}
+
+	if !s.embeddingAutoCategorizeEnabled() {
+		s.recordRejection(todoID, false, start)
+		return nil
+	}
+
 	key := normalizeName(name)
 	if key == "" {
 		// Empty key after normalization (e.g. an emoji-only name). Nothing
 		// to do; CreateTodo validation should reject these earlier anyway.
+		s.recordRejection(todoID, false, start)
 		slog.Debug("auto_categorize_skipped_empty_key", "todo_id", todoID)
 		return nil
 	}
 
-	// Log entry without leaking the raw item name. key_len is a coarse
-	// hint for debugging only.
-	slog.Info("auto_categorize_started",
+	// Log only normalization length/cache state; never the raw item name.
+	slog.Info("auto_categorize_embedding_fallback",
 		"todo_id", todoID,
 		"key_len", len(key),
 		"cache_hit_expected", s.embeddingCache.Has(key),
@@ -105,52 +139,7 @@ func (s *Server) suggestCategory(todoID, name string) error {
 		return nil
 	}
 
-	// Precondition re-check: the todo must still exist and still be
-	// uncategorized. This prevents the auto-categorize from clobbering a
-	// user choice made between TodoCreated and now.
-	cur, ok := s.state.GetTodo(todoID)
-	if !ok {
-		s.autoCategorizeMetrics.SkippedDeleted.Add(1)
-		slog.Info("auto_categorize_skipped_deleted",
-			"todo_id", todoID,
-			"duration_ms", time.Since(start).Milliseconds(),
-		)
-		return nil
-	}
-	if cur.CategoryID != nil {
-		s.autoCategorizeMetrics.SkippedUserSet.Add(1)
-		slog.Info("auto_categorize_skipped_user_set",
-			"todo_id", todoID,
-			"existing_category_id", *cur.CategoryID,
-			"duration_ms", time.Since(start).Milliseconds(),
-		)
-		return nil
-	}
-
-	cid := suggestion.CategoryID
-	cmd := CategorizeTodoCommand{
-		BaseCommand: BaseCommand{
-			Type:      "CategorizeTodo",
-			CommandID: "auto-" + todoID,
-		},
-		ID:         todoID,
-		CategoryID: &cid,
-	}
-
-	if err := s.ExecuteCommand(cmd); err != nil {
-		s.autoCategorizeMetrics.EmitFailed.Add(1)
-		slog.Error("auto_categorize_emit_failed",
-			"todo_id", todoID,
-			"category_id", cid,
-			"error", err.Error(),
-		)
-		return nil
-	}
-
-	s.autoCategorizeMetrics.Suggested.Add(1)
-	slog.Info("auto_categorize_suggested",
-		"todo_id", todoID,
-		"category_id", cid,
+	s.emitAutoCategory(todoID, suggestion.CategoryID, "embedding", start,
 		"score", suggestion.Score,
 		"blended_recent", suggestion.BlendedRecent,
 		"blended_all", suggestion.BlendedAll,
@@ -159,9 +148,63 @@ func (s *Server) suggestCategory(todoID, name string) error {
 		"max_sim", suggestion.MaxSim,
 		"candidates", suggestion.Candidates,
 		"cache_hit", cacheHit,
-		"duration_ms", time.Since(start).Milliseconds(),
 	)
 	return nil
+}
+
+// emitAutoCategory performs the race-safe final assignment shared by all
+// providers. The todo is re-checked immediately before emitting so an async
+// suggestion can never overwrite a user's manual category choice.
+func (s *Server) emitAutoCategory(todoID, cid, provider string, start time.Time, attrs ...any) {
+	cur, ok := s.state.GetTodo(todoID)
+	if !ok {
+		s.autoCategorizeMetrics.SkippedDeleted.Add(1)
+		slog.Info("auto_categorize_skipped_deleted",
+			"todo_id", todoID,
+			"provider", provider,
+			"duration_ms", time.Since(start).Milliseconds(),
+		)
+		return
+	}
+	if cur.CategoryID != nil {
+		s.autoCategorizeMetrics.SkippedUserSet.Add(1)
+		slog.Info("auto_categorize_skipped_user_set",
+			"todo_id", todoID,
+			"provider", provider,
+			"existing_category_id", *cur.CategoryID,
+			"duration_ms", time.Since(start).Milliseconds(),
+		)
+		return
+	}
+
+	cmd := CategorizeTodoCommand{
+		BaseCommand: BaseCommand{
+			Type:      "CategorizeTodo",
+			CommandID: "auto-" + todoID,
+		},
+		ID:         todoID,
+		CategoryID: &cid,
+	}
+	if err := s.ExecuteCommand(cmd); err != nil {
+		s.autoCategorizeMetrics.EmitFailed.Add(1)
+		slog.Error("auto_categorize_emit_failed",
+			"todo_id", todoID,
+			"provider", provider,
+			"category_id", cid,
+			"error", err.Error(),
+		)
+		return
+	}
+
+	s.autoCategorizeMetrics.Suggested.Add(1)
+	fields := []any{
+		"todo_id", todoID,
+		"provider", provider,
+		"category_id", cid,
+		"duration_ms", time.Since(start).Milliseconds(),
+	}
+	fields = append(fields, attrs...)
+	slog.Info("auto_categorize_suggested", fields...)
 }
 
 // resolveEmbedding returns the vector for key, fetching it via the embedder

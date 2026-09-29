@@ -60,6 +60,15 @@ type Config struct {
 	// Optional bearer-token HTTP API (see api.go)
 	APIToken string `env:"FOODLIST_API_TOKEN" envDefault:""`
 
+	// Jev closed-choice auto-categorization. When configured, Jev is tried
+	// before the existing embedding scorer; embeddings remain the fallback
+	// and continue to power Suggestions independently.
+	TypeSafeAPIKey                   string  `env:"TYPESAFE_API_KEY" envDefault:""`
+	JevBaseURL                       string  `env:"JEV_BASE_URL" envDefault:"https://api.typesafe.ai/v1/systemone"`
+	JevModel                         string  `env:"JEV_MODEL" envDefault:"jev-latest"`
+	JevCategorizeEnabled             bool    `env:"JEV_CATEGORIZE_ENABLED" envDefault:"true"`
+	JevCategorizeConfidenceThreshold float64 `env:"JEV_CATEGORIZE_CONFIDENCE_THRESHOLD" envDefault:"0.70"`
+
 	// Embedding cache configuration. If GeminiAPIKey is empty the cache
 	// build is skipped entirely.
 	GeminiAPIKey       string `env:"GEMINI_API_KEY" envDefault:""`
@@ -143,6 +152,29 @@ func runHTTPServer() {
 	if err := server.LoadEvents(); err != nil {
 		slog.Error("failed to load events", "error", err)
 		return // defer will close store
+	}
+
+	// Jev is a direct closed-choice classifier and does not depend on the
+	// embedding cache. When both providers are configured, auto-categorize
+	// tries Jev first and falls back to embeddings on errors/low confidence.
+	switch {
+	case cfg.JevCategorizeEnabled && cfg.TypeSafeAPIKey != "":
+		jev := NewJevCategorizer(
+			cfg.TypeSafeAPIKey,
+			cfg.JevBaseURL,
+			cfg.JevModel,
+			cfg.JevCategorizeConfidenceThreshold,
+		)
+		server.SetCategoryDecider(jev)
+		slog.Info("jev_auto_categorize_configured",
+			"base_url", cfg.JevBaseURL,
+			"model", cfg.JevModel,
+			"confidence_threshold", cfg.JevCategorizeConfidenceThreshold,
+		)
+	case !cfg.JevCategorizeEnabled:
+		slog.Info("jev_auto_categorize_disabled_via_config")
+	default:
+		slog.Info("jev_auto_categorize_disabled_no_api_key")
 	}
 
 	// Build the embedding cache before serving traffic, and share the same
