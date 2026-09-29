@@ -67,7 +67,7 @@ func (s *Server) handleAutoCategorizeMetrics(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if s.categorizer == nil || s.autoCategorizeMetrics == nil {
+	if !s.AutoCategorizeEnabled() {
 		http.NotFound(w, r)
 		return
 	}
