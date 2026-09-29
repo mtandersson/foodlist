@@ -17,7 +17,7 @@ type stubCategoryDecider struct {
 	calls    atomic.Uint64
 }
 
-func (s *stubCategoryDecider) DecideCategory(_ context.Context, _ string, _ []Category) (*CategoryDecision, error) {
+func (s *stubCategoryDecider) DecideCategory(_ context.Context, _ string, _ []Category, _ map[string][]string) (*CategoryDecision, error) {
 	s.calls.Add(1)
 	if s.err != nil {
 		return nil, s.err

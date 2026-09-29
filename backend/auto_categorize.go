@@ -72,7 +72,9 @@ func (s *Server) suggestCategory(todoID, name string) error {
 	// none_of_above, or provider error falls through to the embedding scorer
 	// when that legacy provider is available.
 	if s.categoryDecider != nil {
-		decision, err := s.categoryDecider.DecideCategory(ctx, name, s.state.GetCategories())
+		_, categories, history := s.state.GetShoppingSnapshot()
+		examples := buildCategoryExamples(history, categories, name, defaultJevExamplesPerCategory)
+		decision, err := s.categoryDecider.DecideCategory(ctx, name, categories, examples)
 		switch {
 		case err != nil:
 			slog.Warn("auto_categorize_jev_failed",
