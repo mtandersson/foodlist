@@ -52,7 +52,7 @@ func TestJevCategorizerDecideCategory(t *testing.T) {
 	defer upstream.Close()
 
 	jev := NewJevCategorizer("test-key", upstream.URL, "jev-test", 0.70)
-	decision, err := jev.DecideCategory(context.Background(), "bambuskott", categories)
+	decision, err := jev.DecideCategory(context.Background(), "bambuskott", categories, nil)
 	require.NoError(t, err)
 	require.NotNil(t, decision)
 	require.Equal(t, "asian", decision.CategoryID)
@@ -92,7 +92,7 @@ func TestJevCategorizerLowConfidenceReturnsNoDecision(t *testing.T) {
 	defer upstream.Close()
 
 	jev := NewJevCategorizer("test-key", upstream.URL, "jev-test", 0.70)
-	decision, err := jev.DecideCategory(context.Background(), "kapris", []Category{{ID: "dry", Name: "Torrvaror"}})
+	decision, err := jev.DecideCategory(context.Background(), "kapris", []Category{{ID: "dry", Name: "Torrvaror"}}, nil)
 	require.NoError(t, err)
 	require.Nil(t, decision)
 }
@@ -115,7 +115,7 @@ func TestJevCategorizerNoneOfAboveReturnsNoDecision(t *testing.T) {
 	defer upstream.Close()
 
 	jev := NewJevCategorizer("test-key", upstream.URL, "jev-test", 0.70)
-	decision, err := jev.DecideCategory(context.Background(), "mystery item", []Category{{ID: "dry", Name: "Torrvaror"}})
+	decision, err := jev.DecideCategory(context.Background(), "mystery item", []Category{{ID: "dry", Name: "Torrvaror"}}, nil)
 	require.NoError(t, err)
 	require.Nil(t, decision)
 }
@@ -138,7 +138,7 @@ func TestJevCategorizerRejectsUnknownChoice(t *testing.T) {
 	defer upstream.Close()
 
 	jev := NewJevCategorizer("test-key", upstream.URL, "jev-test", 0.70)
-	decision, err := jev.DecideCategory(context.Background(), "kapris", []Category{{ID: "dry", Name: "Torrvaror"}})
+	decision, err := jev.DecideCategory(context.Background(), "kapris", []Category{{ID: "dry", Name: "Torrvaror"}}, nil)
 	require.Error(t, err)
 	require.Nil(t, decision)
 	require.Contains(t, err.Error(), "unknown category choice")
@@ -153,9 +153,46 @@ func TestJevCategorizerHTTPFailure(t *testing.T) {
 	defer upstream.Close()
 
 	jev := NewJevCategorizer("test-key", upstream.URL, "jev-test", 0.70)
-	decision, err := jev.DecideCategory(context.Background(), "kapris", []Category{{ID: "dry", Name: "Torrvaror"}})
+	decision, err := jev.DecideCategory(context.Background(), "kapris", []Category{{ID: "dry", Name: "Torrvaror"}}, nil)
 	require.Error(t, err)
 	require.Nil(t, decision)
 	require.Contains(t, err.Error(), "HTTP 429")
 	require.NotContains(t, err.Error(), "rate limited")
+}
+
+
+func TestJevCategorizerIncludesHistoryExamplesInCriteria(t *testing.T) {
+	t.Parallel()
+
+	observed := make(chan jevSystemOneRequest, 1)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body jevSystemOneRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+		observed <- body
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"model":"jev-1.13.0",
+			"answers":{"category":{
+				"type":"choice",
+				"choice":"category_001",
+				"confidence":0.90,
+				"probabilities":{"category_001":0.95,"none_of_above":0.05}
+			}}
+		}`))
+	}))
+	defer upstream.Close()
+
+	categories := []Category{{ID: "dry", Name: "Torrvaror"}}
+	examples := map[string][]string{"dry": {"havregryn", "makaroner", "maizena"}}
+	jev := NewJevCategorizer("test-key", upstream.URL, "jev-test", 0.70)
+
+	decision, err := jev.DecideCategory(context.Background(), "strösocker", categories, examples)
+	require.NoError(t, err)
+	require.NotNil(t, decision)
+
+	body := <-observed
+	require.Equal(t,
+		"Torrvaror. Examples from this Foodlist history: havregryn; makaroner; maizena",
+		body.Questions["category"].Criteria["category_001"],
+	)
 }
