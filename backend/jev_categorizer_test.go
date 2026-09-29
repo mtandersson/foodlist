@@ -160,7 +160,6 @@ func TestJevCategorizerHTTPFailure(t *testing.T) {
 	require.NotContains(t, err.Error(), "rate limited")
 }
 
-
 func TestJevCategorizerIncludesHistoryExamplesInCriteria(t *testing.T) {
 	t.Parallel()
 
