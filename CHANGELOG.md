@@ -1,3 +1,9 @@
+## [2.2.0](https://github.com/mtandersson/foodlist/compare/v2.1.0...v2.2.0) (2026-09-29)
+
+### Features
+
+* **categorizer:** add Jev auto-categorization ([#523](https://github.com/mtandersson/foodlist/issues/523)) ([e5f010a](https://github.com/mtandersson/foodlist/commit/e5f010a2f4d1513232bb2d784433f9dda5c46017)), closes [#522](https://github.com/mtandersson/foodlist/issues/522)
+
 ## [2.1.0](https://github.com/mtandersson/foodlist/compare/v2.0.0...v2.1.0) (2026-09-28)
 
 ### Features
