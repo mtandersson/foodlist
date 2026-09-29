@@ -16,7 +16,11 @@ const (
 	DefaultJevModel               = "jev-latest"
 	DefaultJevConfidenceThreshold = 0.70
 	maxJevCategories              = 254 // one extra Choice option is reserved for none_of_above
+	maxJevExampleNameBytes        = 256
+	maxJevHistoryBytes            = 16 * 1024
 )
+
+const jevHistoryPrefix = ". Examples from this Foodlist history: "
 
 // CategoryDecision is a provider-independent category choice. CategoryID is
 // always one of the live category IDs supplied to DecideCategory.
@@ -104,11 +108,32 @@ func (j *JevCategorizer) DecideCategory(ctx context.Context, itemName string, ca
 
 	criteria := make(map[string]string, len(categories)+1)
 	choiceToID := make(map[string]string, len(categories))
+	historyBytesRemaining := maxJevHistoryBytes
 	for i, category := range categories {
 		label := fmt.Sprintf("category_%03d", i+1)
 		description := category.Name
-		if categoryExamples := examples[category.ID]; len(categoryExamples) > 0 {
-			description += ". Examples from this Foodlist history: " + strings.Join(categoryExamples, "; ")
+		included := 0
+		for _, example := range examples[category.ID] {
+			if included == defaultJevExamplesPerCategory {
+				break
+			}
+			if len(example) == 0 || len(example) > maxJevExampleNameBytes {
+				continue
+			}
+			separator := jevHistoryPrefix
+			if included > 0 {
+				separator = "; "
+			}
+			// Count bytes as they appear in JSON. Characters such as '<' and
+			// control bytes can expand when the request is marshaled.
+			encodedExample, _ := json.Marshal(example)             // string marshaling cannot fail
+			addedBytes := len(separator) + len(encodedExample) - 2 // omit JSON quotes
+			if addedBytes > historyBytesRemaining {
+				continue
+			}
+			description += separator + example
+			historyBytesRemaining -= addedBytes
+			included++
 		}
 		criteria[label] = description
 		choiceToID[label] = category.ID

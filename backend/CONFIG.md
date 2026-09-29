@@ -47,7 +47,9 @@ For each live category, Foodlist also sends at most four grocery names from its
 own projected history as contextual examples. Completed/purchased items are
 preferred, duplicate names and the item currently being categorized are
 excluded, and categories with no suitable history are sent with the category
-name alone. The full shopping history is never sent to TypeSafe.
+name alone. Names longer than 256 bytes are omitted, and historical examples
+add at most 16 KiB to a Jev request. The full shopping history is never sent
+to TypeSafe.
 
 ### Embeddings + auto-categorize fallback
 

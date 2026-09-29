@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -199,4 +201,61 @@ func TestJevCategorizerIncludesHistoryExamplesInCriteria(t *testing.T) {
 		"Torrvaror. Examples from this Foodlist history: havregryn; makaroner; maizena",
 		got.body.Questions["category"].Criteria["category_001"],
 	)
+}
+
+func TestJevCategorizerBoundsHistoryExamplesInRequest(t *testing.T) {
+	t.Parallel()
+
+	observed := make(chan jevSystemOneRequest, 2)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body jevSystemOneRequest
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		observed <- body
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"model":"jev-test","answers":{"category":{"type":"choice","choice":"none_of_above","confidence":0.99}}}`))
+	}))
+	defer upstream.Close()
+
+	jev := NewJevCategorizer("test-key", upstream.URL, "jev-test", 0.70)
+	categories := []Category{{ID: "dry", Name: "Torrvaror"}, {ID: "produce", Name: "Frukt & Grönt"}}
+	examples := map[string][]string{"dry": {strings.Repeat("x", maxJevExampleNameBytes+1), "havregryn", "makaroner"}}
+	decision, err := jev.DecideCategory(context.Background(), "strösocker", categories, examples)
+	require.NoError(t, err)
+	require.Nil(t, decision)
+	criteria := (<-observed).Questions["category"].Criteria
+	require.Equal(t, "Torrvaror"+jevHistoryPrefix+"havregryn; makaroner", criteria["category_001"])
+	require.Equal(t, "Frukt & Grönt", criteria["category_002"])
+
+	categories = make([]Category, maxJevCategories)
+	examples = make(map[string][]string, maxJevCategories)
+	for i := range categories {
+		id := fmt.Sprintf("category-%03d", i)
+		categories[i] = Category{ID: id, Name: id}
+		examples[id] = []string{
+			strings.Repeat("<", maxJevExampleNameBytes),
+			strings.Repeat("&", maxJevExampleNameBytes),
+			strings.Repeat("c", maxJevExampleNameBytes),
+			strings.Repeat("d", maxJevExampleNameBytes),
+		}
+	}
+	decision, err = jev.DecideCategory(context.Background(), "strösocker", categories, examples)
+	require.NoError(t, err)
+	require.Nil(t, decision)
+	criteria = (<-observed).Questions["category"].Criteria
+	addedBytes := 0
+	for i, category := range categories {
+		description := criteria[fmt.Sprintf("category_%03d", i+1)]
+		require.True(t, strings.HasPrefix(description, category.Name))
+		encodedDescription, err := json.Marshal(description)
+		require.NoError(t, err)
+		encodedName, err := json.Marshal(category.Name)
+		require.NoError(t, err)
+		addedBytes += len(encodedDescription) - len(encodedName)
+	}
+	require.Positive(t, addedBytes)
+	require.LessOrEqual(t, addedBytes, maxJevHistoryBytes)
+	require.Equal(t, categories[len(categories)-1].Name, criteria[fmt.Sprintf("category_%03d", len(categories))])
 }

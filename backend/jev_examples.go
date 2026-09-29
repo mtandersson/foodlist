@@ -40,7 +40,7 @@ func buildCategoryExamples(todos []Todo, categories []Category, currentItem stri
 		}
 		name := strings.TrimSpace(todo.Name)
 		key := normalizeName(name)
-		if name == "" || key == "" || key == currentKey {
+		if name == "" || len(name) > maxJevExampleNameBytes || key == "" || key == currentKey {
 			continue
 		}
 
