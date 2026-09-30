@@ -978,7 +978,6 @@
             class:error={categoryError}
             bind:value={newCategoryName}
             onkeydown={handleNewCategoryKeydown}
-            onblur={finishCreatingCategory}
             placeholder="Namn på ny kategori..."
           />
           {#if categoryError}
