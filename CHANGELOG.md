@@ -1,3 +1,9 @@
+## [2.3.1](https://github.com/mtandersson/foodlist/compare/v2.3.0...v2.3.1) (2026-09-30)
+
+### Bug Fixes
+
+* **categorizer:** bound Jev history example payload ([#527](https://github.com/mtandersson/foodlist/issues/527)) ([dc5f7e8](https://github.com/mtandersson/foodlist/commit/dc5f7e828b91f86b0c2dc2bb585b53184e88f8de))
+
 ## [2.3.0](https://github.com/mtandersson/foodlist/compare/v2.2.0...v2.3.0) (2026-09-29)
 
 ### Features
