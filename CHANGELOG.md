@@ -1,3 +1,9 @@
+## [2.3.2](https://github.com/mtandersson/foodlist/compare/v2.3.1...v2.3.2) (2026-09-30)
+
+### Bug Fixes
+
+* **frontend:** improve mobile category picker scrolling ([#529](https://github.com/mtandersson/foodlist/issues/529)) ([a1b7842](https://github.com/mtandersson/foodlist/commit/a1b78426e02695ac816a58fa0a536dc2085dd4c3))
+
 ## [2.3.1](https://github.com/mtandersson/foodlist/compare/v2.3.0...v2.3.1) (2026-09-30)
 
 ### Bug Fixes
