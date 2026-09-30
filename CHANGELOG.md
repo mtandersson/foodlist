@@ -1,3 +1,9 @@
+## [2.3.4](https://github.com/mtandersson/foodlist/compare/v2.3.3...v2.3.4) (2026-09-30)
+
+### Bug Fixes
+
+* **frontend:** cancel category drafts without submitting ([#533](https://github.com/mtandersson/foodlist/issues/533)) ([38a44cc](https://github.com/mtandersson/foodlist/commit/38a44cc7906a33788e9b55beadcb066b36854660))
+
 ## [2.3.3](https://github.com/mtandersson/foodlist/compare/v2.3.2...v2.3.3) (2026-09-30)
 
 ### Bug Fixes
