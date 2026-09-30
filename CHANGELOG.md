@@ -1,3 +1,9 @@
+## [2.3.3](https://github.com/mtandersson/foodlist/compare/v2.3.2...v2.3.3) (2026-09-30)
+
+### Bug Fixes
+
+* **frontend:** keep recipe editor controls visible on phones ([#532](https://github.com/mtandersson/foodlist/issues/532)) ([fd89b3d](https://github.com/mtandersson/foodlist/commit/fd89b3d35dcb389b9d4e3941690c39414cf2da53))
+
 ## [2.3.2](https://github.com/mtandersson/foodlist/compare/v2.3.1...v2.3.2) (2026-09-30)
 
 ### Bug Fixes
