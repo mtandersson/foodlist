@@ -108,6 +108,8 @@
     max-width: 400px;
     width: 100%;
     max-height: 80vh;
+    max-height: 80dvh;
+    min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -127,6 +129,7 @@
   }
 
   .modal-header {
+    flex-shrink: 0;
     padding: var(--spacing-xl);
     border-bottom: 1px solid var(--surface-light);
     display: flex;
@@ -143,6 +146,7 @@
   }
 
   .modal-subheader {
+    flex-shrink: 0;
     padding: 0 var(--spacing-xl) var(--spacing-lg);
     font-size: var(--font-size-base);
     color: var(--text-secondary);
@@ -175,8 +179,11 @@
 
   .category-list {
     padding: var(--spacing-md);
+    min-height: 0;
     overflow-y: auto;
-    flex: 1;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
   }
 
   .category-option {
@@ -193,14 +200,16 @@
     color: var(--text-secondary);
   }
 
-  .category-option:hover {
-    background: var(--primary-color);
-    color: white;
-    transform: translateX(4px);
-  }
+  @media (hover: hover) and (pointer: fine) {
+    .category-option:hover {
+      background: var(--primary-color);
+      color: white;
+      transform: translateX(4px);
+    }
 
-  .category-option:active {
-    transform: translateX(4px) scale(0.98);
+    .category-option:active {
+      transform: translateX(4px) scale(0.98);
+    }
   }
 
   .category-name {
@@ -208,6 +217,7 @@
   }
 
   .modal-footer {
+    flex-shrink: 0;
     padding: var(--spacing-lg);
     border-top: 1px solid var(--surface-light);
   }
@@ -241,8 +251,21 @@
 
     .modal-content {
       max-width: 100%;
-      max-height: 100%;
+      height: 100vh;
+      height: 100dvh;
+      max-height: 100vh;
+      max-height: 100dvh;
       border-radius: 0;
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+    }
+
+    .modal-header {
+      padding-top: calc(var(--spacing-xl) + env(safe-area-inset-top, 0px));
+    }
+
+    .modal-footer {
+      padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
     }
 
     .category-option {
@@ -251,4 +274,3 @@
     }
   }
 </style>
-
