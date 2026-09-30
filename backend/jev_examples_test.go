@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -35,6 +36,26 @@ func TestBuildCategoryExamplesPrefersCompletedDedupesAndExcludesCurrentItem(t *t
 
 	require.Equal(t, []string{"Makaroner", "havregryn", "maizena"}, got[dry])
 	require.Equal(t, []string{"broccoli"}, got[produce])
+}
+
+func TestBuildCategoryExamplesSkipsLongNamesAndUsesOlderHistory(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	dry := "dry"
+	todos := []Todo{
+		{ID: "old", Name: "havregryn", CreatedAt: now.Add(-time.Hour), CategoryID: &dry},
+	}
+	for i := 0; i < defaultJevExamplesPerCategory; i++ {
+		todos = append(todos, Todo{
+			Name:       strings.Repeat("x", maxJevExampleNameBytes+1),
+			CreatedAt:  now.Add(time.Duration(i) * time.Minute),
+			CategoryID: &dry,
+		})
+	}
+
+	got := buildCategoryExamples(todos, []Category{{ID: dry, Name: "Torrvaror"}}, "strösocker", defaultJevExamplesPerCategory)
+	require.Equal(t, []string{"havregryn"}, got[dry])
 }
 
 func TestBuildCategoryExamplesIgnoresDeletedCategoriesAndRespectsLimit(t *testing.T) {
