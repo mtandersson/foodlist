@@ -193,6 +193,7 @@
 
 <style>
   .section {
+    min-width: 0;
     border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
@@ -235,14 +236,14 @@
 
   .ing-row {
     display: grid;
-    grid-template-columns: 70px 90px 1fr 32px;
+    grid-template-columns: 70px 90px minmax(0, 1fr) 32px;
     gap: var(--spacing-xs);
     align-items: center;
   }
 
   .step-row {
     display: grid;
-    grid-template-columns: 28px 1fr auto;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
     gap: var(--spacing-xs);
     align-items: start;
   }
@@ -260,6 +261,8 @@
 
   input,
   textarea {
+    min-width: 0;
+    width: 100%;
     padding: var(--spacing-xs) var(--spacing-sm);
     border: 1px solid var(--border-color, rgba(0, 0, 0, 0.15));
     border-radius: var(--radius-sm);
@@ -302,7 +305,17 @@
 
   @media (max-width: 600px) {
     .ing-row {
-      grid-template-columns: 60px 70px 1fr 28px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px;
+    }
+
+    .ing-row input:nth-child(3) {
+      grid-column: 1 / 3;
+      grid-row: 2;
+    }
+
+    .ing-row .icon-btn {
+      grid-column: 3;
+      grid-row: 2;
     }
   }
 </style>
