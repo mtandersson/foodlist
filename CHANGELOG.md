@@ -1,3 +1,13 @@
+## [2.3.5](https://github.com/mtandersson/foodlist/compare/v2.3.4...v2.3.5) (2026-10-06)
+
+### Bug Fixes
+
+* **mcp:** limit completed shopping history ([#546](https://github.com/mtandersson/foodlist/issues/546)) ([ac378b9](https://github.com/mtandersson/foodlist/commit/ac378b937b986f613992e8961dd46408dff49d7b)), closes [#545](https://github.com/mtandersson/foodlist/issues/545)
+
+### Chores
+
+* **deps:** update @modelcontextprotocol/ext-apps to ^2.0.3 ([681e220](https://github.com/mtandersson/foodlist/commit/681e220324ef8682b30e2420ff9dd89778271845))
+
 ## [2.3.4](https://github.com/mtandersson/foodlist/compare/v2.3.3...v2.3.4) (2026-09-30)
 
 ### Bug Fixes
