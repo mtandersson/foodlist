@@ -7,6 +7,7 @@ let messageHandler: ((msg: ServerMessage) => void) | null = null;
 let autocompleteHandler: ((response: AutocompleteResponse) => void) | null = null;
 const mockSend = vi.fn();
 const mockSendAutocomplete = vi.fn();
+const recentCompletedCreatedAt = () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
 // Mock the websocket module
 vi.mock('./websocket', () => {
@@ -250,6 +251,51 @@ describe('TodoStore', () => {
     const todos = get(store.todos);
     expect(todos[0].completedAt).toBe('2024-01-02T00:00:00Z');
     
+    store.destroy();
+  });
+
+  it('should keep only the last 30 days of completed items in the app history', () => {
+    const store = createTodoStore('ws://localhost:8080/ws');
+    const now = Date.now();
+
+    messageHandler!({
+      type: 'StateRollup',
+      todos: [
+        {
+          id: 'recent',
+          name: 'Recent',
+          createdAt: new Date(now - 29 * 24 * 60 * 60 * 1000).toISOString(),
+          completedAt: null,
+          sortOrder: 2000,
+          starred: false,
+        },
+        {
+          id: 'old',
+          name: 'Old',
+          createdAt: new Date(now - 31 * 24 * 60 * 60 * 1000).toISOString(),
+          completedAt: null,
+          sortOrder: 1000,
+          starred: false,
+        },
+      ],
+      categories: [],
+      listTitle: 'My Todo List',
+    });
+
+    messageHandler!({
+      type: 'TodoCompleted',
+      id: 'recent',
+      completedAt: new Date(now).toISOString(),
+    });
+    messageHandler!({
+      type: 'TodoCompleted',
+      id: 'old',
+      completedAt: new Date(now).toISOString(),
+    });
+
+    expect(get(store.todos)).toHaveLength(2);
+    expect(get(store.completedTodos).map((todo) => todo.id)).toEqual(['recent']);
+
     store.destroy();
   });
 
@@ -560,7 +606,7 @@ describe('TodoStore', () => {
       type: 'StateRollup',
       todos: [
         { id: '1', name: 'Active', createdAt: '2024-01-01T00:00:00Z', completedAt: null, sortOrder: 1000, starred: false },
-        { id: '2', name: 'Done', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T00:00:00Z', sortOrder: 2000, starred: false },
+        { id: '2', name: 'Done', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T00:00:00Z', sortOrder: 2000, starred: false },
       ],
       categories: [],
       listTitle: 'My Todo List',
@@ -772,9 +818,9 @@ describe('TodoStore', () => {
     messageHandler!({
       type: 'StateRollup',
       todos: [
-        { id: '1', name: 'Completed First', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false },
-        { id: '2', name: 'Completed Last', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 1000, starred: false },
-        { id: '3', name: 'Completed Middle', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false },
+        { id: '1', name: 'Completed First', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false },
+        { id: '2', name: 'Completed Last', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T14:00:00Z', sortOrder: 1000, starred: false },
+        { id: '3', name: 'Completed Middle', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false },
       ],
       categories: [],
       listTitle: 'My Todo List',
@@ -798,8 +844,8 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'a', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
-          { id: 'b', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'a', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'b', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
         ],
         categories: [],
         listTitle: 'My Todo List',
@@ -820,9 +866,9 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'a', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
-          { id: 'b', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
-          { id: 'c', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 2000, starred: false, categoryId: null },
+          { id: 'a', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'b', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'c', name: 'Bröd', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T14:00:00Z', sortOrder: 2000, starred: false, categoryId: null },
         ],
         categories: [],
         listTitle: 'My Todo List',
@@ -843,8 +889,8 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'a', name: 'Milk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: false, categoryId: null },
-          { id: 'b', name: 'milk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: null },
+          { id: 'a', name: 'Milk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: false, categoryId: null },
+          { id: 'b', name: 'milk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: null },
         ],
         categories: [],
         listTitle: 'My Todo List',
@@ -862,8 +908,8 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'a', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: false, categoryId: 'cat1' },
-          { id: 'b', name: 'Bröd', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'cat2' },
+          { id: 'a', name: 'Bröd', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: false, categoryId: 'cat1' },
+          { id: 'b', name: 'Bröd', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: 'cat2' },
         ],
         categories: [],
         listTitle: 'My Todo List',
@@ -881,8 +927,8 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'a', name: 'Pasta', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: true, categoryId: null },
-          { id: 'b', name: 'Pasta', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: null },
+          { id: 'a', name: 'Pasta', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 2000, starred: true, categoryId: null },
+          { id: 'b', name: 'Pasta', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 1000, starred: false, categoryId: null },
         ],
         categories: [],
         listTitle: 'My Todo List',
@@ -900,8 +946,8 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'old', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
-          { id: 'recent', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'old', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'recent', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
         ],
         categories: [],
         listTitle: 'My Todo List',
@@ -931,9 +977,9 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'a', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
-          { id: 'b', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false, categoryId: 'dairy' },
-          { id: 'c', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'a', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'b', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false, categoryId: 'dairy' },
+          { id: 'c', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
         ],
         categories: [],
         listTitle: 'My Todo List',
@@ -953,9 +999,9 @@ describe('TodoStore', () => {
       messageHandler!({
         type: 'StateRollup',
         todos: [
-          { id: 'old', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
-          { id: 'mid', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false, categoryId: 'dairy' },
-          { id: 'recent', name: 'Mjölk', createdAt: '2024-01-01T00:00:00Z', completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
+          { id: 'old', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T10:00:00Z', sortOrder: 1000, starred: false, categoryId: 'dairy' },
+          { id: 'mid', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T12:00:00Z', sortOrder: 2000, starred: false, categoryId: 'dairy' },
+          { id: 'recent', name: 'Mjölk', createdAt: recentCompletedCreatedAt(), completedAt: '2024-01-02T14:00:00Z', sortOrder: 3000, starred: false, categoryId: 'dairy' },
         ],
         categories: [],
         listTitle: 'My Todo List',

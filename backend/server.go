@@ -458,12 +458,14 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	s.register <- client
 
-	// Send state rollup to new client
+	// Send the bounded app projection to new clients. The event-sourced
+	// state remains complete; only the WebSocket rollup trims old completed items.
+	title, categories, todos := s.state.GetShoppingSnapshot()
 	rollup := StateRollup{
 		Type:       "StateRollup",
-		Todos:      s.state.GetTodos(),
-		Categories: s.state.GetCategories(),
-		ListTitle:  s.state.GetListTitle(),
+		Todos:      todos,
+		Categories: categories,
+		ListTitle:  title,
 		Version:    version,
 	}
 	flags := FeatureFlags{
