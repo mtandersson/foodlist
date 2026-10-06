@@ -92,6 +92,7 @@ func TestMCP_FullIntegration_MatchesEventsSchemaShape(t *testing.T) {
 		"foodlist_categorize",
 		"foodlist_list",
 		"foodlist_recipe_add_ingredients",
+		"foodlist_recipe_attach_image",
 		"foodlist_recipe_create",
 		"foodlist_recipe_get",
 		"foodlist_recipe_update",

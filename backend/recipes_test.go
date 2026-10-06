@@ -141,6 +141,55 @@ func TestRecipeStore_SaveDoesNotWriteMetadataWhenImageWriteFails(t *testing.T) {
 	require.ErrorIs(t, err, os.ErrNotExist)
 }
 
+func TestRecipeStore_AttachImageToTextOnlyRecipe(t *testing.T) {
+	tmp := t.TempDir()
+	store, err := NewRecipeStore(filepath.Join(tmp, "recipes"), tmp, 1_000_000)
+	require.NoError(t, err)
+	id := uuid.NewString()
+	created, err := store.Save(Recipe{
+		ID: id, Title: "Soup", Sections: []RecipeSection{{Ingredients: []Ingredient{{Name: "Salt"}}}},
+	}, nil, "")
+	require.NoError(t, err)
+	require.Empty(t, created.ImageFilename)
+
+	png := makeTestPNG(t, 3, 2)
+	attached, err := store.AttachImage(id, png, "image/png")
+	require.NoError(t, err)
+	require.Equal(t, id+".png", attached.ImageFilename)
+	require.Equal(t, "image/png", attached.ImageMIME)
+	data, mime, err := store.ReadImage(id)
+	require.NoError(t, err)
+	require.Equal(t, png, data)
+	require.Equal(t, "image/png", mime)
+
+	_, err = store.AttachImage(id, png, "image/png")
+	require.ErrorIs(t, err, ErrRecipeImageExists)
+}
+
+func TestRecipeStore_AttachImageRollsBackWhenMetadataWriteFails(t *testing.T) {
+	tmp := t.TempDir()
+	store, err := NewRecipeStore(filepath.Join(tmp, "recipes"), tmp, 1_000_000)
+	require.NoError(t, err)
+	id := uuid.NewString()
+	_, err = store.Save(Recipe{
+		ID: id, Title: "Soup", Sections: []RecipeSection{{Ingredients: []Ingredient{{Name: "Salt"}}}},
+	}, nil, "")
+	require.NoError(t, err)
+
+	// Block writeAtomic from creating the metadata temp file after the image
+	// sidecar has been written.
+	require.NoError(t, os.Mkdir(filepath.Join(store.baseDir, id+".json.tmp"), 0o755))
+	_, err = store.AttachImage(id, makeTestPNG(t, 2, 2), "image/png")
+	require.Error(t, err)
+	_, err = os.Stat(filepath.Join(store.baseDir, id+".png"))
+	require.ErrorIs(t, err, os.ErrNotExist)
+
+	stored, err := store.Get(id)
+	require.NoError(t, err)
+	require.Empty(t, stored.ImageFilename)
+	require.Empty(t, stored.ImageMIME)
+}
+
 func TestRecipeStore_PathTraversal(t *testing.T) {
 	tmp := t.TempDir()
 	store, err := NewRecipeStore(filepath.Join(tmp, "recipes"), tmp, 1_000_000)
