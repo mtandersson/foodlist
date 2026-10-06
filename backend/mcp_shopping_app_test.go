@@ -67,7 +67,7 @@ func TestMCP_ShoppingListStructuredViewAndMutation(t *testing.T) {
 	require.Contains(t, text, "2.5 litres")
 	require.Contains(t, text, "### Uncategorized")
 	structured := list["structuredContent"].(map[string]any)
-	require.Equal(t, true, structured["includeCompleted"])
+	require.Equal(t, false, structured["includeCompleted"])
 	require.Equal(t, 2, len(structured["items"].([]any)))
 	require.Equal(t, 1, len(structured["categories"].([]any)))
 	for _, entry := range structured["items"].([]any) {
@@ -96,11 +96,20 @@ func TestMCP_ShoppingListStructuredViewAndMutation(t *testing.T) {
 	require.Len(t, open["structuredContent"].(map[string]any)["items"].([]any), 1)
 	require.NotContains(t, firstTextContent(t, open), itemID)
 	all := toolCall(t, base, 8, "foodlist_list", map[string]any{})
-	for _, entry := range all["structuredContent"].(map[string]any)["items"].([]any) {
-		item := entry.(map[string]any)
-		if item["id"] == itemID {
-			require.Equal(t, true, item["completed"])
-			require.Equal(t, true, item["starred"])
-		}
-	}
+	require.Equal(t, false, all["structuredContent"].(map[string]any)["includeCompleted"])
+	require.Len(t, all["structuredContent"].(map[string]any)["items"].([]any), 1)
+	require.NotContains(t, firstTextContent(t, all), itemID)
+
+	explicitHistory := toolCall(t, base, 10, "foodlist_list", map[string]any{"include_completed": true})
+	require.Equal(t, false, explicitHistory["structuredContent"].(map[string]any)["includeCompleted"])
+	require.Len(t, explicitHistory["structuredContent"].(map[string]any)["items"].([]any), 1)
+	require.NotContains(t, firstTextContent(t, explicitHistory), itemID)
+
+	// MCP resources expose the current list too, not completed history.
+	todosResource := resourceText(t, base, 11, mcpResourceTodos)
+	require.Contains(t, todosResource, bareID)
+	require.NotContains(t, todosResource, itemID)
+	stateResource := resourceText(t, base, 12, mcpResourceState)
+	require.Contains(t, stateResource, bareID)
+	require.NotContains(t, stateResource, itemID)
 }

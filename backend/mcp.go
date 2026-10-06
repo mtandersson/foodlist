@@ -53,6 +53,16 @@ type shoppingList struct {
 	Items            []shoppingItem `json:"items"`
 }
 
+func activeShoppingTodos(todos []Todo) []Todo {
+	active := make([]Todo, 0, len(todos))
+	for _, todo := range todos {
+		if todo.CompletedAt == nil {
+			active = append(active, todo)
+		}
+	}
+	return active
+}
+
 type foodlistAddIn struct {
 	Name       string  `json:"name"`
 	CategoryID *string `json:"category_id,omitempty"`
@@ -74,17 +84,15 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_list",
-		Description: "List grocery items by category with quantities and state. Returns text and structured data for the shopping-list view.",
+		Description: "List items currently on the grocery shopping list by category with quantities and state. Completed history is intentionally excluded to keep MCP context focused.",
 		Meta:        mcp.Meta{"ui": map[string]any{"resourceUri": mcpShoppingAppURI}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in foodlistListIn) (*mcp.CallToolResult, any, error) {
 		_ = ctx
 		_ = req
-		includeCompleted := true
-		if in.IncludeCompleted != nil {
-			includeCompleted = *in.IncludeCompleted
-		}
+		_ = in // include_completed is retained for wire compatibility but completed history is never returned.
 		title, cats, todos := app.state.GetShoppingSnapshot()
-		out := shoppingList{Title: title, IncludeCompleted: includeCompleted, Categories: cats, Items: []shoppingItem{}}
+		todos = activeShoppingTodos(todos)
+		out := shoppingList{Title: title, IncludeCompleted: false, Categories: cats, Items: []shoppingItem{}}
 		catName := make(map[string]string, len(cats))
 		for _, c := range cats {
 			catName[c.ID] = c.Name
@@ -93,9 +101,6 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 		_, _ = fmt.Fprintf(&b, "**%s**\n\n", title)
 		groups := make(map[string][]shoppingItem)
 		for _, t := range todos {
-			if !includeCompleted && t.CompletedAt != nil {
-				continue
-			}
 			item := shoppingItem{ID: t.ID, Name: t.Name, CategoryID: t.CategoryID, Count: t.Count, Unit: t.Unit, Completed: t.CompletedAt != nil, Starred: t.Starred, SortOrder: t.SortOrder}
 			out.Items = append(out.Items, item)
 			key := ""
@@ -262,17 +267,18 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 	s.AddResource(&mcp.Resource{
 		URI:         mcpResourceState,
 		Name:        "state",
-		Description: "Full projected state (StateRollup JSON): grocery items, categories, list title.",
+		Description: "Current shopping-list state (StateRollup JSON): open grocery items, categories, and list title. Completed history is excluded.",
 		MIMEType:    "application/json",
 	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		if req.Params.URI != mcpResourceState {
 			return nil, mcp.ResourceNotFoundError(req.Params.URI)
 		}
+		title, categories, todos := app.state.GetShoppingSnapshot()
 		rollup := StateRollup{
 			Type:       "StateRollup",
-			Todos:      app.state.GetTodos(),
-			Categories: app.state.GetCategories(),
-			ListTitle:  app.state.GetListTitle(),
+			Todos:      activeShoppingTodos(todos),
+			Categories: categories,
+			ListTitle:  title,
 			Version:    version,
 		}
 		return writeResourceJSON(mcpResourceState, rollup)
@@ -293,13 +299,14 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 	s.AddResource(&mcp.Resource{
 		URI:         mcpResourceTodos,
 		Name:        "grocery_items",
-		Description: "All grocery items sorted by sort order (JSON array). Legacy URI remains foodlist://todos for compatibility.",
+		Description: "Current open grocery items sorted by sort order (JSON array). Completed history is excluded. Legacy URI remains foodlist://todos for compatibility.",
 		MIMEType:    "application/json",
 	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		if req.Params.URI != mcpResourceTodos {
 			return nil, mcp.ResourceNotFoundError(req.Params.URI)
 		}
-		return writeResourceJSON(mcpResourceTodos, app.state.GetTodos())
+		_, _, todos := app.state.GetShoppingSnapshot()
+		return writeResourceJSON(mcpResourceTodos, activeShoppingTodos(todos))
 	})
 
 	mcp.AddTool(s, &mcp.Tool{

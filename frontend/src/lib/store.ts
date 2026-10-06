@@ -119,6 +119,13 @@ function categoryKey(categoryId: string | null | undefined): string {
   return categoryId ?? "__uncategorized__"
 }
 
+const completedHistoryMaxAgeMs = 30 * 24 * 60 * 60 * 1000
+
+function isWithinCompletedHistory(todo: Todo): boolean {
+  const createdAt = Date.parse(todo.createdAt)
+  return Number.isFinite(createdAt) && createdAt >= Date.now() - completedHistoryMaxAgeMs
+}
+
 function duplicateKey(todo: Todo): string {
   const count = todo.count ?? ""
   const unit = todo.unit ?? ""
@@ -198,7 +205,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
   // Completed todos, sorted by completedAt descending (most recently completed first)
   const completedTodos = derived(todos, ($todos) =>
     $todos
-      .filter((t) => t.completedAt !== null)
+      .filter((t) => t.completedAt !== null && isWithinCompletedHistory(t))
       .sort((a, b) => {
         // Sort by completedAt descending - most recent first
         if (a.completedAt && b.completedAt) {
