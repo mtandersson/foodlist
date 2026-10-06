@@ -155,6 +155,96 @@ func TestMCP_RecipeCreate_ImageFormatsAndMIMEHint(t *testing.T) {
 	}
 }
 
+func TestMCP_RecipeCreate_Base64Variants(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	base := initRecipeMCP(t, srv)
+	png := makeTestPNG(t, 3, 2)
+	standard := base64.StdEncoding.EncodeToString(png)
+	whitespace := standard[:12] + "\n\t " + standard[12:24] + "\r\n" + standard[24:]
+
+	cases := []struct {
+		name string
+		data string
+	}{
+		{"data_url", "data:image/png;base64," + standard},
+		{"raw_standard", base64.RawStdEncoding.EncodeToString(png)},
+		{"raw_url_safe", base64.RawURLEncoding.EncodeToString(png)},
+		{"ascii_whitespace", whitespace},
+	}
+	for i, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := recipeArgs(tc.name)
+			args["image"] = map[string]any{"data_base64": tc.data, "mime_type": "image/jpeg"}
+			out := toolCall(t, base, 60+i, "foodlist_recipe_create", args)
+			require.NotEqual(t, true, out["isError"], "%v", out)
+			result := out["structuredContent"].(map[string]any)
+			require.Equal(t, true, result["has_image"])
+			stored, err := srv.RecipeStore().Get(result["id"].(string))
+			require.NoError(t, err)
+			require.Equal(t, "image/png", stored.ImageMIME)
+		})
+	}
+}
+
+func TestMCP_RecipeAttachImage_RetryTextOnlyCreate(t *testing.T) {
+	srv := newServerWithRecipes(t)
+	base := initRecipeMCP(t, srv)
+	created := toolCall(t, base, 70, "foodlist_recipe_create", recipeArgs("Retry image"))
+	require.NotEqual(t, true, created["isError"], "%v", created)
+	id := created["structuredContent"].(map[string]any)["id"].(string)
+
+	// Drain the create notification so we can assert attach emits its own.
+	select {
+	case <-srv.broadcast:
+	default:
+		t.Fatal("missing create RecipeChanged broadcast")
+	}
+
+	png := makeTestPNG(t, 4, 3)
+	attached := toolCall(t, base, 71, "foodlist_recipe_attach_image", map[string]any{
+		"recipe_id": id,
+		"image": map[string]any{
+			"data_base64": "data:image/png;base64," + base64.StdEncoding.EncodeToString(png),
+			"mime_type":   "image/jpeg",
+		},
+	})
+	require.NotEqual(t, true, attached["isError"], "%v", attached)
+	result := attached["structuredContent"].(map[string]any)
+	require.Equal(t, id, result["id"])
+	require.Equal(t, true, result["has_image"])
+
+	stored, err := srv.RecipeStore().Get(id)
+	require.NoError(t, err)
+	require.Equal(t, "image/png", stored.ImageMIME)
+	got, mime, err := srv.RecipeStore().ReadImage(id)
+	require.NoError(t, err)
+	require.Equal(t, "image/png", mime)
+	require.Equal(t, png, got)
+
+	select {
+	case data := <-srv.broadcast:
+		var event RecipeChanged
+		require.NoError(t, json.Unmarshal(data, &event))
+		require.Equal(t, id, event.ID)
+	default:
+		t.Fatal("missing attach RecipeChanged broadcast")
+	}
+
+	second := toolCall(t, base, 72, "foodlist_recipe_attach_image", map[string]any{
+		"recipe_id": id,
+		"image": map[string]any{"data_base64": base64.StdEncoding.EncodeToString(png)},
+	})
+	require.Equal(t, true, second["isError"])
+	require.Contains(t, firstTextContent(t, second), "already has an image")
+
+	missing := toolCall(t, base, 73, "foodlist_recipe_attach_image", map[string]any{
+		"recipe_id": uuid.NewString(),
+		"image": map[string]any{"data_base64": base64.StdEncoding.EncodeToString(png)},
+	})
+	require.Equal(t, true, missing["isError"])
+	require.Contains(t, firstTextContent(t, missing), "not found")
+}
+
 func TestMCP_RecipeCreate_MultiSectionAndIngredientShapes(t *testing.T) {
 	srv := newServerWithRecipes(t)
 	base := initRecipeMCP(t, srv)
