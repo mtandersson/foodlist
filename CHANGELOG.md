@@ -1,3 +1,18 @@
+## [2.3.6](https://github.com/mtandersson/foodlist/compare/v2.3.5...v2.3.6) (2026-10-06)
+
+### Bug Fixes
+
+* **mcp:** make recipe image uploads retryable ([#548](https://github.com/mtandersson/foodlist/issues/548)) ([291f24b](https://github.com/mtandersson/foodlist/commit/291f24ba1b454b8c6dc3536c721263aeda781a38)), closes [#547](https://github.com/mtandersson/foodlist/issues/547)
+
+### Chores
+
+* **deps:** update @types/node to ^24.19.1 ([0e879e8](https://github.com/mtandersson/foodlist/commit/0e879e8ccde08f25524ea7fb9fa2d383490449bf))
+* **deps:** update docker/dockerfile:1.27 Docker digest to 4edf897 ([e2f818e](https://github.com/mtandersson/foodlist/commit/e2f818e14ecc4b23b7b93f5da53c6db1ef521fb2))
+* **deps:** update opentelemetry-go monorepo to v1.47.0 ([38f4160](https://github.com/mtandersson/foodlist/commit/38f41604068ef3237842f872f1f011f1dfb8e628))
+* **deps:** update renovatebot/github-action action to v46.3.7 ([a6d596d](https://github.com/mtandersson/foodlist/commit/a6d596d73d9030d13758198aaf8cbefdccbeab89))
+* **deps:** update vite-plugin-pwa to v2 ([5707933](https://github.com/mtandersson/foodlist/commit/570793346e03cbc9c73db420a6c716a9c32d27ff))
+* **deps:** update vitest monorepo to ^5.0.3 ([344db0a](https://github.com/mtandersson/foodlist/commit/344db0a7755d3f42822431ee1b11ef85b9c961e3))
+
 ## [2.3.5](https://github.com/mtandersson/foodlist/compare/v2.3.4...v2.3.5) (2026-10-06)
 
 ### Bug Fixes
