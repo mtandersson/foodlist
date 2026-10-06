@@ -97,6 +97,10 @@ var ErrRecipeInvalid = errors.New("recipe invalid")
 // ErrUnsupportedImage signals an image MIME type outside the allowlist.
 var ErrUnsupportedImage = errors.New("unsupported image type")
 
+// ErrRecipeImageExists is returned when attaching an image to a recipe that
+// already has one. MCP image retries intentionally do not replace images.
+var ErrRecipeImageExists = errors.New("recipe already has an image")
+
 // RecipeStore owns the on-disk recipe directory. All paths it touches are
 // validated to live under the configured base directory; ids are required
 // to be UUIDs so a malicious request cannot escape the directory even if
@@ -709,6 +713,68 @@ func (s *RecipeStore) Save(r Recipe, imageBytes []byte, mime string) (Recipe, er
 		s.onChanged(cleaned.ID, false)
 	}
 	return cleaned, nil
+}
+
+// AttachImage adds an image sidecar to an existing image-less recipe.
+// It is intentionally attach-only: callers must not use this to replace an
+// existing image. The sidecar is written first and removed again if the JSON
+// metadata update fails, preserving the same no-orphan guarantee as Save.
+func (s *RecipeStore) AttachImage(id string, imageBytes []byte, mime string) (Recipe, error) {
+	if len(imageBytes) == 0 {
+		return Recipe{}, ErrUnsupportedImage
+	}
+	ext, ok := allowedImageMimes[mime]
+	if !ok {
+		return Recipe{}, ErrUnsupportedImage
+	}
+	if _, err := uuid.Parse(id); err != nil {
+		return Recipe{}, ErrRecipeNotFound
+	}
+
+	jsonPath, err := s.resolveJSON(id)
+	if err != nil {
+		return Recipe{}, err
+	}
+	imagePath, err := s.resolveImage(id, mime)
+	if err != nil {
+		return Recipe{}, err
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	current, err := s.readUnlocked(id)
+	if err != nil {
+		return Recipe{}, err
+	}
+	if current.ImageFilename != "" || current.ImageMIME != "" {
+		return Recipe{}, ErrRecipeImageExists
+	}
+	if _, _, exists := s.findExistingImage(id); exists {
+		return Recipe{}, ErrRecipeImageExists
+	}
+
+	current.ImageMIME = mime
+	current.ImageFilename = id + ext
+	current.UpdatedAt = time.Now().UTC()
+	jsonBytes, err := json.MarshalIndent(current, "", "  ")
+	if err != nil {
+		return Recipe{}, fmt.Errorf("marshal recipe: %w", err)
+	}
+
+	if err := writeAtomic(imagePath, imageBytes); err != nil {
+		return Recipe{}, fmt.Errorf("write image: %w", err)
+	}
+	if err := writeAtomic(jsonPath, jsonBytes); err != nil {
+		_ = os.Remove(imagePath)
+		return Recipe{}, fmt.Errorf("write recipe: %w", err)
+	}
+
+	s.upsertMeta(current)
+	if s.onChanged != nil {
+		s.onChanged(id, false)
+	}
+	return current, nil
 }
 
 // Update overwrites the metadata-only fields of an existing recipe. The
