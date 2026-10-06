@@ -258,6 +258,11 @@ JSON array (so an MCP client can still introspect the server).
   `image.mime_type` is only a hint and is not trusted. Returns the
   generated ID and normalized recipe as structured output. Images are
   limited to 10 MiB after decoding; accepted formats match HTTP uploads.
+- **Tool `foodlist_recipe_attach_image`** — attaches an image to an existing
+  image-less recipe, which makes image upload retryable after text-only
+  creation. It accepts the same `image.data_base64` payload as create,
+  including data-URL, padded/unpadded, URL-safe, and whitespace-wrapped
+  Base64 forms. Existing images are never replaced.
 - **Tool `foodlist_recipe_update`** — updates an existing recipe using
   `recipe_id` and optional `title`, `description`, or `sections`. Omitted
   fields remain unchanged; supplied fields replace existing values.
@@ -282,8 +287,8 @@ JSON array (so an MCP client can still introspect the server).
   contains no image bytes or secret-path HTTP URL.
 
 The LLM parse path, recipe deletion, and replacing an existing recipe image
-remain HTTP-only. MCP creation accepts image bytes from the client and never
-fetches an image URL.
+remain HTTP-only. MCP create/attach accepts image bytes from the client and
+never fetches an image URL.
 
 ## Usage
 
