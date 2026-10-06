@@ -403,6 +403,11 @@ type recipeCreateIn struct {
 	Image       *recipeMCPImageIn `json:"image,omitempty"`
 }
 
+type recipeAttachImageIn struct {
+	RecipeID string           `json:"recipe_id"`
+	Image    recipeMCPImageIn `json:"image"`
+}
+
 type recipeUpdateIn struct {
 	RecipeID    string           `json:"recipe_id"`
 	Title       *string          `json:"title,omitempty"`
@@ -416,11 +421,68 @@ type recipeMCPOut struct {
 	HasImage bool   `json:"has_image"`
 }
 
+var (
+	errMCPImageTooLarge = errors.New("mcp image too large")
+	errMCPImageInvalid  = errors.New("invalid mcp image data")
+)
+
 func recipeMCPError(message string) *mcp.CallToolResult {
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: message}},
 		IsError: true,
 	}
+}
+
+// decodeRecipeMCPImageData accepts the Base64 forms commonly produced by
+// MCP clients while keeping the decoded image limit authoritative. MIME
+// metadata in a data URL is deliberately ignored; prepareRecipeImage sniffs
+// the actual bytes before anything is persisted.
+func decodeRecipeMCPImageData(data string) ([]byte, error) {
+	s := strings.TrimSpace(data)
+	if strings.HasPrefix(strings.ToLower(s), "data:") {
+		comma := strings.IndexByte(s, ',')
+		if comma < 0 || !strings.Contains(strings.ToLower(s[:comma]), ";base64") {
+			return nil, errMCPImageInvalid
+		}
+		s = s[comma+1:]
+	}
+
+	// JSON clients sometimes wrap long Base64 values for readability.
+	s = strings.Map(func(r rune) rune {
+		switch r {
+		case ' ', '\t', '\r', '\n':
+			return -1
+		default:
+			return r
+		}
+	}, s)
+	if s == "" {
+		return nil, errMCPImageInvalid
+	}
+	if len(s) > base64.StdEncoding.EncodedLen(recipeUploadMaxBytes) {
+		return nil, errMCPImageTooLarge
+	}
+
+	encodings := []*base64.Encoding{
+		base64.StdEncoding,
+		base64.RawStdEncoding,
+		base64.URLEncoding,
+		base64.RawURLEncoding,
+	}
+	for _, encoding := range encodings {
+		decoded, err := encoding.DecodeString(s)
+		if err != nil {
+			continue
+		}
+		if len(decoded) == 0 {
+			return nil, errMCPImageInvalid
+		}
+		if len(decoded) > recipeUploadMaxBytes {
+			return nil, errMCPImageTooLarge
+		}
+		return decoded, nil
+	}
+	return nil, errMCPImageInvalid
 }
 
 // registerRecipeMCP wires recipe-related tools and resources.
@@ -452,11 +514,11 @@ func registerRecipeMCP(
 		var imageBytes []byte
 		var mime string
 		if in.Image != nil {
-			if len(in.Image.DataBase64) > base64.StdEncoding.EncodedLen(recipeUploadMaxBytes) {
-				return recipeMCPError("Image too large."), recipeMCPOut{}, nil
-			}
-			imageBytes, err = base64.StdEncoding.DecodeString(in.Image.DataBase64)
-			if err != nil || len(imageBytes) == 0 || len(imageBytes) > recipeUploadMaxBytes {
+			imageBytes, err = decodeRecipeMCPImageData(in.Image.DataBase64)
+			if err != nil {
+				if errors.Is(err, errMCPImageTooLarge) {
+					return recipeMCPError("Image too large."), recipeMCPOut{}, nil
+				}
 				return recipeMCPError("Invalid image data."), recipeMCPOut{}, nil
 			}
 			imageBytes, mime, err = prepareRecipeImage(app.recipeStore, imageBytes)
@@ -473,6 +535,39 @@ func registerRecipeMCP(
 		}
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Saved recipe " + saved.ID + "."}}},
 			recipeMCPOut{ID: saved.ID, Recipe: saved, HasImage: saved.ImageFilename != ""}, nil
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "foodlist_recipe_attach_image",
+		Description: "Attach an image to an existing image-less recipe. Use this to retry image persistence after text-only creation. The same Base64 image formats as recipe create are accepted; existing recipe images are never replaced.",
+	}, func(_ context.Context, _ *mcp.CallToolRequest, in recipeAttachImageIn) (*mcp.CallToolResult, recipeMCPOut, error) {
+		if app.recipeStore == nil {
+			return recipeMCPError("Recipes feature is disabled."), recipeMCPOut{}, nil
+		}
+		imageBytes, err := decodeRecipeMCPImageData(in.Image.DataBase64)
+		if err != nil {
+			if errors.Is(err, errMCPImageTooLarge) {
+				return recipeMCPError("Image too large."), recipeMCPOut{}, nil
+			}
+			return recipeMCPError("Invalid image data."), recipeMCPOut{}, nil
+		}
+		imageBytes, mime, err := prepareRecipeImage(app.recipeStore, imageBytes)
+		if err != nil {
+			return recipeMCPError("Invalid image."), recipeMCPOut{}, nil
+		}
+		updated, err := app.recipeStore.AttachImage(in.RecipeID, imageBytes, mime)
+		if err != nil {
+			switch {
+			case errors.Is(err, ErrRecipeNotFound):
+				return recipeMCPError("Recipe not found."), recipeMCPOut{}, nil
+			case errors.Is(err, ErrRecipeImageExists):
+				return recipeMCPError("Recipe already has an image."), recipeMCPOut{}, nil
+			default:
+				return recipeMCPError("Failed to attach recipe image."), recipeMCPOut{}, nil
+			}
+		}
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Attached image to recipe " + updated.ID + "."}}},
+			recipeMCPOut{ID: updated.ID, Recipe: updated, HasImage: true}, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
