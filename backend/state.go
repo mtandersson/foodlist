@@ -3,6 +3,7 @@ package main
 import (
 	"sort"
 	"sync"
+	"time"
 )
 
 // State holds the current state of all todos, projected from events
@@ -159,8 +160,11 @@ func (s *State) GetTodos() []Todo {
 	return todos
 }
 
+const shoppingSnapshotCompletedMaxAge = 30 * 24 * time.Hour
+
 // GetShoppingSnapshot copies the title, categories, and items under one lock.
 // MCP list text and structured content must describe the same projection.
+// Completed items are kept only when they were added within the recent-history window.
 func (s *State) GetShoppingSnapshot() (string, []Category, []Todo) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -168,8 +172,12 @@ func (s *State) GetShoppingSnapshot() (string, []Category, []Todo) {
 	for _, c := range s.categories {
 		cats = append(cats, *c)
 	}
+	completedCutoff := time.Now().UTC().Add(-shoppingSnapshotCompletedMaxAge)
 	todos := make([]Todo, 0, len(s.todos))
 	for _, t := range s.todos {
+		if t.CompletedAt != nil && t.CreatedAt.Before(completedCutoff) {
+			continue
+		}
 		todos = append(todos, *t)
 	}
 	sort.Slice(cats, func(i, j int) bool { return cats[i].SortOrder > cats[j].SortOrder })

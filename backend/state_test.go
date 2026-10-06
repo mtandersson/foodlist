@@ -323,6 +323,53 @@ func TestState_GetTodosSortedBySortOrder(t *testing.T) {
 	assert.Equal(t, "todo-1", todos[2].ID)
 }
 
+func TestState_GetShoppingSnapshotLimitsCompletedHistory(t *testing.T) {
+	state := NewState()
+	now := time.Now().UTC()
+
+	state.ApplyEvents([]Event{
+		TodoCreated{
+			Type:      "TodoCreated",
+			ID:        "recent-completed",
+			Name:      "Recent completed",
+			CreatedAt: now.Add(-29 * 24 * time.Hour),
+			SortOrder: 3000,
+		},
+		TodoCompleted{
+			Type:        "TodoCompleted",
+			ID:          "recent-completed",
+			CompletedAt: now.Add(-28 * 24 * time.Hour),
+		},
+		TodoCreated{
+			Type:      "TodoCreated",
+			ID:        "old-completed",
+			Name:      "Old completed",
+			CreatedAt: now.Add(-31 * 24 * time.Hour),
+			SortOrder: 2000,
+		},
+		TodoCompleted{
+			Type:        "TodoCompleted",
+			ID:          "old-completed",
+			CompletedAt: now.Add(-24 * time.Hour),
+		},
+		TodoCreated{
+			Type:      "TodoCreated",
+			ID:        "old-open",
+			Name:      "Old open",
+			CreatedAt: now.Add(-60 * 24 * time.Hour),
+			SortOrder: 1000,
+		},
+	})
+
+	_, _, snapshot := state.GetShoppingSnapshot()
+	require.Len(t, snapshot, 2)
+	assert.Equal(t, "recent-completed", snapshot[0].ID)
+	assert.Equal(t, "old-open", snapshot[1].ID)
+
+	// Filtering the MCP projection must not remove retained event-sourced history.
+	require.Len(t, state.GetTodos(), 3)
+}
+
 func TestState_GetHighestSortOrder(t *testing.T) {
 	state := NewState()
 
