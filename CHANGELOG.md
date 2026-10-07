@@ -1,3 +1,9 @@
+## [2.3.7](https://github.com/mtandersson/foodlist/compare/v2.3.6...v2.3.7) (2026-10-07)
+
+### Bug Fixes
+
+* **frontend:** cancel interrupted mobile long presses ([#557](https://github.com/mtandersson/foodlist/issues/557)) ([fccba55](https://github.com/mtandersson/foodlist/commit/fccba55f6c0021d5d948a97c445c1f345d29c31a))
+
 ## [2.3.6](https://github.com/mtandersson/foodlist/compare/v2.3.5...v2.3.6) (2026-10-06)
 
 ### Bug Fixes
