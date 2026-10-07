@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import type { Todo } from './types';
 import TodoItem from './TodoItem.svelte';
 
-describe('TodoItem - Mobile Categorization Logic', () => {
+describe('TodoItem', () => {
   let mockTodo: Todo;
 
   beforeEach(() => {
@@ -66,235 +66,118 @@ describe('TodoItem - Mobile Categorization Logic', () => {
     });
   });
 
-  describe('Quick tap logic', () => {
-    it('should categorize uncategorized todos', () => {
-      const todo = mockTodo;
-      const shouldShowCategoryModal = !todo.categoryId;
-      
-      expect(shouldShowCategoryModal).toBe(true);
+  describe('touch gestures', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => {
+      cleanup();
+      vi.useRealTimers();
     });
 
-    it('should not categorize already categorized todos', () => {
-      const categorizedTodo = { ...mockTodo, categoryId: 'cat1' };
-      const shouldShowCategoryModal = !categorizedTodo.categoryId;
-      
-      expect(shouldShowCategoryModal).toBe(false);
+    function renderItem(categoryId: string | null = null) {
+      const todo = { ...mockTodo, categoryId };
+      const onRequestCategorize = vi.fn();
+      const onRename = vi.fn();
+      const view = render(TodoItem, {
+        props: {
+          todo,
+          onToggleComplete: vi.fn(),
+          onToggleStar: vi.fn(),
+          onRename,
+          onRequestCategorize,
+        },
+      });
+      const button = screen.getByRole('button', { name: 'Double-click or long-press to edit' });
+      return { ...view, todo, button, onRequestCategorize, onRename };
+    }
+
+    it.each([null, 'fruit'])('categorizes a quick tap for category %s without entering edit mode', async (categoryId) => {
+      const { button, todo, onRequestCategorize } = renderItem(categoryId);
+      await fireEvent.touchStart(button);
+      await vi.advanceTimersByTimeAsync(100);
+      await fireEvent.touchEnd(button);
+      await vi.advanceTimersByTimeAsync(500);
+      expect(onRequestCategorize).toHaveBeenCalledExactlyOnceWith(todo);
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      expect(button).not.toHaveClass('long-pressing');
     });
 
-    it('validates quick tap timing threshold', () => {
-      const QUICK_TAP_THRESHOLD = 500; // milliseconds
-      
-      const quickTap = 100;
-      const longPress = 600;
-      
-      expect(quickTap).toBeLessThan(QUICK_TAP_THRESHOLD);
-      expect(longPress).toBeGreaterThan(QUICK_TAP_THRESHOLD);
+    it('edits after a stationary long press and saves the new name', async () => {
+      const { button, onRequestCategorize, onRename } = renderItem();
+      await fireEvent.touchStart(button);
+      await vi.advanceTimersByTimeAsync(499);
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(1);
+      const input = screen.getByRole('textbox');
+      expect(input).toHaveValue('Test Todo');
+      await fireEvent.touchEnd(button);
+      expect(onRequestCategorize).not.toHaveBeenCalled();
+      await fireEvent.input(input, { target: { value: 'Fresh fruit' } });
+      await fireEvent.keyDown(input, { key: 'Enter' });
+      expect(onRename).toHaveBeenCalledExactlyOnceWith('1', 'Fresh fruit');
     });
 
-    it('validates touch move cancels categorization', () => {
-      let touchMoved = false;
-      let shouldCategorize = true;
-      
-      // Simulate touch move
-      touchMoved = true;
-      if (touchMoved) {
-        shouldCategorize = false;
-      }
-      
-      expect(shouldCategorize).toBe(false);
-    });
-  });
-
-  describe('TodoItem props interface', () => {
-    it('validates optional onRequestCategorize callback', () => {
-      interface TodoItemProps {
-        todo: Todo;
-        categoryName?: string | null;
-        onToggleComplete: (id: string) => void;
-        onToggleStar: (id: string) => void;
-        onRename: (id: string, name: string) => void;
-        onRequestCategorize?: (todo: Todo) => void;
-      }
-
-      const mockOnRequestCategorize = vi.fn();
-      
-      const props: TodoItemProps = {
-        todo: mockTodo,
-        categoryName: null,
-        onToggleComplete: vi.fn(),
-        onToggleStar: vi.fn(),
-        onRename: vi.fn(),
-        onRequestCategorize: mockOnRequestCategorize,
-      };
-
-      expect(props.onRequestCategorize).toBeDefined();
-      expect(typeof props.onRequestCategorize).toBe('function');
+    it('does not edit or categorize when a touch moves to scroll', async () => {
+      const { button, onRequestCategorize } = renderItem();
+      await fireEvent.touchStart(button);
+      await vi.advanceTimersByTimeAsync(100);
+      await fireEvent.touchMove(button);
+      await fireEvent.touchEnd(button);
+      await vi.advanceTimersByTimeAsync(500);
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      expect(onRequestCategorize).not.toHaveBeenCalled();
+      expect(button).not.toHaveClass('long-pressing');
     });
 
-    it('handles missing onRequestCategorize callback', () => {
-      interface TodoItemProps {
-        todo: Todo;
-        categoryName?: string | null;
-        onToggleComplete: (id: string) => void;
-        onToggleStar: (id: string) => void;
-        onRename: (id: string) => void;
-        onRequestCategorize?: (todo: Todo) => void;
-      }
-
-      const props: TodoItemProps = {
-        todo: mockTodo,
-        categoryName: null,
-        onToggleComplete: vi.fn(),
-        onToggleStar: vi.fn(),
-        onRename: vi.fn(),
-        // onRequestCategorize not provided
-      };
-
-      expect(props.onRequestCategorize).toBeUndefined();
+    it.each([0, 100, 499])('discards a touch canceled after %sms', async (delay) => {
+      const { button, onRequestCategorize, onRename } = renderItem();
+      await fireEvent.touchStart(button);
+      await vi.advanceTimersByTimeAsync(delay);
+      await fireEvent.touchCancel(button);
+      expect(button).not.toHaveClass('long-pressing');
+      await vi.advanceTimersByTimeAsync(600);
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      expect(onRequestCategorize).not.toHaveBeenCalled();
+      expect(onRename).not.toHaveBeenCalled();
     });
 
-    it('onRequestCategorize callback receives correct todo', () => {
-      let receivedTodo: Todo | null = null;
-      
-      const onRequestCategorize = (todo: Todo) => {
-        receivedTodo = todo;
-      };
-
-      onRequestCategorize(mockTodo);
-      
-      expect(receivedTodo).toEqual(mockTodo);
-      expect(receivedTodo!.id).toBe('1');
-      expect(receivedTodo!.name).toBe('Test Todo');
-    });
-  });
-
-  describe('Touch event timing logic', () => {
-    it('calculates touch duration correctly', () => {
-      const touchStartTime = 1000;
-      const touchEndTime = 1100;
-      const duration = touchEndTime - touchStartTime;
-      
-      expect(duration).toBe(100);
+    it('allows a fresh quick tap after canceling a previous touch', async () => {
+      const { button, todo, onRequestCategorize } = renderItem();
+      await fireEvent.touchStart(button);
+      await vi.advanceTimersByTimeAsync(400);
+      await fireEvent.touchCancel(button);
+      await fireEvent.touchStart(button);
+      await vi.advanceTimersByTimeAsync(100);
+      await fireEvent.touchEnd(button);
+      await vi.advanceTimersByTimeAsync(600);
+      expect(onRequestCategorize).toHaveBeenCalledExactlyOnceWith(todo);
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
-    it('identifies quick tap vs long press', () => {
-      const THRESHOLD = 500;
-      
-      const quickTapDuration = 100;
-      const longPressDuration = 600;
-      
-      const isQuickTap = quickTapDuration < THRESHOLD;
-      const isLongPress = longPressDuration >= THRESHOLD;
-      
-      expect(isQuickTap).toBe(true);
-      expect(isLongPress).toBe(true);
+    it('ignores a touchend from a canceled gesture', async () => {
+      const { button, onRequestCategorize } = renderItem();
+      await fireEvent.touchStart(button);
+      await vi.advanceTimersByTimeAsync(100);
+      await fireEvent.touchCancel(button);
+      await fireEvent.touchEnd(button);
+      await vi.advanceTimersByTimeAsync(600);
+      expect(onRequestCategorize).not.toHaveBeenCalled();
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
-    it('validates touch state tracking', () => {
-      let touchMoved = false;
-      let touchStartTime = Date.now();
-      
-      // Simulate touch move
-      touchMoved = true;
-      
-      const shouldCancelAction = touchMoved;
-      expect(shouldCancelAction).toBe(true);
-    });
-  });
-
-  describe('Categorization conditions', () => {
-    it('requires uncategorized todo', () => {
-      const uncategorized = mockTodo;
-      const categorized = { ...mockTodo, categoryId: 'cat1' };
-      
-      expect(uncategorized.categoryId).toBeNull();
-      expect(categorized.categoryId).toBe('cat1');
+    it('releases the pending gesture timer when its row is removed', async () => {
+      const { button, unmount, onRequestCategorize, onRename } = renderItem();
+      await fireEvent.touchStart(button);
+      await unmount();
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(600);
+      expect(onRequestCategorize).not.toHaveBeenCalled();
+      expect(onRename).not.toHaveBeenCalled();
     });
 
-    it('requires callback to be defined', () => {
-      const callbackDefined = vi.fn();
-      const callbackUndefined = undefined;
-      
-      expect(callbackDefined).toBeDefined();
-      expect(callbackUndefined).toBeUndefined();
-    });
-
-    it('requires quick tap (not long press)', () => {
-      const tapDuration = 100;
-      const QUICK_TAP_MAX = 500;
-      
-      const isQuickTap = tapDuration < QUICK_TAP_MAX;
-      expect(isQuickTap).toBe(true);
-    });
-
-    it('requires no touch movement', () => {
-      let touchMoved = false;
-      
-      const canCategorize = !touchMoved;
-      expect(canCategorize).toBe(true);
-      
-      touchMoved = true;
-      const cannotCategorize = !touchMoved;
-      expect(cannotCategorize).toBe(false);
-    });
-
-    it('combines all conditions correctly', () => {
-      const todo = mockTodo;
-      const hasCallback = true;
-      const isQuickTap = true;
-      const touchMoved = false;
-      
-      const shouldShowModal = 
-        !todo.categoryId &&  // Uncategorized
-        hasCallback &&       // Callback defined
-        isQuickTap &&        // Quick tap
-        !touchMoved;         // No movement
-      
-      expect(shouldShowModal).toBe(true);
-    });
-  });
-
-  describe('Edge cases', () => {
-    it('handles completed todos with no category', () => {
-      const completedTodo = {
-        ...mockTodo,
-        completedAt: '2024-01-02',
-        categoryId: null,
-      };
-      
-      const isUncategorized = !completedTodo.categoryId;
-      expect(isUncategorized).toBe(true);
-    });
-
-    it('handles starred todos with no category', () => {
-      const starredTodo = {
-        ...mockTodo,
-        starred: true,
-        categoryId: null,
-      };
-      
-      const isUncategorized = !starredTodo.categoryId;
-      expect(isUncategorized).toBe(true);
-    });
-
-    it('handles rapid taps', () => {
-      const tap1Time = 1000;
-      const tap2Time = 1050;
-      
-      const timeBetweenTaps = tap2Time - tap1Time;
-      expect(timeBetweenTaps).toBe(50);
-      
-      // Each tap should be handled independently
-      expect(timeBetweenTaps).toBeGreaterThan(0);
-    });
-
-    it('handles zero duration touch', () => {
-      const touchDuration = 0;
-      const THRESHOLD = 500;
-      
-      const isQuickTap = touchDuration < THRESHOLD;
-      expect(isQuickTap).toBe(true);
+    it('still supports desktop double-click editing', async () => {
+      const { button } = renderItem();
+      await fireEvent.doubleClick(button);
+      expect(screen.getByRole('textbox')).toHaveValue('Test Todo');
     });
   });
 });
-

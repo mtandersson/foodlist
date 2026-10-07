@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import type { Todo } from './types';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
@@ -69,15 +70,21 @@
     }
   }
 
+  function clearLongPress() {
+    if (longPressTimer !== null) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    isLongPressing = false;
+  }
+
+  onDestroy(clearLongPress);
+
   // Mobile long-press support
-  function handleTouchStart(e: TouchEvent) {
+  function handleTouchStart() {
+    clearLongPress();
     touchStartTime = Date.now();
     touchMoved = false;
-    
-    // Clear any existing timer
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-    }
     
     isLongPressing = true;
     
@@ -92,12 +99,7 @@
     const touchDuration = Date.now() - touchStartTime;
     const wasQuickTap = touchDuration < 500 && !touchMoved;
     
-    // Clear timer if touch ends before long-press threshold
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-    }
-    isLongPressing = false;
+    clearLongPress();
     
     // If it's a quick tap, show category selector (works for both categorized and uncategorized)
     if (wasQuickTap && onRequestCategorize) {
@@ -106,14 +108,9 @@
     }
   }
 
-  function handleTouchMove(e: TouchEvent) {
+  function cancelTouchGesture() {
     touchMoved = true;
-    // Cancel long-press if user moves finger
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-    }
-    isLongPressing = false;
+    clearLongPress();
   }
 </script>
 
@@ -144,7 +141,8 @@
       ondblclick={startEditing}
       ontouchstart={handleTouchStart}
       ontouchend={handleTouchEnd}
-      ontouchmove={handleTouchMove}
+      ontouchmove={cancelTouchGesture}
+      ontouchcancel={cancelTouchGesture}
       onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); } }}
       aria-label="Double-click or long-press to edit"
     >
@@ -417,4 +415,3 @@
     height: var(--icon-sm);
   }
 </style>
-
