@@ -9,7 +9,7 @@ require (
 	github.com/jdeng/goheif v0.0.0-20260529013157-491845cec8a6
 	github.com/joho/godotenv v1.5.1
 	github.com/microsoft/kiota-abstractions-go v1.11.1
-	github.com/microsoft/kiota-http-go v1.5.6
+	github.com/microsoft/kiota-http-go v1.5.7
 	github.com/microsoftgraph/msgraph-sdk-go v1.103.0
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
