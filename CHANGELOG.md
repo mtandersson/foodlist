@@ -1,3 +1,13 @@
+## [2.3.8](https://github.com/mtandersson/foodlist/compare/v2.3.7...v2.3.8) (2026-10-14)
+
+### Bug Fixes
+
+* **mcp:** enforce private no-store cache policy ([#571](https://github.com/mtandersson/foodlist/issues/571)) ([626bd01](https://github.com/mtandersson/foodlist/commit/626bd01cfb8aa20327c31e14835fc37a9a08d563))
+
+### Chores
+
+* **deps:** update @types/node to ^24.19.2 ([81c399b](https://github.com/mtandersson/foodlist/commit/81c399bd38f3c30f115506dbf7e48e4076a0040a))
+
 ## [2.3.7](https://github.com/mtandersson/foodlist/compare/v2.3.6...v2.3.7) (2026-10-07)
 
 ### Bug Fixes
