@@ -1,6 +1,6 @@
 module foodlist
 
-go 1.27.1
+go 1.27.2
 
 require (
 	github.com/caarlos0/env/v11 v11.4.1
@@ -10,12 +10,12 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/microsoft/kiota-abstractions-go v1.11.1
 	github.com/microsoft/kiota-http-go v1.5.7
-	github.com/microsoftgraph/msgraph-sdk-go v1.103.0
+	github.com/microsoftgraph/msgraph-sdk-go v1.104.0
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/image v0.46.0
+	golang.org/x/image v0.47.0
 	golang.org/x/sync v0.24.0
 	golang.org/x/sys v0.49.0
 )
