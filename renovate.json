@@ -8,52 +8,79 @@
   ],
   "packageRules": [
     {
-      "matchCategories": ["golang"],
+      "matchCategories": [
+        "golang"
+      ],
       "enabled": true,
-      "postUpdateOptions": ["gomodTidy"]
+      "postUpdateOptions": [
+        "gomodTidy"
+      ]
     },
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "rebase"
     },
     {
-      "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["patch"],
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "automerge": true
     },
     {
-      "matchManagers": ["npm"],
-      "matchUpdateTypes": ["patch"],
+      "matchManagers": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "automerge": true
     },
     {
-      "matchUpdateTypes": ["major"],
-      "automerge": true,
-      "automergeType": "pr",
-      "automergeStrategy": "rebase",
-      "ignoreTests": true
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
     },
     {
-      "matchManagers": ["npm"],
-      "matchDepNames": ["typescript"],
-      "matchFileNames": ["frontend/package.json"],
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepNames": [
+        "typescript"
+      ],
+      "matchFileNames": [
+        "frontend/package.json"
+      ],
       "allowedVersions": "<7",
       "recreateWhen": "never"
     }
   ],
-  "labels": ["dependencies", "renovate"],
-  "prConcurrentLimit": 0,
-  "prHourlyLimit": 0,
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
+  "prConcurrentLimit": 8,
+  "prHourlyLimit": 4,
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}}",
-  "schedule": ["* 10-14 * * 1"],
-  "automergeSchedule": ["* 10-14 * * 1"],
+  "schedule": [
+    "* 10-14 * * 1"
+  ],
+  "automergeSchedule": [
+    "* 10-14 * * 1"
+  ],
   "updateNotScheduled": false,
   "platformAutomerge": false,
   "timezone": "Europe/Stockholm",
@@ -67,10 +94,14 @@
   },
   "github-actions": {
     "enabled": true,
-    "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"]
+    "managerFilePatterns": [
+      "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+    ]
   },
   "vulnerabilityAlerts": {
-    "labels": ["security"],
+    "labels": [
+      "security"
+    ],
     "automerge": true
   },
   "ignoreDeps": [],
