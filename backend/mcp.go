@@ -382,12 +382,7 @@ func foodlistMCPHandler(app *Server) http.Handler {
 		JSONResponse:        true,
 		MaxRequestBodyBytes: mcpMaxRequestBodyBytes,
 	})
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// MCP responses (including error responses) must not be retained by
-		// browsers, CDNs, or shared HTTP intermediaries.
-		w.Header().Set("Cache-Control", "private, no-store")
-		handler.ServeHTTP(w, r)
-	})
+	return mcpHTTPNoStore(handler)
 }
 
 // recipeRefIn identifies a single recipe by id.
