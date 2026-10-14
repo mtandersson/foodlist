@@ -31,10 +31,7 @@
     },
     {
       "matchUpdateTypes": ["major"],
-      "automerge": true,
-      "automergeType": "pr",
-      "automergeStrategy": "rebase",
-      "ignoreTests": true
+      "automerge": false
     },
     {
       "matchManagers": ["npm"],
@@ -45,8 +42,8 @@
     }
   ],
   "labels": ["dependencies", "renovate"],
-  "prConcurrentLimit": 0,
-  "prHourlyLimit": 0,
+  "prConcurrentLimit": 8,
+  "prHourlyLimit": 4,
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
   "commitMessageAction": "update",
