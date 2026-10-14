@@ -70,7 +70,14 @@ type foodlistUpdateItemIn struct {
 }
 
 func newFoodlistMCPServer(app *Server) *mcp.Server {
-	s := mcp.NewServer(&mcp.Implementation{Name: "foodlist", Version: version}, nil)
+	s := mcp.NewServer(&mcp.Implementation{Name: "foodlist", Version: version}, &mcp.ServerOptions{
+		// MCP 2026-07-28: list/discovery/resource results must never be reused.
+		// Explicit private scope avoids the SDK's shared-cache default.
+		SetCacheable: func(_ context.Context, _ mcp.Request, cache *mcp.Cacheable) {
+			cache.TTLMs = 0
+			cache.CacheScope = "private"
+		},
+	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "foodlist_list",
@@ -368,13 +375,14 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 // foodlistMCPHandler serves MCP over streamable HTTP at /mcp (no application-level auth; protect at network/reverse-proxy if needed).
 func foodlistMCPHandler(app *Server) http.Handler {
 	mcpSrv := newFoodlistMCPServer(app)
-	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
+	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 		return mcpSrv
 	}, &mcp.StreamableHTTPOptions{
 		Stateless:           true,
 		JSONResponse:        true,
 		MaxRequestBodyBytes: mcpMaxRequestBodyBytes,
 	})
+	return mcpHTTPNoStore(handler)
 }
 
 // recipeRefIn identifies a single recipe by id.
