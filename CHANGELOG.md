@@ -1,3 +1,25 @@
+## [2.3.9](https://github.com/mtandersson/foodlist/compare/v2.3.8...v2.3.9) (2026-10-14)
+
+### Bug Fixes
+
+* **renovate:** disallow major automerge and limit PR fan-out ([#574](https://github.com/mtandersson/foodlist/issues/574)) ([bdab683](https://github.com/mtandersson/foodlist/commit/bdab68311649ee9611f5cd708e8940c7cb1e714b))
+
+### Chores
+
+* **deps:** reconcile Go, image and Graph updates ([#572](https://github.com/mtandersson/foodlist/issues/572)) ([2fc13de](https://github.com/mtandersson/foodlist/commit/2fc13de64c250d424598c6232cb50f97e771dc9c))
+* **deps:** reconcile Vite 8.3.4 and jsdom 30.1.2 ([#573](https://github.com/mtandersson/foodlist/issues/573)) ([8db8b05](https://github.com/mtandersson/foodlist/commit/8db8b0569b7cb4e23c5b1b981b7ac2a8a8863cfc))
+* **deps:** update @modelcontextprotocol/client to ^2.3.1 ([#541](https://github.com/mtandersson/foodlist/issues/541)) ([bdd07cd](https://github.com/mtandersson/foodlist/commit/bdd07cd31b3b8fa46e1b46569cada1f612df299f))
+* **deps:** update azure-sdk-for-go monorepo ([#537](https://github.com/mtandersson/foodlist/issues/537)) ([f27c107](https://github.com/mtandersson/foodlist/commit/f27c107da482f271f4ceac442c260b659fcc7cac))
+* **deps:** update conventional-changelog-conventionalcommits to ^10.4.1 ([#551](https://github.com/mtandersson/foodlist/issues/551)) ([b0eff8c](https://github.com/mtandersson/foodlist/commit/b0eff8cb12d5db4e585924ed619476458738881c))
+* **deps:** update docker/dockerfile Docker tag to v1.28 ([#564](https://github.com/mtandersson/foodlist/issues/564)) ([8f48e38](https://github.com/mtandersson/foodlist/commit/8f48e3839d430e08a944260f4e1dac21842856a8))
+* **deps:** update golang Docker tag to v1.27.2 ([#560](https://github.com/mtandersson/foodlist/issues/560)) ([d37eb92](https://github.com/mtandersson/foodlist/commit/d37eb9261130b76b4590e6a965dec96d3c81062d))
+* **deps:** update marked to ^18.1.0 ([#553](https://github.com/mtandersson/foodlist/issues/553)) ([b1815c2](https://github.com/mtandersson/foodlist/commit/b1815c2f2ebe3880b32125fa289234d55c000100))
+* **deps:** update module github.com/microsoft/kiota-http-go to v1.5.7 ([#561](https://github.com/mtandersson/foodlist/issues/561)) ([1e43ebe](https://github.com/mtandersson/foodlist/commit/1e43ebe03636cbbbbedd4444c2cfd2ab052997fa))
+* **deps:** update module golang.org/x/net to v0.61.0 ([#567](https://github.com/mtandersson/foodlist/issues/567)) ([2709b29](https://github.com/mtandersson/foodlist/commit/2709b29ea63f8d24e886c387ea88305ef6374c6e))
+* **deps:** update renovatebot/github-action action to v46.3.8 ([#562](https://github.com/mtandersson/foodlist/issues/562)) ([623f04f](https://github.com/mtandersson/foodlist/commit/623f04f670e76ea61efdaa6f3b0e8321114252d4))
+* **deps:** update svelte to ^5.57.2 ([#552](https://github.com/mtandersson/foodlist/issues/552)) ([3d5c755](https://github.com/mtandersson/foodlist/commit/3d5c75519a65f6e476e33141f00c0c639e59fd94))
+* **deps:** update uuid to ^14.0.3 ([#563](https://github.com/mtandersson/foodlist/issues/563)) ([d5722b2](https://github.com/mtandersson/foodlist/commit/d5722b25b10a1619136844954a4ef7abe68a25c3))
+
 ## [2.3.8](https://github.com/mtandersson/foodlist/compare/v2.3.7...v2.3.8) (2026-10-14)
 
 ### Bug Fixes
