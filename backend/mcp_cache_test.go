@@ -23,10 +23,17 @@ func TestMCP_HTTPPrivateNoStore(t *testing.T) {
 		name, method, body string
 		status             int
 	}{
-		{"successful_initialize", http.MethodPost,
-			`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"cache-test","version":"1"}}}`,
-			http.StatusOK},
-		{"error_response", http.MethodGet, "", http.StatusMethodNotAllowed},
+		{
+			name:   "successful_initialize",
+			method: http.MethodPost,
+			body:   `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"cache-test","version":"1"}}}`,
+			status: http.StatusOK,
+		},
+		{
+			name:   "error_response",
+			method: http.MethodGet,
+			status: http.StatusMethodNotAllowed,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
