@@ -40,7 +40,7 @@ func TestMCP_HTTPPrivateNoStore(t *testing.T) {
 			require.NoError(t, err)
 			defer resp.Body.Close()
 			require.Equal(t, tc.status, resp.StatusCode)
-			require.Equal(t, "private, no-store", resp.Header.Get("Cache-Control"))
+			require.Equal(t, "private, no-store, no-transform", resp.Header.Get("Cache-Control"))
 		})
 	}
 }
