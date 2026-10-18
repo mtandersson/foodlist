@@ -201,22 +201,18 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 	server, ts, wsURL := setupTestServer(t)
 	defer ts.Close()
 
-	// Add some events to the store first
+	// Add events spanning the app's recent completed-history window.
 	now := time.Now().UTC()
-	server.store.Append(TodoCreated{
-		Type:      "TodoCreated",
-		ID:        "todo-1",
-		Name:      "Test task",
-		CreatedAt: now,
-		SortOrder: 1000,
-	})
-	server.store.Append(CategoryCreated{
-		Type:      "CategoryCreated",
-		ID:        "cat-1",
-		Name:      "Work",
-		CreatedAt: now,
-		SortOrder: 1000,
-	})
+	for _, event := range []Event{
+		TodoCreated{Type: "TodoCreated", ID: "old-open", Name: "Old open", CreatedAt: now.Add(-60 * 24 * time.Hour), SortOrder: 3000},
+		TodoCreated{Type: "TodoCreated", ID: "recent-completed", Name: "Recent completed", CreatedAt: now.Add(-29 * 24 * time.Hour), SortOrder: 2000},
+		TodoCompleted{Type: "TodoCompleted", ID: "recent-completed", CompletedAt: now.Add(-28 * 24 * time.Hour)},
+		TodoCreated{Type: "TodoCreated", ID: "old-completed", Name: "Old completed", CreatedAt: now.Add(-31 * 24 * time.Hour), SortOrder: 1000},
+		TodoCompleted{Type: "TodoCompleted", ID: "old-completed", CompletedAt: now.Add(-24 * time.Hour)},
+		CategoryCreated{Type: "CategoryCreated", ID: "cat-1", Name: "Work", CreatedAt: now, SortOrder: 1000},
+	} {
+		require.NoError(t, server.store.Append(event))
+	}
 
 	// Rebuild state from store
 	events, _ := server.store.ReadAll()
@@ -257,11 +253,20 @@ func TestServer_SendStateRollupOnConnect(t *testing.T) {
 	require.True(t, rollupReceived, "Should receive StateRollup message")
 	require.True(t, clientCountReceived, "Should receive ClientCount message")
 
-	// Verify StateRollup content
-	require.Len(t, rollup.Todos, 1)
-	assert.Equal(t, "todo-1", rollup.Todos[0].ID)
+	// Verify StateRollup contains open items regardless of age plus recent completed history.
+	require.Len(t, rollup.Todos, 2)
+	ids := map[string]bool{}
+	for _, todo := range rollup.Todos {
+		ids[todo.ID] = true
+	}
+	assert.True(t, ids["old-open"])
+	assert.True(t, ids["recent-completed"])
+	assert.False(t, ids["old-completed"])
 	require.Len(t, rollup.Categories, 1)
 	assert.Equal(t, "Work", rollup.Categories[0].Name)
+
+	// The complete event-sourced state remains available server-side.
+	require.Len(t, server.state.GetTodos(), 3)
 
 	// Verify ClientCount
 	assert.Equal(t, 1, clientCount.Count)
