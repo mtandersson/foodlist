@@ -3,7 +3,7 @@ module foodlist
 go 1.27.2
 
 require (
-	github.com/caarlos0/env/v11 v11.4.1
+	github.com/caarlos0/env/v11 v11.4.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jdeng/goheif v0.0.0-20260529013157-491845cec8a6
