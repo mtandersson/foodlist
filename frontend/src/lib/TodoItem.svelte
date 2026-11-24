@@ -342,8 +342,27 @@
   }
 
   .todo-name-button.strikethrough {
-    text-decoration: line-through;
     color: var(--text-muted);
+  }
+
+  .todo-name-button .todo-name {
+    position: relative;
+  }
+
+  .todo-name-button .todo-name::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 55%;
+    height: 2px;
+    width: 0;
+    background: currentColor;
+    border-radius: 1px;
+    transition: width 0.22s ease-out;
+  }
+
+  .todo-name-button.strikethrough .todo-name::after {
+    width: 100%;
   }
 
 

@@ -126,7 +126,9 @@
         {/if}
       {/if}
       {#if count !== undefined}
-        <span class="section-count">{count}</span>
+        {#key count}
+          <span class="section-count">{count}</span>
+        {/key}
       {/if}
     </button>
     <div class="action-buttons">
@@ -278,7 +280,16 @@
   .section-count {
     color: var(--text-muted);
     font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
     flex-shrink: 0;
+    display: inline-block;
+    animation: fl-bump 0.4s var(--ease-spring);
+  }
+
+  @keyframes fl-bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.35); }
+    100% { transform: scale(1); }
   }
 
   .chevron {

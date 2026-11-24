@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { flip } from 'svelte/animate';
-  import { fade, slide } from 'svelte/transition';
+  import { slide } from 'svelte/transition';
   import { v4 as uuidv4 } from 'uuid';
   import { createTodoStore } from './store';
   import TodoItem from './TodoItem.svelte';
@@ -10,6 +10,7 @@
   import SuggestionsView from './SuggestionsView.svelte';
   import RecipesView from './RecipesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
+  import { dropIn, collapseOut, motionMs } from './motion';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
   import AboutModal from './AboutModal.svelte';
@@ -1019,8 +1020,9 @@
             class="todo-container"
             class:spacer-top={dropTargetId === entry.todo.id && dropPosition === 'above'}
             class:spacer-bottom={dropTargetId === entry.todo.id && dropPosition === 'below'}
-            animate:flip={{ duration: isDragging ? 0 : 300 }}
-            transition:fade={{ duration: 200 }}
+            animate:flip={{ duration: isDragging ? 0 : motionMs(300) }}
+            in:dropIn
+            out:collapseOut
           >
             <div
               class="todo-wrapper"
@@ -1053,14 +1055,16 @@
       {#if $completedTodosCollapsed.length > 0}
         <CollapsibleSection
           title="Slutfört"
+          count={$completedTodosCollapsed.length}
           expanded={completedExpanded}
           onToggle={toggleCompletedSection}
         >
           {#each $completedTodosCollapsed as collapsed (collapsed.todo.id)}
             <div
               class="todo-wrapper"
-              animate:flip={{ duration: 300 }}
-              transition:fade={{ duration: 200 }}
+              animate:flip={{ duration: motionMs(300) }}
+              in:dropIn={{ delay: motionMs(200), duration: 600 }}
+              out:collapseOut={{ delay: 120 }}
             >
               <TodoItem
                 todo={collapsed.todo}
