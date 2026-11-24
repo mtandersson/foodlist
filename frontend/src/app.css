@@ -7,6 +7,8 @@
   --primary-color: #2f6b4f;
   --primary-color-rgb: 47, 107, 79;
   --accent-color: #d9572b;
+  /* Text/icons placed ON --primary-color */
+  --on-primary: #ffffff;
   /* Background helpers (iOS uses background-color for the status-bar/safe-area) */
   --app-bg-color: #f6f3ec;
   --app-bg-image: none;
@@ -158,6 +160,7 @@
     --primary-color: #7fb89a;
     --primary-color-rgb: 127, 184, 154;
     --accent-color: #e0703f;
+    --on-primary: #111413;
     --app-bg-color: #111413;
     --app-bg-image: none;
     --primary-bg: #111413;
@@ -182,6 +185,7 @@
     --primary-color: #7fb89a;
     --primary-color-rgb: 127, 184, 154;
     --accent-color: #e0703f;
+    --on-primary: #111413;
     --app-bg-color: #111413;
     --app-bg-image: none;
     --primary-bg: #111413;

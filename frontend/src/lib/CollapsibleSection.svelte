@@ -225,7 +225,7 @@
     min-width: 0;
   }
 
-  /* In light theme, the background gradient is vivid; ensure readable header text. */
+  /* Light theme: ink header text on the neutral ground. */
   :global(:root[data-theme='light']) .section-header {
     color: var(--text-on-primary);
   }

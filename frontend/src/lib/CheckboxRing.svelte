@@ -43,7 +43,7 @@
   .checkbox-ring.checked {
     background: var(--primary-color);
     border-color: var(--primary-color);
-    color: var(--card-bg);
+    color: var(--on-primary);
     animation: fl-pop 0.3s var(--ease-spring);
   }
 
