@@ -1010,7 +1010,7 @@
     {#if viewMode === 'normal'}
       <!-- Active todos -->
       <div
-        class="todos-section"
+        class="todos-section todo-group"
         ondragover={handleDragOverList}
         ondrop={handleDrop}
         role="list"
@@ -1059,6 +1059,7 @@
           expanded={completedExpanded}
           onToggle={toggleCompletedSection}
         >
+          <div class="todo-group">
           {#each $completedTodosCollapsed as collapsed (collapsed.todo.id)}
             <div
               class="todo-wrapper"
@@ -1076,6 +1077,7 @@
               />
             </div>
           {/each}
+          </div>
         </CollapsibleSection>
       {/if}
     {:else if viewMode === 'categories'}
@@ -1673,6 +1675,30 @@
 
   .todo-container {
     position: relative;
+  }
+
+  /* Rows in a section read as one grouped card with hairline dividers. */
+  .todo-group > :global(*) :global(.todo-item) {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .todo-group > :global(*) + :global(*) :global(.todo-item) {
+    border-top: 1px solid var(--border-color);
+  }
+
+  .todo-group > :global(:first-child) :global(.todo-item) {
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+  }
+
+  .todo-group > :global(:last-child) :global(.todo-item) {
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+  }
+
+  .todo-group :global(.todo-wrapper) {
+    margin-bottom: 0;
   }
 
   .todo-container.spacer-top {

@@ -429,6 +429,10 @@
     color: var(--star-color);
   }
 
+  .star-btn.starred svg {
+    animation: fl-pop 0.3s var(--ease-spring);
+  }
+
   .star-btn svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
