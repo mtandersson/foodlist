@@ -28,29 +28,27 @@ export function captureRowPositions(container: HTMLElement | null | undefined): 
       if (Math.abs(dy) >= 1) moves.push({ el, dy });
     }
     if (moves.length === 0) return;
-    // Only the row travelling furthest is lifted (opaque, shadowed, on top);
-    // the rows it passes simply slide, so nothing else changes stacking.
-    const lead = moves.reduce((a, b) => (Math.abs(b.dy) > Math.abs(a.dy) ? b : a));
+    // The row travelling furthest does not sweep across the others (WebKit
+    // hides rows it passes); it fades in at its new place while the rest slide.
+    const lead = moves.length > 1
+      ? moves.reduce((x, y) => (Math.abs(y.dy) > Math.abs(x.dy) ? y : x))
+      : null;
     for (const { el, dy } of moves) {
-      const lifted = el === lead.el && moves.length > 1;
-      if (lifted) {
-        el.style.position = 'relative';
-        el.style.zIndex = '2';
-        el.style.background = 'var(--card-bg)';
+      if (el === lead?.el && Math.abs(dy) > el.offsetHeight * 1.5) {
+        const nudge = Math.sign(dy) * 14;
+        el.animate(
+          [
+            { opacity: 0, transform: `translateY(${nudge}px) scale(0.98)` },
+            { opacity: 1, transform: 'none' },
+          ],
+          { duration: 360, delay: 60, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' },
+        );
+        continue;
       }
-      const frames = lifted
-        ? [
-            { transform: `translateY(${dy}px)`, boxShadow: '0 6px 18px rgba(0,0,0,0.16)' },
-            { transform: `translateY(${dy * 0.15}px)`, boxShadow: '0 6px 18px rgba(0,0,0,0.16)', offset: 0.85 },
-            { transform: 'none', boxShadow: '0 0 0 rgba(0,0,0,0)' },
-          ]
-        : [{ transform: `translateY(${dy}px)` }, { transform: 'none' }];
-      const anim = el.animate(frames, { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
-      if (lifted) {
-        const reset = () => { el.style.background = ''; el.style.zIndex = ''; el.style.position = ''; };
-        anim.onfinish = reset;
-        anim.oncancel = reset;
-      }
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
+        duration: 420,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      });
     }
   };
 }
