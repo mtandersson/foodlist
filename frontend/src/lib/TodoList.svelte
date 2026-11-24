@@ -72,7 +72,10 @@
 
   let newTodoName = $state('');
   let completedExpanded = $state(typeof localStorage !== 'undefined' && localStorage.getItem('completedExpanded') !== null ? localStorage.getItem('completedExpanded') === 'true' : true);
-  let viewMode: ViewMode = $state((typeof localStorage !== 'undefined' && (localStorage.getItem('viewMode') as ViewMode)) || 'normal');
+  // Remember Normal vs Kategorier between visits; any other saved mode
+  // (Förslag, Recept) or a missing value opens in Normal.
+  const savedViewMode = typeof localStorage !== 'undefined' ? localStorage.getItem('viewMode') : null;
+  let viewMode: ViewMode = $state(savedViewMode === 'categories' ? 'categories' : 'normal');
 
   // If the saved viewMode is 'suggestions' but the feature flag turns off,
   // fall back to normal so the user is never stuck on an empty tab.
