@@ -205,6 +205,18 @@ describe('TodoItem check-off', () => {
     expect(onToggleComplete).toHaveBeenCalledExactlyOnceWith('t1');
   });
 
+  it('shows a completed item as unchecked in place before reopening it', async () => {
+    vi.useFakeTimers();
+    const onToggleComplete = vi.fn();
+    const todo: Todo = { id: 't2', name: 'Lime', createdAt: '2026-11-24', completedAt: '2026-11-24', sortOrder: 1, starred: false };
+    render(TodoItem, { props: { todo, onToggleComplete, onToggleStar: vi.fn(), onRename: vi.fn() } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Mark as incomplete' }));
+    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(document.querySelector('.checkbox-ring')).not.toHaveClass('checked');
+    vi.advanceTimersByTime(400);
+    expect(onToggleComplete).toHaveBeenCalledExactlyOnceWith('t2');
+  });
+
   it('ignores repeat taps while the check is settling', async () => {
     vi.useFakeTimers();
     const { onToggleComplete } = renderOpen();

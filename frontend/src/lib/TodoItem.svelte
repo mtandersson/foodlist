@@ -26,15 +26,16 @@
   let checkboxButton: HTMLButtonElement | null = $state(null);
   let starButton: HTMLButtonElement | null = $state(null);
 
-  // Let the ring fill and the strike line draw in place before the row moves.
+  // Let the ring fill (or empty) and the strike line draw (or retract) in place
+  // before the row moves between the open list and Slutfört.
   const CHECK_SETTLE_MS = 380;
   let settling = $state(false);
   let settleTimer: ReturnType<typeof setTimeout> | null = null;
-  let showChecked = $derived(todo.completedAt !== null || settling);
+  let showChecked = $derived(settling ? todo.completedAt === null : todo.completedAt !== null);
 
   function handleCheckClick() {
     if (settling) return;
-    const delay = todo.completedAt === null ? motionMs(CHECK_SETTLE_MS) : 0;
+    const delay = motionMs(CHECK_SETTLE_MS);
     if (delay > 0) {
       settling = true;
       settleTimer = setTimeout(() => {

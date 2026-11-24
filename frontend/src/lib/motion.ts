@@ -43,7 +43,7 @@ function heightFade(node: Element, delay: number, duration: number, fadeShare: n
       // t: 0 = gone, 1 = fully present
       const k = cubicOut(Math.min(1, t / gap));
       const o = Math.max(0, (t - gap) / fadeShare);
-      return `overflow: hidden; opacity: ${o}; height: ${k * h}px; padding-top: ${k * pt}px; padding-bottom: ${k * pb}px; margin-top: ${k * mt}px; margin-bottom: ${k * mb}px;`;
+      return `overflow: hidden; opacity: ${o}; visibility: ${o > 0 ? 'visible' : 'hidden'}; height: ${k * h}px; padding-top: ${k * pt}px; padding-bottom: ${k * pb}px; margin-top: ${k * mt}px; margin-bottom: ${k * mb}px;`;
     },
   };
 }

@@ -1014,7 +1014,7 @@
             class="todo-container"
             class:spacer-top={dropTargetId === entry.todo.id && dropPosition === 'above'}
             class:spacer-bottom={dropTargetId === entry.todo.id && dropPosition === 'below'}
-            in:dropIn
+            in:growIn={{ delay: 120 }}
             out:collapseOut
           >
             <div
@@ -1675,15 +1675,23 @@
     box-shadow: none;
   }
 
-  /* Divider below each row (not above), so a row opening at the top never
-     flashes a stray line against the card edge. */
-  .todo-group > :global(:not(:last-child)) :global(.todo-item) {
+  /* Every row draws its divider on its bottom edge and overlaps the next row
+     by 1px; the card clips that 1px, so the last row's divider never shows,
+     even while a new row is opening below or above it. */
+  .todo-group > :global(*) {
+    margin-bottom: -1px;
+  }
+
+  .todo-group :global(.todo-item) {
+    background: transparent;
     border-bottom: 1px solid var(--border-color);
   }
 
   .todo-group {
     border-radius: var(--radius-lg);
     overflow: clip;
+    /* A row's gap opens as card, not as a hole in the card. */
+    background: var(--card-bg);
   }
 
   /* Long completed history: let the browser skip layout/paint of off-screen rows. */
