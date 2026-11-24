@@ -28,27 +28,32 @@ export function captureRowPositions(container: HTMLElement | null | undefined): 
       if (Math.abs(dy) >= 1) moves.push({ el, dy });
     }
     if (moves.length === 0) return;
-    // The row travelling furthest does not sweep across the others (WebKit
-    // hides rows it passes); it fades in at its new place while the rest slide.
+    // Animate `top`, not transform/opacity: iOS Safari mis-clips composited
+    // (GPU) animations inside a rounded overflow-hidden card and blanks the
+    // rows. The row travelling furthest is lifted over the ones it passes.
     const lead = moves.length > 1
       ? moves.reduce((x, y) => (Math.abs(y.dy) > Math.abs(x.dy) ? y : x))
       : null;
     for (const { el, dy } of moves) {
-      if (el === lead?.el && Math.abs(dy) > el.offsetHeight * 1.5) {
-        const nudge = Math.sign(dy) * 14;
-        el.animate(
-          [
-            { opacity: 0, transform: `translateY(${nudge}px) scale(0.98)` },
-            { opacity: 1, transform: 'none' },
-          ],
-          { duration: 480, delay: 80, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' },
-        );
-        continue;
+      const lifted = el === lead?.el;
+      el.style.position = 'relative';
+      if (lifted) {
+        el.style.zIndex = '2';
+        el.style.background = 'var(--card-bg)';
       }
-      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
-        duration: 520,
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      });
+      const anim = el.animate(
+        lifted
+          ? [
+              { top: `${dy}px`, boxShadow: '0 6px 18px rgba(0,0,0,0.18)' },
+              { top: `${dy * 0.12}px`, boxShadow: '0 6px 18px rgba(0,0,0,0.18)', offset: 0.85 },
+              { top: '0px', boxShadow: '0 0 0 rgba(0,0,0,0)' },
+            ]
+          : [{ top: `${dy}px` }, { top: '0px' }],
+        { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      );
+      const reset = () => { el.style.position = ''; el.style.zIndex = ''; el.style.background = ''; };
+      anim.onfinish = reset;
+      anim.oncancel = reset;
     }
   };
 }
