@@ -7,6 +7,14 @@
   --primary-color: #2f6b4f;
   --primary-color-rgb: 47, 107, 79;
   --accent-color: #d9572b;
+  --cat-0: #2f6b4f;
+  --cat-1: #1f6f84;
+  --cat-2: #3d5bc0;
+  --cat-3: #8a6412;
+  --cat-4: #b2532a;
+  --cat-5: #b33a3a;
+  --cat-6: #7048a8;
+  --cat-7: #7a6340;
   /* Text/icons placed ON --primary-color */
   --on-primary: #ffffff;
   /* Background helpers (iOS uses background-color for the status-bar/safe-area) */
@@ -161,6 +169,14 @@
     --primary-color-rgb: 127, 184, 154;
     --accent-color: #e0703f;
     --on-primary: #111413;
+    --cat-0: #7fb89a;
+    --cat-1: #8cc8d8;
+    --cat-2: #8fa8f0;
+    --cat-3: #d9b26a;
+    --cat-4: #e7a07a;
+    --cat-5: #e07f7f;
+    --cat-6: #b896e0;
+    --cat-7: #c7b08e;
     --app-bg-color: #111413;
     --app-bg-image: none;
     --primary-bg: #111413;
@@ -186,6 +202,14 @@
     --primary-color-rgb: 127, 184, 154;
     --accent-color: #e0703f;
     --on-primary: #111413;
+    --cat-0: #7fb89a;
+    --cat-1: #8cc8d8;
+    --cat-2: #8fa8f0;
+    --cat-3: #d9b26a;
+    --cat-4: #e7a07a;
+    --cat-5: #e07f7f;
+    --cat-6: #b896e0;
+    --cat-7: #c7b08e;
     --app-bg-color: #111413;
     --app-bg-image: none;
     --primary-bg: #111413;

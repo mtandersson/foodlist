@@ -146,9 +146,7 @@
       onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); } }}
       aria-label="Double-click or long-press to edit"
     >
-      <span class="todo-name">
-        {todo.originalInput || todo.name}
-      </span>
+      <span class="todo-name"><span class="todo-name-text">{todo.originalInput || todo.name}</span></span>
     </button>
   {/if}
 
@@ -323,18 +321,6 @@
     flex-shrink: 0;
   }
 
-  /* Dark mode styling */
-  @media (prefers-color-scheme: dark) {
-    .duplicate-badge {
-      background: #c4b5fd; /* Lighter purple for dark mode */
-      color: white;
-    }
-  }
-
-  :global(:root[data-theme="dark"]) .duplicate-badge {
-    background: #c4b5fd; /* Lighter purple for dark mode */
-    color: white;
-  }
 
   .todo-name-button.long-pressing {
     opacity: var(--opacity-subtle);
@@ -345,24 +331,19 @@
     color: var(--text-muted);
   }
 
-  .todo-name-button .todo-name {
-    position: relative;
+  .todo-name-button .todo-name-text {
+    /* Strike line drawn as a background so it follows wrapped lines. */
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 55%;
+    background-size: 0 2px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    transition: background-size 0.22s ease-out;
   }
 
-  .todo-name-button .todo-name::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 55%;
-    height: 2px;
-    width: 0;
-    background: currentColor;
-    border-radius: 1px;
-    transition: width 0.22s ease-out;
-  }
-
-  .todo-name-button.strikethrough .todo-name::after {
-    width: 100%;
+  .todo-name-button.strikethrough .todo-name-text {
+    background-size: 100% 2px;
   }
 
 

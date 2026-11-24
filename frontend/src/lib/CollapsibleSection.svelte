@@ -3,6 +3,8 @@
 
   interface Props {
     title: string;
+    /** Optional colour shown as a dot before the title (e.g. a category colour). */
+    accent?: string;
     count?: number;
     expanded?: boolean;
     onToggle: () => void;
@@ -13,7 +15,7 @@
     children?: import('svelte').Snippet;
   }
 
-  let { title, count, expanded = true, onToggle, onDelete, onMoveUp, onMoveDown, onRename, children }: Props = $props();
+  let { title, accent, count, expanded = true, onToggle, onDelete, onMoveUp, onMoveDown, onRename, children }: Props = $props();
 
   let isEditing = $state(false);
   let editValue = $state('');
@@ -102,6 +104,9 @@
       >
         <polyline points="9 18 15 12 9 6"></polyline>
       </svg>
+      {#if accent}
+        <span class="accent-dot" style="background: {accent}" aria-hidden="true"></span>
+      {/if}
       {#if isEditing}
         <input
           bind:this={inputElement}
@@ -290,6 +295,13 @@
     0% { transform: scale(1); }
     40% { transform: scale(1.35); }
     100% { transform: scale(1); }
+  }
+
+  .accent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .chevron {

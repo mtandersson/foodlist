@@ -3,6 +3,7 @@
   import { fade } from 'svelte/transition';
   import TodoItem from './TodoItem.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
+  import { categoryColorVar } from './categoryColor';
   import CategorySelectorModal from './CategorySelectorModal.svelte';
   import type { CollapsedTodo } from './store';
   import type { Category, Todo } from './types';
@@ -391,6 +392,7 @@
   >
     <CollapsibleSection
       title={category.name}
+      accent={categoryColorVar(category.name)}
       count={todosForCategory(category.id).reduce((sum, e) => sum + e.count, 0)}
       expanded={expandedCategories.has(category.id)}
       onToggle={() => onToggleCategory(category.id)}
