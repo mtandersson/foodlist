@@ -10,7 +10,7 @@
   import SuggestionsView from './SuggestionsView.svelte';
   import RecipesView from './RecipesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
-  import { dropIn, collapseOut, motionMs } from './motion';
+  import { dropIn, growIn, collapseOut } from './motion';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
   import AboutModal from './AboutModal.svelte';
@@ -1020,7 +1020,6 @@
             class="todo-container"
             class:spacer-top={dropTargetId === entry.todo.id && dropPosition === 'above'}
             class:spacer-bottom={dropTargetId === entry.todo.id && dropPosition === 'below'}
-            animate:flip={{ duration: isDragging ? 0 : motionMs(300) }}
             in:dropIn
             out:collapseOut
           >
@@ -1059,13 +1058,12 @@
           expanded={completedExpanded}
           onToggle={toggleCompletedSection}
         >
-          <div class="todo-group">
+          <div class="todo-group completed-group">
           {#each $completedTodosCollapsed as collapsed (collapsed.todo.id)}
             <div
               class="todo-wrapper"
-              animate:flip={{ duration: motionMs(300) }}
-              in:dropIn={{ delay: motionMs(200), duration: 600 }}
-              out:collapseOut={{ delay: 120 }}
+              in:growIn={{ delay: 120 }}
+              out:collapseOut={{ delay: 0 }}
             >
               <TodoItem
                 todo={collapsed.todo}
@@ -1683,18 +1681,21 @@
     box-shadow: none;
   }
 
-  .todo-group > :global(*) + :global(*) :global(.todo-item) {
-    border-top: 1px solid var(--border-color);
+  /* Divider below each row (not above), so a row opening at the top never
+     flashes a stray line against the card edge. */
+  .todo-group > :global(:not(:last-child)) :global(.todo-item) {
+    border-bottom: 1px solid var(--border-color);
   }
 
-  .todo-group > :global(:first-child) :global(.todo-item) {
-    border-top-left-radius: var(--radius-lg);
-    border-top-right-radius: var(--radius-lg);
+  .todo-group {
+    border-radius: var(--radius-lg);
+    overflow: clip;
   }
 
-  .todo-group > :global(:last-child) :global(.todo-item) {
-    border-bottom-left-radius: var(--radius-lg);
-    border-bottom-right-radius: var(--radius-lg);
+  /* Long completed history: let the browser skip layout/paint of off-screen rows. */
+  .completed-group > :global(.todo-wrapper) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 50px;
   }
 
   .todo-group :global(.todo-wrapper) {
