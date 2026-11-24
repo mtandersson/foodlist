@@ -1706,7 +1706,10 @@
 
   .todo-group {
     border-radius: var(--radius-lg);
-    overflow: clip;
+    /* hidden + isolation, not clip: iOS Safari hid composited (animating)
+       rows inside an overflow: clip card with a radius. */
+    overflow: hidden;
+    isolation: isolate;
     /* A row's gap opens as card, not as a hole in the card. */
     background: var(--card-bg);
   }
