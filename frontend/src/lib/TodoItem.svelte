@@ -3,6 +3,7 @@
   import type { Todo } from './types';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
+  import { motionMs } from './motion';
 
   interface Props {
     todo: Todo;
@@ -25,8 +26,25 @@
   let checkboxButton: HTMLButtonElement | null = $state(null);
   let starButton: HTMLButtonElement | null = $state(null);
 
+  // Let the ring fill and the strike line draw in place before the row moves.
+  const CHECK_SETTLE_MS = 380;
+  let settling = $state(false);
+  let settleTimer: ReturnType<typeof setTimeout> | null = null;
+  let showChecked = $derived(todo.completedAt !== null || settling);
+
   function handleCheckClick() {
-    onToggleComplete(todo.id);
+    if (settling) return;
+    const delay = todo.completedAt === null ? motionMs(CHECK_SETTLE_MS) : 0;
+    if (delay > 0) {
+      settling = true;
+      settleTimer = setTimeout(() => {
+        settleTimer = null;
+        settling = false;
+        onToggleComplete(todo.id);
+      }, delay);
+    } else {
+      onToggleComplete(todo.id);
+    }
     // Blur the button after click to prevent focus from moving to next item
     // This fixes the issue where the item below gets a focus ring on mobile
     // Use queueMicrotask to ensure blur happens after browser's default focus behavior
@@ -79,6 +97,14 @@
   }
 
   onDestroy(clearLongPress);
+  onDestroy(() => {
+    // Never drop a check the user already made if the row unmounts mid-animation.
+    if (settleTimer) {
+      clearTimeout(settleTimer);
+      settleTimer = null;
+      onToggleComplete(todo.id);
+    }
+  });
 
   // Mobile long-press support
   function handleTouchStart() {
@@ -121,7 +147,7 @@
     onclick={handleCheckClick}
     aria-label={todo.completedAt ? 'Mark as incomplete' : 'Mark as complete'}
   >
-    <CheckboxRing checked={todo.completedAt !== null} />
+    <CheckboxRing checked={showChecked} />
   </button>
 
   {#if isEditing}
@@ -136,7 +162,7 @@
     <button
       type="button"
       class="todo-name-button" 
-      class:strikethrough={todo.completedAt !== null}
+      class:strikethrough={showChecked}
       class:long-pressing={isLongPressing}
       ondblclick={startEditing}
       ontouchstart={handleTouchStart}
