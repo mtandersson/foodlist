@@ -57,7 +57,7 @@
   }
 
   // Let the star pop in place before a starred item glides to the top.
-  const STAR_SETTLE_MS = 340;
+  const STAR_SETTLE_MS = 460;
   let starSettling = $state(false);
   let starTimer: ReturnType<typeof setTimeout> | null = null;
   let showStarred = $derived(starSettling ? !todo.starred : todo.starred);
@@ -468,7 +468,7 @@
   .star-btn.popping svg {
     /* Only while settling: a CSS animation on every starred row replays
        whenever a row is re-inserted, and iOS then repaints the list. */
-    animation: star-pop 0.3s var(--ease-spring);
+    animation: star-pop 0.44s var(--ease-spring);
   }
 
   .star-btn svg polygon {

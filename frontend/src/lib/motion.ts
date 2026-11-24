@@ -8,20 +8,13 @@ export function prefersReducedMotion(): boolean {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** Safari and every iOS browser: WebKit hides rows mid-glide, so skip it there. */
-function isWebKit(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent;
-  return /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg|jsdom/.test(ua) || /CriOS|FxiOS|EdgiOS/.test(ua);
-}
-
 /**
  * Glide keyed rows to their new places when a list re-sorts (FLIP), without
  * Svelte's animate:, which pulls leaving rows out of flow. Call before the
  * DOM updates; the returned function runs the glide after it.
  */
 export function captureRowPositions(container: HTMLElement | null | undefined): () => void {
-  if (!container || prefersReducedMotion() || isWebKit()) return () => {};
+  if (!container || prefersReducedMotion()) return () => {};
   const before = new Map<string, number>();
   for (const el of Array.from(container.querySelectorAll<HTMLElement>(':scope > [data-row-id]'))) {
     before.set(el.dataset.rowId!, el.getBoundingClientRect().top);
@@ -48,12 +41,12 @@ export function captureRowPositions(container: HTMLElement | null | undefined): 
             { opacity: 0, transform: `translateY(${nudge}px) scale(0.98)` },
             { opacity: 1, transform: 'none' },
           ],
-          { duration: 360, delay: 60, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' },
+          { duration: 480, delay: 80, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' },
         );
         continue;
       }
       el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
-        duration: 420,
+        duration: 520,
         easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
       });
     }
