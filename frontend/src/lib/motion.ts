@@ -20,23 +20,37 @@ export function captureRowPositions(container: HTMLElement | null | undefined): 
     before.set(el.dataset.rowId!, el.getBoundingClientRect().top);
   }
   return () => {
+    const moves: { el: HTMLElement; dy: number }[] = [];
     for (const el of Array.from(container.querySelectorAll<HTMLElement>(':scope > [data-row-id]'))) {
       const prev = before.get(el.dataset.rowId!);
       if (prev === undefined) continue;
       const dy = prev - el.getBoundingClientRect().top;
-      if (Math.abs(dy) < 1) continue;
-      // Rows are see-through inside a section card; give moving rows the card
-      // colour, and keep the one travelling furthest on top.
-      el.style.position = 'relative';
-      el.style.background = 'var(--card-bg)';
-      el.style.zIndex = String(Math.round(Math.abs(dy)));
-      const anim = el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
-        duration: 380,
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      });
-      const reset = () => { el.style.background = ''; el.style.zIndex = ''; el.style.position = ''; };
-      anim.onfinish = reset;
-      anim.oncancel = reset;
+      if (Math.abs(dy) >= 1) moves.push({ el, dy });
+    }
+    if (moves.length === 0) return;
+    // Only the row travelling furthest is lifted (opaque, shadowed, on top);
+    // the rows it passes simply slide, so nothing else changes stacking.
+    const lead = moves.reduce((a, b) => (Math.abs(b.dy) > Math.abs(a.dy) ? b : a));
+    for (const { el, dy } of moves) {
+      const lifted = el === lead.el && moves.length > 1;
+      if (lifted) {
+        el.style.position = 'relative';
+        el.style.zIndex = '2';
+        el.style.background = 'var(--card-bg)';
+      }
+      const frames = lifted
+        ? [
+            { transform: `translateY(${dy}px)`, boxShadow: '0 6px 18px rgba(0,0,0,0.16)' },
+            { transform: `translateY(${dy * 0.15}px)`, boxShadow: '0 6px 18px rgba(0,0,0,0.16)', offset: 0.85 },
+            { transform: 'none', boxShadow: '0 0 0 rgba(0,0,0,0)' },
+          ]
+        : [{ transform: `translateY(${dy}px)` }, { transform: 'none' }];
+      const anim = el.animate(frames, { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+      if (lifted) {
+        const reset = () => { el.style.background = ''; el.style.zIndex = ''; el.style.position = ''; };
+        anim.onfinish = reset;
+        anim.oncancel = reset;
+      }
     }
   };
 }
