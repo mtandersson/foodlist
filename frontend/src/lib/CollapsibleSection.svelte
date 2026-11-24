@@ -93,7 +93,7 @@
 
 <div class="collapsible-section">
   <div class="section-header-wrapper">
-    <button class="section-header" onclick={onToggle}>
+    <button class="section-header" class:accented={!!accent} style={accent ? `--accent: ${accent}` : undefined} onclick={onToggle}>
       <svg 
         class="chevron" 
         class:expanded={expanded}
@@ -233,6 +233,22 @@
   /* Light theme: ink header text on the neutral ground. */
   :global(:root[data-theme='light']) .section-header {
     color: var(--text-on-primary);
+  }
+
+  /* Category headers wear the same tint as the category badges in Normal. */
+  .section-header.accented,
+  :global(:root[data-theme='light']) .section-header.accented {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+  }
+
+  .section-header.accented:hover {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .section-header.accented .section-count {
+    color: inherit;
+    opacity: 0.75;
   }
 
   .section-header:hover {
