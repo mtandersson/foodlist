@@ -1,3 +1,15 @@
+## [2.4.0](https://github.com/mtandersson/foodlist/compare/v2.3.9...v2.4.0) (2026-11-24)
+
+### Features
+
+* **frontend:** Marknad redesign with motion ([#591](https://github.com/mtandersson/foodlist/issues/591)) ([c9075dc](https://github.com/mtandersson/foodlist/commit/c9075dc9233ea47ce2d2d7c30b42e6bf23791fee)), references [#587](https://github.com/mtandersson/foodlist/issues/587) [#589](https://github.com/mtandersson/foodlist/issues/589) [#588](https://github.com/mtandersson/foodlist/issues/588) [#590](https://github.com/mtandersson/foodlist/issues/590) [#592](https://github.com/mtandersson/foodlist/issues/592) [#586](https://github.com/mtandersson/foodlist/issues/586)
+
+### Chores
+
+* **deps:** update @modelcontextprotocol/ext-apps to ^2.0.4 ([5c53ffa](https://github.com/mtandersson/foodlist/commit/5c53ffa6c0d587821248c6426812a546dd614e36))
+* **deps:** update @tsconfig/svelte to ^5.0.9 ([8664b45](https://github.com/mtandersson/foodlist/commit/8664b45fe283f16bed95aa8f2cf3b7f89378e35f))
+* **deps:** update dompurify to ^3.4.17 ([65cb273](https://github.com/mtandersson/foodlist/commit/65cb2732570374d87e9a2ec403beeb87a08e24b7))
+
 ## [2.3.9](https://github.com/mtandersson/foodlist/compare/v2.3.8...v2.3.9) (2026-10-14)
 
 ### Bug Fixes
