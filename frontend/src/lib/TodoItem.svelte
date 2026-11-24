@@ -56,8 +56,25 @@
     });
   }
 
+  // Let the star pop in place before a starred item glides to the top.
+  const STAR_SETTLE_MS = 320;
+  let starSettling = $state(false);
+  let starTimer: ReturnType<typeof setTimeout> | null = null;
+  let showStarred = $derived(starSettling ? !todo.starred : todo.starred);
+
   function handleStarClick() {
-    onToggleStar(todo.id);
+    if (starSettling) return;
+    const delay = motionMs(STAR_SETTLE_MS);
+    if (delay > 0) {
+      starSettling = true;
+      starTimer = setTimeout(() => {
+        starTimer = null;
+        starSettling = false;
+        onToggleStar(todo.id);
+      }, delay);
+    } else {
+      onToggleStar(todo.id);
+    }
     // Blur the button after click to prevent focus from moving to next item
     queueMicrotask(() => {
       if (starButton) {
@@ -98,6 +115,13 @@
   }
 
   onDestroy(clearLongPress);
+  onDestroy(() => {
+    if (starTimer) {
+      clearTimeout(starTimer);
+      starTimer = null;
+      onToggleStar(todo.id);
+    }
+  });
   onDestroy(() => {
     // Never drop a check the user already made if the row unmounts mid-animation.
     if (settleTimer) {
@@ -189,12 +213,12 @@
 
   <button 
     class="star-btn" 
-    class:starred={todo.starred}
+    class:starred={showStarred}
     bind:this={starButton}
     onclick={handleStarClick}
-    aria-label={todo.starred ? 'Unstar' : 'Star'}
+    aria-label={showStarred ? 'Unstar' : 'Star'}
   >
-    <svg viewBox="0 0 24 24" fill={todo.starred ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2">
+    <svg viewBox="0 0 24 24" fill={showStarred ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
     </svg>
   </button>
@@ -412,7 +436,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-normal);
+    transition: color var(--transition-normal), transform var(--transition-normal);
     padding: 0;
     outline: none;
   }
@@ -428,9 +452,12 @@
     }
   }
 
-  .star-btn:hover {
-    color: var(--star-color);
-    transform: scale(1.1);
+  /* Only real pointers hover; on touch screens :hover sticks after a tap. */
+  @media (hover: hover) and (pointer: fine) {
+    .star-btn:hover {
+      color: var(--star-color);
+      transform: scale(1.1);
+    }
   }
 
   .star-btn.starred {
@@ -438,7 +465,17 @@
   }
 
   .star-btn.starred svg {
-    animation: fl-pop 0.3s var(--ease-spring);
+    animation: star-pop 0.45s var(--ease-spring);
+  }
+
+  .star-btn svg polygon {
+    transition: fill 0.15s ease;
+  }
+
+  @keyframes star-pop {
+    0% { transform: scale(0.6) rotate(-18deg); }
+    55% { transform: scale(1.3) rotate(8deg); }
+    100% { transform: scale(1) rotate(0); }
   }
 
   .star-btn svg {

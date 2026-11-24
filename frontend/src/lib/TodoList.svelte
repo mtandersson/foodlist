@@ -10,7 +10,7 @@
   import SuggestionsView from './SuggestionsView.svelte';
   import RecipesView from './RecipesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
-  import { dropIn, growIn, collapseOut } from './motion';
+  import { growIn, collapseOut, captureRowPositions } from './motion';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
   import AboutModal from './AboutModal.svelte';
@@ -571,6 +571,21 @@
   let dropPosition: 'above' | 'below' | null = $state(null);
   let isDragging = $state(false);
 
+  // Glide rows to new places when the open list re-sorts (e.g. starring).
+  let activeListEl: HTMLElement | undefined = $state();
+  let pendingGlide: (() => void) | null = null;
+  $effect.pre(() => {
+    void $activeTodosCollapsed;
+    pendingGlide = isDragging ? null : captureRowPositions(activeListEl);
+  });
+  $effect(() => {
+    void $activeTodosCollapsed;
+    const glide = pendingGlide;
+    pendingGlide = null;
+    glide?.();
+  });
+
+
   function computeSortOrder(todos: Array<{ sortOrder: number }>, newIndex: number): number {
     if (todos.length === 0) return 0;
     if (newIndex <= 0) return todos[0].sortOrder + 1000;
@@ -1005,6 +1020,7 @@
       <!-- Active todos -->
       <div
         class="todos-section todo-group"
+        bind:this={activeListEl}
         ondragover={handleDragOverList}
         ondrop={handleDrop}
         role="list"
@@ -1012,6 +1028,7 @@
         {#each $activeTodosCollapsed as entry (entry.todo.id)}
           <div
             class="todo-container"
+            data-row-id={entry.todo.id}
             class:spacer-top={dropTargetId === entry.todo.id && dropPosition === 'above'}
             class:spacer-bottom={dropTargetId === entry.todo.id && dropPosition === 'below'}
             in:growIn={{ delay: 120 }}

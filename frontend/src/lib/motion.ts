@@ -8,6 +8,39 @@ export function prefersReducedMotion(): boolean {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/**
+ * Glide keyed rows to their new places when a list re-sorts (FLIP), without
+ * Svelte's animate:, which pulls leaving rows out of flow. Call before the
+ * DOM updates; the returned function runs the glide after it.
+ */
+export function captureRowPositions(container: HTMLElement | null | undefined): () => void {
+  if (!container || prefersReducedMotion()) return () => {};
+  const before = new Map<string, number>();
+  for (const el of Array.from(container.querySelectorAll<HTMLElement>(':scope > [data-row-id]'))) {
+    before.set(el.dataset.rowId!, el.getBoundingClientRect().top);
+  }
+  return () => {
+    for (const el of Array.from(container.querySelectorAll<HTMLElement>(':scope > [data-row-id]'))) {
+      const prev = before.get(el.dataset.rowId!);
+      if (prev === undefined) continue;
+      const dy = prev - el.getBoundingClientRect().top;
+      if (Math.abs(dy) < 1) continue;
+      // Rows are see-through inside a section card; give moving rows the card
+      // colour, and keep the one travelling furthest on top.
+      el.style.position = 'relative';
+      el.style.background = 'var(--card-bg)';
+      el.style.zIndex = String(Math.round(Math.abs(dy)));
+      const anim = el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
+        duration: 380,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      });
+      const reset = () => { el.style.background = ''; el.style.zIndex = ''; el.style.position = ''; };
+      anim.onfinish = reset;
+      anim.oncancel = reset;
+    }
+  };
+}
+
 /** Scale a duration to zero under reduced motion. */
 export function motionMs(ms: number): number {
   return prefersReducedMotion() ? 0 : ms;
