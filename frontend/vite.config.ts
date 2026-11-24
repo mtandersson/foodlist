@@ -139,8 +139,8 @@ export default defineConfig(({mode}) => ({
         name: "FoodList",
         short_name: "FoodList",
         description: "A beautiful, real-time shopping list app",
-        theme_color: "#6366f1",
-        background_color: "#6366f1",
+        theme_color: "#f6f3ec",
+        background_color: "#f6f3ec",
         display: "standalone",
         start_url: "./",
         icons: [

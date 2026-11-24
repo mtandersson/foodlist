@@ -1370,7 +1370,9 @@
     background: transparent;
     border: none;
     text-align: left;
-    font-family: inherit;
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
   }
 
   .title:hover {
@@ -1507,12 +1509,9 @@
     align-items: center;
     gap: var(--spacing-lg);
     padding: var(--font-size-xl) var(--spacing-xl);
-    background: rgba(255, 255, 255, 0.1); /* Fallback */
-    background: var(--surface-muted);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--card-bg);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 6px 20px rgba(29, 43, 36, 0.12);
     cursor: text;
     transition: all var(--transition-normal);
     /* Ensure proper touch target size on iOS */
@@ -1520,9 +1519,7 @@
   }
 
   .add-todo-bottom:hover {
-    background: rgba(255, 255, 255, 0.15);
-    background: var(--surface-muted-strong);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 24px rgba(29, 43, 36, 0.16);
   }
 
   .add-todo-bottom:focus-within {

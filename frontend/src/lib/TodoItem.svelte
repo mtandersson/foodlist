@@ -315,8 +315,8 @@
   .duplicate-badge {
     padding: 2px var(--spacing-sm);
     border-radius: var(--radius-full);
-    background: #e9d5ff; /* Light purple for light mode */
-    color: #6b21a8; /* Dark purple text for light mode */
+    background: rgba(var(--primary-color-rgb), 0.12);
+    color: var(--primary-color);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-normal);
