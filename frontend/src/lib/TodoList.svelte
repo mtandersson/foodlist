@@ -93,26 +93,17 @@
 
   // Expanded categories state
   let expandedCategories = $state<Set<string | null>>(new Set());
-  let isExpandedCategoriesInitialized = false;
+  let categoriesOpenedOnStart = false;
 
-  // Load expanded state from localStorage once on mount
-  if (typeof localStorage !== 'undefined' && !isExpandedCategoriesInitialized) {
-    const stored = localStorage.getItem('expandedCategories');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        expandedCategories = new Set(parsed);
-      } catch (e) {
-        console.error('Failed to parse expandedCategories from localStorage', e);
-      }
-    }
-    isExpandedCategoriesInitialized = true;
-  }
+  // Every category starts open when the app loads; collapsing is per session.
+  $effect(() => {
+    if (categoriesOpenedOnStart || !$isSynced) return;
+    categoriesOpenedOnStart = true;
+    expandedCategories = new Set<string | null>([null, ...$categories.map((c) => c.id)]);
+  });
 
   function saveExpandedCategories() {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('expandedCategories', JSON.stringify(Array.from(expandedCategories)));
-    }
+    // Intentionally not persisted: categories open again on next start.
   }
 
   function handleToggleCategory(categoryId: string | null) {
