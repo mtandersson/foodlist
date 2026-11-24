@@ -5,10 +5,13 @@
     size?: 'small' | 'normal';
   }
 
+  import { categoryColorVar } from './categoryColor';
+
   let { name, showIcon = false, size = 'normal' }: Props = $props();
+  let color = $derived(categoryColorVar(name));
 </script>
 
-<span class="category-badge" class:small={size === 'small'}>
+<span class="category-badge" class:small={size === 'small'} style="--badge-color: {color}">
   {#if showIcon}
     <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -23,8 +26,8 @@
     align-items: center;
     gap: var(--spacing-xs);
     padding: var(--spacing-xs) var(--spacing-md);
-    background: var(--primary-color);
-    color: white;
+    background: color-mix(in srgb, var(--badge-color) 14%, transparent);
+    color: var(--badge-color);
     border-radius: var(--radius-full);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);

@@ -301,7 +301,7 @@
       font-weight: var(--font-weight-semibold);
       min-height: 52px; /* Larger touch target on mobile */
       background: var(--primary-color);
-      color: var(--text-on-primary);
+      color: var(--on-primary);
     }
 
     .close-button:hover,

@@ -12,11 +12,9 @@
   class:checked
   class:small={size === 'small'}
 >
-  {#if checked}
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-  {/if}
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <polyline class="tick" points="20 6 9 17 4 12"></polyline>
+  </svg>
 </div>
 
 <style>
@@ -30,7 +28,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: all var(--transition-normal);
+    transition: background var(--transition-normal), border-color var(--transition-normal);
   }
 
   .checkbox-ring.small {
@@ -45,7 +43,18 @@
   .checkbox-ring.checked {
     background: var(--primary-color);
     border-color: var(--primary-color);
-    color: var(--text-on-primary);
+    color: var(--on-primary);
+    animation: fl-pop 0.3s var(--ease-spring);
+  }
+
+  .tick {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    transition: stroke-dashoffset 0.2s ease-out 0.08s;
+  }
+
+  .checked .tick {
+    stroke-dashoffset: 0;
   }
 
   .checkbox-ring svg {
@@ -58,4 +67,3 @@
     height: calc(var(--icon-xs) * 0.8);
   }
 </style>
-

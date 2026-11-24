@@ -3,6 +3,7 @@
   import type { Todo } from './types';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
+  import { motionMs } from './motion';
 
   interface Props {
     todo: Todo;
@@ -25,8 +26,26 @@
   let checkboxButton: HTMLButtonElement | null = $state(null);
   let starButton: HTMLButtonElement | null = $state(null);
 
+  // Let the ring fill (or empty) and the strike line draw (or retract) in place
+  // before the row moves between the open list and Slutfört.
+  const CHECK_SETTLE_MS = 380;
+  let settling = $state(false);
+  let settleTimer: ReturnType<typeof setTimeout> | null = null;
+  let showChecked = $derived(settling ? todo.completedAt === null : todo.completedAt !== null);
+
   function handleCheckClick() {
-    onToggleComplete(todo.id);
+    if (settling) return;
+    const delay = motionMs(CHECK_SETTLE_MS);
+    if (delay > 0) {
+      settling = true;
+      settleTimer = setTimeout(() => {
+        settleTimer = null;
+        settling = false;
+        onToggleComplete(todo.id);
+      }, delay);
+    } else {
+      onToggleComplete(todo.id);
+    }
     // Blur the button after click to prevent focus from moving to next item
     // This fixes the issue where the item below gets a focus ring on mobile
     // Use queueMicrotask to ensure blur happens after browser's default focus behavior
@@ -37,8 +56,25 @@
     });
   }
 
+  // Let the star pop in place before a starred item glides to the top.
+  const STAR_SETTLE_MS = 460;
+  let starSettling = $state(false);
+  let starTimer: ReturnType<typeof setTimeout> | null = null;
+  let showStarred = $derived(starSettling ? !todo.starred : todo.starred);
+
   function handleStarClick() {
-    onToggleStar(todo.id);
+    if (starSettling) return;
+    const delay = motionMs(STAR_SETTLE_MS);
+    if (delay > 0) {
+      starSettling = true;
+      starTimer = setTimeout(() => {
+        starTimer = null;
+        starSettling = false;
+        onToggleStar(todo.id);
+      }, delay);
+    } else {
+      onToggleStar(todo.id);
+    }
     // Blur the button after click to prevent focus from moving to next item
     queueMicrotask(() => {
       if (starButton) {
@@ -79,6 +115,21 @@
   }
 
   onDestroy(clearLongPress);
+  onDestroy(() => {
+    if (starTimer) {
+      clearTimeout(starTimer);
+      starTimer = null;
+      onToggleStar(todo.id);
+    }
+  });
+  onDestroy(() => {
+    // Never drop a check the user already made if the row unmounts mid-animation.
+    if (settleTimer) {
+      clearTimeout(settleTimer);
+      settleTimer = null;
+      onToggleComplete(todo.id);
+    }
+  });
 
   // Mobile long-press support
   function handleTouchStart() {
@@ -121,7 +172,7 @@
     onclick={handleCheckClick}
     aria-label={todo.completedAt ? 'Mark as incomplete' : 'Mark as complete'}
   >
-    <CheckboxRing checked={todo.completedAt !== null} />
+    <CheckboxRing checked={showChecked} />
   </button>
 
   {#if isEditing}
@@ -136,7 +187,7 @@
     <button
       type="button"
       class="todo-name-button" 
-      class:strikethrough={todo.completedAt !== null}
+      class:strikethrough={showChecked}
       class:long-pressing={isLongPressing}
       ondblclick={startEditing}
       ontouchstart={handleTouchStart}
@@ -146,9 +197,7 @@
       onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); } }}
       aria-label="Double-click or long-press to edit"
     >
-      <span class="todo-name">
-        {todo.originalInput || todo.name}
-      </span>
+      <span class="todo-name"><span class="todo-name-text">{todo.originalInput || todo.name}</span></span>
     </button>
   {/if}
 
@@ -164,12 +213,13 @@
 
   <button 
     class="star-btn" 
-    class:starred={todo.starred}
+    class:starred={showStarred}
+    class:popping={starSettling && !todo.starred}
     bind:this={starButton}
     onclick={handleStarClick}
-    aria-label={todo.starred ? 'Unstar' : 'Star'}
+    aria-label={showStarred ? 'Unstar' : 'Star'}
   >
-    <svg viewBox="0 0 24 24" fill={todo.starred ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2">
+    <svg viewBox="0 0 24 24" fill={showStarred ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
     </svg>
   </button>
@@ -315,26 +365,14 @@
   .duplicate-badge {
     padding: 2px var(--spacing-sm);
     border-radius: var(--radius-full);
-    background: #e9d5ff; /* Light purple for light mode */
-    color: #6b21a8; /* Dark purple text for light mode */
+    background: rgba(var(--primary-color-rgb), 0.12);
+    color: var(--primary-color);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-normal);
     flex-shrink: 0;
   }
 
-  /* Dark mode styling */
-  @media (prefers-color-scheme: dark) {
-    .duplicate-badge {
-      background: #c4b5fd; /* Lighter purple for dark mode */
-      color: white;
-    }
-  }
-
-  :global(:root[data-theme="dark"]) .duplicate-badge {
-    background: #c4b5fd; /* Lighter purple for dark mode */
-    color: white;
-  }
 
   .todo-name-button.long-pressing {
     opacity: var(--opacity-subtle);
@@ -342,8 +380,22 @@
   }
 
   .todo-name-button.strikethrough {
-    text-decoration: line-through;
     color: var(--text-muted);
+  }
+
+  .todo-name-button .todo-name-text {
+    /* Strike line drawn as a background so it follows wrapped lines. */
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 55%;
+    background-size: 0 2px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    transition: background-size 0.22s ease-out;
+  }
+
+  .todo-name-button.strikethrough .todo-name-text {
+    background-size: 100% 2px;
   }
 
 
@@ -385,7 +437,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-normal);
+    transition: color var(--transition-normal), transform var(--transition-normal);
     padding: 0;
     outline: none;
   }
@@ -401,13 +453,32 @@
     }
   }
 
-  .star-btn:hover {
-    color: var(--star-color);
-    transform: scale(1.1);
+  /* Only real pointers hover; on touch screens :hover sticks after a tap. */
+  @media (hover: hover) and (pointer: fine) {
+    .star-btn:hover {
+      color: var(--star-color);
+      transform: scale(1.1);
+    }
   }
 
   .star-btn.starred {
     color: var(--star-color);
+  }
+
+  .star-btn.popping svg {
+    /* Only while settling: a CSS animation on every starred row replays
+       whenever a row is re-inserted, and iOS then repaints the list. */
+    animation: star-pop 0.44s var(--ease-spring);
+  }
+
+  .star-btn svg polygon {
+    transition: fill 0.15s ease;
+  }
+
+  @keyframes star-pop {
+    0% { transform: scale(0.6) rotate(-18deg); }
+    55% { transform: scale(1.3) rotate(8deg); }
+    100% { transform: scale(1) rotate(0); }
   }
 
   .star-btn svg {

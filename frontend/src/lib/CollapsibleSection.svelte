@@ -3,6 +3,8 @@
 
   interface Props {
     title: string;
+    /** Optional colour shown as a dot before the title (e.g. a category colour). */
+    accent?: string;
     count?: number;
     expanded?: boolean;
     onToggle: () => void;
@@ -13,7 +15,7 @@
     children?: import('svelte').Snippet;
   }
 
-  let { title, count, expanded = true, onToggle, onDelete, onMoveUp, onMoveDown, onRename, children }: Props = $props();
+  let { title, accent, count, expanded = true, onToggle, onDelete, onMoveUp, onMoveDown, onRename, children }: Props = $props();
 
   let isEditing = $state(false);
   let editValue = $state('');
@@ -91,7 +93,7 @@
 
 <div class="collapsible-section">
   <div class="section-header-wrapper">
-    <button class="section-header" onclick={onToggle}>
+    <button class="section-header" class:accented={!!accent} style={accent ? `--accent: ${accent}` : undefined} onclick={onToggle}>
       <svg 
         class="chevron" 
         class:expanded={expanded}
@@ -102,6 +104,9 @@
       >
         <polyline points="9 18 15 12 9 6"></polyline>
       </svg>
+      {#if accent}
+        <span class="accent-dot" style="background: {accent}" aria-hidden="true"></span>
+      {/if}
       {#if isEditing}
         <input
           bind:this={inputElement}
@@ -126,7 +131,9 @@
         {/if}
       {/if}
       {#if count !== undefined}
-        <span class="section-count">{count}</span>
+        {#key count}
+          <span class="section-count">{count}</span>
+        {/key}
       {/if}
     </button>
     <div class="action-buttons">
@@ -223,9 +230,25 @@
     min-width: 0;
   }
 
-  /* In light theme, the background gradient is vivid; ensure readable header text. */
+  /* Light theme: ink header text on the neutral ground. */
   :global(:root[data-theme='light']) .section-header {
     color: var(--text-on-primary);
+  }
+
+  /* Category headers wear the same tint as the category badges in Normal. */
+  .section-header.accented,
+  :global(:root[data-theme='light']) .section-header.accented {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+  }
+
+  .section-header.accented:hover {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .section-header.accented .section-count {
+    color: inherit;
+    opacity: 0.75;
   }
 
   .section-header:hover {
@@ -278,6 +301,22 @@
   .section-count {
     color: var(--text-muted);
     font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    display: inline-block;
+    animation: fl-bump 0.4s var(--ease-spring);
+  }
+
+  @keyframes fl-bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+  }
+
+  .accent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     flex-shrink: 0;
   }
 

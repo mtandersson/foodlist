@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { flip } from 'svelte/animate';
-  import { fade, slide } from 'svelte/transition';
+  import { slide } from 'svelte/transition';
   import { v4 as uuidv4 } from 'uuid';
   import { createTodoStore } from './store';
   import TodoItem from './TodoItem.svelte';
@@ -10,6 +10,7 @@
   import SuggestionsView from './SuggestionsView.svelte';
   import RecipesView from './RecipesView.svelte';
   import CollapsibleSection from './CollapsibleSection.svelte';
+  import { growIn, collapseOut, captureRowPositions } from './motion';
   import CheckboxRing from './CheckboxRing.svelte';
   import CategoryBadge from './CategoryBadge.svelte';
   import AboutModal from './AboutModal.svelte';
@@ -71,7 +72,10 @@
 
   let newTodoName = $state('');
   let completedExpanded = $state(typeof localStorage !== 'undefined' && localStorage.getItem('completedExpanded') !== null ? localStorage.getItem('completedExpanded') === 'true' : true);
-  let viewMode: ViewMode = $state((typeof localStorage !== 'undefined' && (localStorage.getItem('viewMode') as ViewMode)) || 'normal');
+  // Remember Normal vs Kategorier between visits; any other saved mode
+  // (Förslag, Recept) or a missing value opens in Normal.
+  const savedViewMode = typeof localStorage !== 'undefined' ? localStorage.getItem('viewMode') : null;
+  let viewMode: ViewMode = $state(savedViewMode === 'categories' ? 'categories' : 'normal');
 
   // If the saved viewMode is 'suggestions' but the feature flag turns off,
   // fall back to normal so the user is never stuck on an empty tab.
@@ -92,26 +96,17 @@
 
   // Expanded categories state
   let expandedCategories = $state<Set<string | null>>(new Set());
-  let isExpandedCategoriesInitialized = false;
+  let categoriesOpenedOnStart = false;
 
-  // Load expanded state from localStorage once on mount
-  if (typeof localStorage !== 'undefined' && !isExpandedCategoriesInitialized) {
-    const stored = localStorage.getItem('expandedCategories');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        expandedCategories = new Set(parsed);
-      } catch (e) {
-        console.error('Failed to parse expandedCategories from localStorage', e);
-      }
-    }
-    isExpandedCategoriesInitialized = true;
-  }
+  // Every category starts open when the app loads; collapsing is per session.
+  $effect(() => {
+    if (categoriesOpenedOnStart || !$isSynced) return;
+    categoriesOpenedOnStart = true;
+    expandedCategories = new Set<string | null>([null, ...$categories.map((c) => c.id)]);
+  });
 
   function saveExpandedCategories() {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('expandedCategories', JSON.stringify(Array.from(expandedCategories)));
-    }
+    // Intentionally not persisted: categories open again on next start.
   }
 
   function handleToggleCategory(categoryId: string | null) {
@@ -576,6 +571,21 @@
   let dropPosition: 'above' | 'below' | null = $state(null);
   let isDragging = $state(false);
 
+  // Glide rows to new places when the open list re-sorts (e.g. starring).
+  let activeListEl: HTMLElement | undefined = $state();
+  let pendingGlide: (() => void) | null = null;
+  $effect.pre(() => {
+    void $activeTodosCollapsed;
+    pendingGlide = isDragging ? null : captureRowPositions(activeListEl);
+  });
+  $effect(() => {
+    void $activeTodosCollapsed;
+    const glide = pendingGlide;
+    pendingGlide = null;
+    glide?.();
+  });
+
+
   function computeSortOrder(todos: Array<{ sortOrder: number }>, newIndex: number): number {
     if (todos.length === 0) return 0;
     if (newIndex <= 0) return todos[0].sortOrder + 1000;
@@ -1009,7 +1019,8 @@
     {#if viewMode === 'normal'}
       <!-- Active todos -->
       <div
-        class="todos-section"
+        class="todos-section todo-group"
+        bind:this={activeListEl}
         ondragover={handleDragOverList}
         ondrop={handleDrop}
         role="list"
@@ -1017,10 +1028,11 @@
         {#each $activeTodosCollapsed as entry (entry.todo.id)}
           <div
             class="todo-container"
+            data-row-id={entry.todo.id}
             class:spacer-top={dropTargetId === entry.todo.id && dropPosition === 'above'}
             class:spacer-bottom={dropTargetId === entry.todo.id && dropPosition === 'below'}
-            animate:flip={{ duration: isDragging ? 0 : 300 }}
-            transition:fade={{ duration: 200 }}
+            in:growIn={{ delay: 120 }}
+            out:collapseOut
           >
             <div
               class="todo-wrapper"
@@ -1053,14 +1065,16 @@
       {#if $completedTodosCollapsed.length > 0}
         <CollapsibleSection
           title="Slutfört"
+          count={$completedTodosCollapsed.length}
           expanded={completedExpanded}
           onToggle={toggleCompletedSection}
         >
+          <div class="todo-group completed-group">
           {#each $completedTodosCollapsed as collapsed (collapsed.todo.id)}
             <div
               class="todo-wrapper"
-              animate:flip={{ duration: 300 }}
-              transition:fade={{ duration: 200 }}
+              in:growIn={{ delay: 120 }}
+              out:collapseOut={{ delay: 0 }}
             >
               <TodoItem
                 todo={collapsed.todo}
@@ -1072,6 +1086,7 @@
               />
             </div>
           {/each}
+          </div>
         </CollapsibleSection>
       {/if}
     {:else if viewMode === 'categories'}
@@ -1370,7 +1385,9 @@
     background: transparent;
     border: none;
     text-align: left;
-    font-family: inherit;
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
   }
 
   .title:hover {
@@ -1507,12 +1524,9 @@
     align-items: center;
     gap: var(--spacing-lg);
     padding: var(--font-size-xl) var(--spacing-xl);
-    background: rgba(255, 255, 255, 0.1); /* Fallback */
-    background: var(--surface-muted);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--card-bg);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 6px 20px rgba(29, 43, 36, 0.12);
     cursor: text;
     transition: all var(--transition-normal);
     /* Ensure proper touch target size on iOS */
@@ -1520,9 +1534,7 @@
   }
 
   .add-todo-bottom:hover {
-    background: rgba(255, 255, 255, 0.15);
-    background: var(--surface-muted-strong);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 24px rgba(29, 43, 36, 0.16);
   }
 
   .add-todo-bottom:focus-within {
@@ -1672,6 +1684,44 @@
 
   .todo-container {
     position: relative;
+  }
+
+  /* Rows in a section read as one grouped card with hairline dividers. */
+  .todo-group > :global(*) :global(.todo-item) {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Every row draws its divider on its bottom edge and overlaps the next row
+     by 1px; the card clips that 1px, so the last row's divider never shows,
+     even while a new row is opening below or above it. */
+  .todo-group > :global(*) {
+    margin-bottom: -1px;
+  }
+
+  .todo-group :global(.todo-item) {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .todo-group {
+    border-radius: var(--radius-lg);
+    /* hidden + isolation, not clip: iOS Safari hid composited (animating)
+       rows inside an overflow: clip card with a radius. */
+    overflow: hidden;
+    isolation: isolate;
+    /* A row's gap opens as card, not as a hole in the card. */
+    background: var(--card-bg);
+  }
+
+  /* Long completed history: let the browser skip layout/paint of off-screen rows. */
+  .completed-group > :global(.todo-wrapper) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 50px;
+  }
+
+  .todo-group :global(.todo-wrapper) {
+    margin-bottom: 0;
   }
 
   .todo-container.spacer-top {

@@ -181,3 +181,57 @@ describe('TodoItem', () => {
     });
   });
 });
+
+describe('TodoItem check-off', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
+
+  function renderOpen() {
+    const onToggleComplete = vi.fn();
+    const todo: Todo = { id: 't1', name: 'Mjölk', createdAt: '2026-11-24', completedAt: null, sortOrder: 1, starred: false };
+    render(TodoItem, { props: { todo, onToggleComplete, onToggleStar: vi.fn(), onRename: vi.fn() } });
+    return { onToggleComplete };
+  }
+
+  it('shows the item as checked in place before completing it', async () => {
+    vi.useFakeTimers();
+    const { onToggleComplete } = renderOpen();
+    await fireEvent.click(screen.getByRole('button', { name: 'Mark as complete' }));
+    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(document.querySelector('.checkbox-ring')).toHaveClass('checked');
+    vi.advanceTimersByTime(400);
+    expect(onToggleComplete).toHaveBeenCalledExactlyOnceWith('t1');
+  });
+
+  it('shows a completed item as unchecked in place before reopening it', async () => {
+    vi.useFakeTimers();
+    const onToggleComplete = vi.fn();
+    const todo: Todo = { id: 't2', name: 'Lime', createdAt: '2026-11-24', completedAt: '2026-11-24', sortOrder: 1, starred: false };
+    render(TodoItem, { props: { todo, onToggleComplete, onToggleStar: vi.fn(), onRename: vi.fn() } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Mark as incomplete' }));
+    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(document.querySelector('.checkbox-ring')).not.toHaveClass('checked');
+    vi.advanceTimersByTime(400);
+    expect(onToggleComplete).toHaveBeenCalledExactlyOnceWith('t2');
+  });
+
+  it('ignores repeat taps while the check is settling', async () => {
+    vi.useFakeTimers();
+    const { onToggleComplete } = renderOpen();
+    const box = screen.getByRole('button', { name: 'Mark as complete' });
+    await fireEvent.click(box);
+    await fireEvent.click(box);
+    vi.advanceTimersByTime(400);
+    expect(onToggleComplete).toHaveBeenCalledOnce();
+  });
+
+  it('still completes the item if the row is removed mid-animation', async () => {
+    vi.useFakeTimers();
+    const { onToggleComplete } = renderOpen();
+    await fireEvent.click(screen.getByRole('button', { name: 'Mark as complete' }));
+    cleanup();
+    expect(onToggleComplete).toHaveBeenCalledExactlyOnceWith('t1');
+  });
+});
