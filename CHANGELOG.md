@@ -1,3 +1,9 @@
+## [2.5.0](https://github.com/mtandersson/foodlist/compare/v2.4.0...v2.5.0) (2026-11-25)
+
+### Features
+
+* limit completed history to the latest 50 in app and MCP ([#593](https://github.com/mtandersson/foodlist/issues/593)) ([db8e39c](https://github.com/mtandersson/foodlist/commit/db8e39c53075de66ec4accc46e78bce114a0b709)), closes [#549](https://github.com/mtandersson/foodlist/issues/549)
+
 ## [2.4.0](https://github.com/mtandersson/foodlist/compare/v2.3.9...v2.4.0) (2026-11-24)
 
 ### Features
