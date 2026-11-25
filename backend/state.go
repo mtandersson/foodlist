@@ -162,9 +162,9 @@ func (s *State) GetTodos() []Todo {
 
 const shoppingSnapshotCompletedMaxAge = 30 * 24 * time.Hour
 
-// GetShoppingSnapshot copies the title, categories, and items under one lock.
-// MCP list text and structured content must describe the same projection.
-// Completed items are kept only when they were added within the recent-history window.
+// GetShoppingSnapshot copies the title, categories, and items under one lock
+// for auto-categorization examples. Completed items are kept only when they
+// were added within the recent-history window.
 func (s *State) GetShoppingSnapshot() (string, []Category, []Todo) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -183,6 +183,54 @@ func (s *State) GetShoppingSnapshot() (string, []Category, []Todo) {
 	sort.Slice(cats, func(i, j int) bool { return cats[i].SortOrder > cats[j].SortOrder })
 	sort.Slice(todos, func(i, j int) bool { return todos[i].SortOrder > todos[j].SortOrder })
 	return s.listTitle, cats, todos
+}
+
+// DefaultCompletedLimit is how many of the most recently completed items
+// clients receive unless they ask for the full completed history.
+const DefaultCompletedLimit = 50
+
+// ListSnapshot is the projected list as shown to clients: every open item plus
+// the most recently completed items, and the total number of completed items.
+type ListSnapshot struct {
+	Title          string
+	Categories     []Category
+	Todos          []Todo
+	CompletedTotal int
+}
+
+// GetListSnapshot copies the list under one lock. All open items are kept.
+// Completed items are limited to the completedLimit most recently completed;
+// a negative limit keeps all of them. Todos are sorted by sortOrder descending.
+func (s *State) GetListSnapshot(completedLimit int) ListSnapshot {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	cats := make([]Category, 0, len(s.categories))
+	for _, c := range s.categories {
+		cats = append(cats, *c)
+	}
+	todos := make([]Todo, 0, len(s.todos))
+	var completed []Todo
+	for _, t := range s.todos {
+		if t.CompletedAt != nil {
+			completed = append(completed, *t)
+			continue
+		}
+		todos = append(todos, *t)
+	}
+	total := len(completed)
+	if completedLimit >= 0 && total > completedLimit {
+		sort.Slice(completed, func(i, j int) bool {
+			if !completed[i].CompletedAt.Equal(*completed[j].CompletedAt) {
+				return completed[i].CompletedAt.After(*completed[j].CompletedAt)
+			}
+			return completed[i].ID < completed[j].ID
+		})
+		completed = completed[:completedLimit]
+	}
+	todos = append(todos, completed...)
+	sort.Slice(cats, func(i, j int) bool { return cats[i].SortOrder > cats[j].SortOrder })
+	sort.Slice(todos, func(i, j int) bool { return todos[i].SortOrder > todos[j].SortOrder })
+	return ListSnapshot{Title: s.listTitle, Categories: cats, Todos: todos, CompletedTotal: total}
 }
 
 // GetTodo returns a single todo by ID

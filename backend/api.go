@@ -35,13 +35,7 @@ func (s *Server) handleAPIState(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	rollup := StateRollup{
-		Type:       "StateRollup",
-		Todos:      s.state.GetTodos(),
-		Categories: s.state.GetCategories(),
-		ListTitle:  s.state.GetListTitle(),
-		Version:    version,
-	}
+	rollup := s.stateRollup(r.URL.Query().Get("include_all_completed") == "true")
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(rollup); err != nil {
 		slog.Error("api state encode failed", "error", err)

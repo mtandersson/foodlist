@@ -52,6 +52,11 @@ export interface TodoStore {
     typeof derived<ReturnType<typeof writable<Todo[]>>, Todo[]>
   >
   completedTodosCollapsed: ReturnType<typeof derived<any, CollapsedTodo[]>>
+  /** Every completed item on the server, including ones this client has not loaded. */
+  completedTotal: ReturnType<typeof derived<any, number>>
+  /** True while completed items exist that the "Slutfört" section does not show. */
+  hasMoreCompleted: ReturnType<typeof derived<any, boolean>>
+  loadAllCompleted: () => void
   categories: ReturnType<
     typeof derived<
       ReturnType<typeof writable<Map<string, Category>>>,
@@ -115,6 +120,9 @@ export type CollapsedTodo = {
   count: number
 }
 
+/** Completed items shown (and sent by the server) before "Visa alla". */
+export const COMPLETED_LIMIT = 50
+
 function categoryKey(categoryId: string | null | undefined): string {
   return categoryId ?? "__uncategorized__"
 }
@@ -165,6 +173,10 @@ export function createTodoStore(wsUrl: string): TodoStore {
   // recipe-list views can re-fetch via HTTP without keeping a parallel
   // cache in memory.
   const recipesVersion = writable<number>(0)
+  // The server sends the most recent COMPLETED_LIMIT completed items. hiddenCompleted
+  // counts the rest; showAllCompleted lifts the display cap after "Visa alla".
+  const hiddenCompleted = writable<number>(0)
+  const showAllCompleted = writable<boolean>(false)
   let errorTimeout: number | null = null
 
   // Track pending autocomplete request to match responses
@@ -211,7 +223,8 @@ export function createTodoStore(wsUrl: string): TodoStore {
   // Completed todos collapsed by exact name + category + starred (case sensitive)
   // Maintains completedAt sorting (most recent first)
   // Uses most recently completed item as representative (not highest sortOrder)
-  const completedTodosCollapsed = derived(completedTodos, ($completedTodos) => {
+  const completedTodosCollapsed = derived([completedTodos, showAllCompleted], ([$all, $showAll]) => {
+    const $completedTodos = $showAll ? $all : $all.slice(0, COMPLETED_LIMIT)
     const groups = new Map<string, Todo[]>()
     for (const t of $completedTodos) {
       const key = duplicateKey(t)
@@ -293,6 +306,22 @@ export function createTodoStore(wsUrl: string): TodoStore {
     return arr
   })
 
+  const completedTotal = derived([completedTodos, hiddenCompleted], ([$completed, $hidden]) =>
+    $completed.length + $hidden
+  )
+
+  const hasMoreCompleted = derived(
+    [completedTodos, hiddenCompleted, showAllCompleted],
+    ([$completed, $hidden, $showAll]) => !$showAll && ($hidden > 0 || $completed.length > COMPLETED_LIMIT)
+  )
+
+  function loadAllCompleted() {
+    showAllCompleted.set(true)
+    if (get(hiddenCompleted) > 0) {
+      ws.requestStateRollup(true)
+    }
+  }
+
   // WebSocket connection
   const ws = new TodoWebSocket(wsUrl)
 
@@ -322,6 +351,15 @@ export function createTodoStore(wsUrl: string): TodoStore {
         map.set(todo.id, todo)
       }
       todosMap.set(map)
+      let loadedCompleted = 0
+      for (const todo of message.todos) {
+        if (todo.completedAt !== null) loadedCompleted++
+      }
+      const hidden = Math.max(0, (message.completedTotal ?? loadedCompleted) - loadedCompleted)
+      hiddenCompleted.set(hidden)
+      // A default rollup (e.g. after reconnect) re-caps the list; the full
+      // rollup requested by loadAllCompleted has nothing hidden.
+      if (hidden > 0) showAllCompleted.set(false)
       const catMap = new Map<string, Category>()
       if ("categories" in message && Array.isArray(message.categories)) {
         for (const cat of message.categories) {
@@ -410,6 +448,13 @@ export function createTodoStore(wsUrl: string): TodoStore {
     if (message.type === "RecipeChanged") {
       // Bump the version so any subscribed view re-fetches the list/detail.
       recipesVersion.update((v) => v + 1)
+      return
+    }
+
+    // Another client can uncomplete an item this client never loaded. Fetch a
+    // fresh rollup so it shows up among the open items.
+    if (message.type === "TodoUncompleted" && get(hiddenCompleted) > 0 && !get(todosMap).has(message.id)) {
+      ws.requestStateRollup(get(showAllCompleted))
       return
     }
 
@@ -1056,6 +1101,9 @@ export function createTodoStore(wsUrl: string): TodoStore {
     activeTodosCollapsed: activeTodosCollapsed as any,
     completedTodos: completedTodos as any,
     completedTodosCollapsed: completedTodosCollapsed as any,
+    completedTotal,
+    hasMoreCompleted,
+    loadAllCompleted,
     categories: categories as any,
     categoryLookup: categoryLookup as any,
     activeTodosByCategory: activeTodosByCategory as any,

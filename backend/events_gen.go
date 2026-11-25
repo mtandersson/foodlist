@@ -124,6 +124,15 @@ type StateRollup struct {
 	ListTitle    string        `json:"listTitle"`
 	Version      string        `json:"version,omitempty"`
 	FeatureFlags *FeatureFlags `json:"featureFlags,omitempty"`
+	// CompletedTotal counts every completed item, including ones not in Todos.
+	CompletedTotal int `json:"completedTotal"`
+}
+
+// RequestStateRollup asks the server to resend StateRollup to this client
+// only, optionally with the full completed history.
+type RequestStateRollup struct {
+	Type                string `json:"type"`
+	IncludeAllCompleted bool   `json:"includeAllCompleted,omitempty"`
 }
 
 // FeatureFlags signals server-side capabilities to the client.

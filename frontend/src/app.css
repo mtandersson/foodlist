@@ -285,3 +285,23 @@ h3 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* "Visa alla" under the capped Slutfört section (TodoList and CategoriesView). */
+.show-all-completed {
+  display: block;
+  margin: var(--spacing-sm) auto var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--card-bg);
+  color: var(--primary-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.show-all-completed:hover,
+.show-all-completed:focus-visible {
+  background: var(--surface-muted);
+}
