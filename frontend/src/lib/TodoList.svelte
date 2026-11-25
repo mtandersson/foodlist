@@ -410,6 +410,8 @@
 
   function toggleCompletedSection() {
     completedExpanded = !completedExpanded;
+    // "Visa alla" lasts until the section is closed; reopening shows the newest items again.
+    if (!completedExpanded) store.capCompleted();
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('completedExpanded', String(completedExpanded));
     }
