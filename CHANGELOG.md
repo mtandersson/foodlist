@@ -1,3 +1,9 @@
+## [2.6.0](https://github.com/mtandersson/foodlist/compare/v2.5.0...v2.6.0) (2026-11-25)
+
+### Features
+
+* **frontend:** re-cap Slutfört when the section is collapsed ([#595](https://github.com/mtandersson/foodlist/issues/595)) ([4625023](https://github.com/mtandersson/foodlist/commit/46250232ef550a8f27902a8cc2e9bfa75566211a)), closes [#594](https://github.com/mtandersson/foodlist/issues/594)
+
 ## [2.5.0](https://github.com/mtandersson/foodlist/compare/v2.4.0...v2.5.0) (2026-11-25)
 
 ### Features
