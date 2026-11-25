@@ -12,6 +12,10 @@
     categories?: Category[];
     activeTodosByCategory?: Map<string | null, CollapsedTodo[]>;
     completedTodos?: CollapsedTodo[];
+    /** Every completed item, including ones not loaded yet. */
+    completedTotal?: number;
+    hasMoreCompleted?: boolean;
+    onLoadAllCompleted?: () => void;
     getCategoryName: (categoryId: string | null | undefined) => string | null;
     onToggleComplete: (id: string) => void;
     onToggleStar: (id: string) => void;
@@ -32,6 +36,9 @@
     categories = [],
     activeTodosByCategory = new Map(),
     completedTodos = [] as CollapsedTodo[],
+    completedTotal = undefined,
+    hasMoreCompleted = false,
+    onLoadAllCompleted,
     getCategoryName,
     onToggleComplete,
     onToggleStar,
@@ -451,6 +458,7 @@
 {#if completedTodos.length > 0}
   <CollapsibleSection
     title="Slutfört"
+    count={completedTotal ?? completedTodos.length}
     expanded={completedExpanded}
     onToggle={onToggleCompletedSection}
   >
@@ -470,6 +478,9 @@
         />
       </div>
     {/each}
+    {#if hasMoreCompleted && onLoadAllCompleted}
+      <button type="button" class="show-all-completed" onclick={onLoadAllCompleted}>Visa alla ({completedTotal})</button>
+    {/if}
   </CollapsibleSection>
 {/if}
 

@@ -32,7 +32,8 @@ const (
 )
 
 type foodlistListIn struct {
-	IncludeCompleted *bool `json:"include_completed,omitempty"`
+	IncludeCompleted    *bool `json:"include_completed,omitempty" jsonschema:"include completed items (default true): the 50 most recently completed unless include_all_completed is set"`
+	IncludeAllCompleted bool  `json:"include_all_completed,omitempty" jsonschema:"include the full completed history instead of the 50 most recent"`
 }
 
 type shoppingItem struct {
@@ -49,6 +50,7 @@ type shoppingItem struct {
 type shoppingList struct {
 	Title            string         `json:"title"`
 	IncludeCompleted bool           `json:"includeCompleted"`
+	CompletedTotal   int            `json:"completedTotal"`
 	Categories       []Category     `json:"categories"`
 	Items            []shoppingItem `json:"items"`
 }
@@ -90,8 +92,14 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 		if in.IncludeCompleted != nil {
 			includeCompleted = *in.IncludeCompleted
 		}
-		title, cats, todos := app.state.GetShoppingSnapshot()
-		out := shoppingList{Title: title, IncludeCompleted: includeCompleted, Categories: cats, Items: []shoppingItem{}}
+		limit := DefaultCompletedLimit
+		if in.IncludeAllCompleted {
+			limit = -1
+		}
+		snap := app.state.GetListSnapshot(limit)
+		title, cats, todos := snap.Title, snap.Categories, snap.Todos
+		out := shoppingList{Title: title, IncludeCompleted: includeCompleted, CompletedTotal: snap.CompletedTotal, Categories: cats, Items: []shoppingItem{}}
+		shownCompleted := 0
 		catName := make(map[string]string, len(cats))
 		for _, c := range cats {
 			catName[c.ID] = c.Name
@@ -104,6 +112,9 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 				continue
 			}
 			item := shoppingItem{ID: t.ID, Name: t.Name, CategoryID: t.CategoryID, Count: t.Count, Unit: t.Unit, Completed: t.CompletedAt != nil, Starred: t.Starred, SortOrder: t.SortOrder}
+			if item.Completed {
+				shownCompleted++
+			}
 			out.Items = append(out.Items, item)
 			key := ""
 			if t.CategoryID != nil {
@@ -151,6 +162,9 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 		}
 		if len(out.Items) == 0 {
 			b.WriteString("_No matching grocery items._\n")
+		}
+		if includeCompleted && shownCompleted < snap.CompletedTotal {
+			_, _ = fmt.Fprintf(&b, "_Showing the %d most recently completed of %d completed items. Pass include_all_completed for all._\n", shownCompleted, snap.CompletedTotal)
 		}
 		return &mcp.CallToolResult{
 			Content:           []mcp.Content{&mcp.TextContent{Text: b.String()}},
@@ -269,20 +283,13 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 	s.AddResource(&mcp.Resource{
 		URI:         mcpResourceState,
 		Name:        "state",
-		Description: "Full projected state (StateRollup JSON): grocery items, categories, list title.",
+		Description: "Projected state (StateRollup JSON): open grocery items, the 50 most recently completed items, completedTotal, categories, list title.",
 		MIMEType:    "application/json",
 	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		if req.Params.URI != mcpResourceState {
 			return nil, mcp.ResourceNotFoundError(req.Params.URI)
 		}
-		rollup := StateRollup{
-			Type:       "StateRollup",
-			Todos:      app.state.GetTodos(),
-			Categories: app.state.GetCategories(),
-			ListTitle:  app.state.GetListTitle(),
-			Version:    version,
-		}
-		return writeResourceJSON(mcpResourceState, rollup)
+		return writeResourceJSON(mcpResourceState, app.stateRollup(false))
 	})
 
 	s.AddResource(&mcp.Resource{
@@ -300,13 +307,13 @@ func newFoodlistMCPServer(app *Server) *mcp.Server {
 	s.AddResource(&mcp.Resource{
 		URI:         mcpResourceTodos,
 		Name:        "grocery_items",
-		Description: "All grocery items sorted by sort order (JSON array). Legacy URI remains foodlist://todos for compatibility.",
+		Description: "Open grocery items and the 50 most recently completed items, sorted by sort order (JSON array). Legacy URI remains foodlist://todos for compatibility.",
 		MIMEType:    "application/json",
 	}, func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		if req.Params.URI != mcpResourceTodos {
 			return nil, mcp.ResourceNotFoundError(req.Params.URI)
 		}
-		return writeResourceJSON(mcpResourceTodos, app.state.GetTodos())
+		return writeResourceJSON(mcpResourceTodos, app.state.GetListSnapshot(DefaultCompletedLimit).Todos)
 	})
 
 	mcp.AddTool(s, &mcp.Tool{

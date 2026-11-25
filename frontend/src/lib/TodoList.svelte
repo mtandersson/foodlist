@@ -41,7 +41,7 @@
   }
 
   const store = createTodoStore(wsUrl);
-  const { activeTodosCollapsed, completedTodos, completedTodosCollapsed, categories, activeTodosByCategoryCollapsed, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced, serverVersion, suggestions, featureFlags } = store;
+  const { activeTodosCollapsed, completedTodos, completedTodosCollapsed, completedTotal, hasMoreCompleted, categories, activeTodosByCategoryCollapsed, categoryLookup, connectionState, userCount, listTitle, autocompleteSuggestions, errorMessage, isSynced, serverVersion, suggestions, featureFlags } = store;
   
   // Get client version from build-time injection
   const clientVersion = import.meta.env.VITE_APP_VERSION || 'dev';
@@ -1065,7 +1065,7 @@
       {#if $completedTodosCollapsed.length > 0}
         <CollapsibleSection
           title="Slutfört"
-          count={$completedTodosCollapsed.length}
+          count={$completedTotal}
           expanded={completedExpanded}
           onToggle={toggleCompletedSection}
         >
@@ -1087,6 +1087,9 @@
             </div>
           {/each}
           </div>
+          {#if $hasMoreCompleted}
+            <button type="button" class="show-all-completed" onclick={store.loadAllCompleted}>Visa alla ({$completedTotal})</button>
+          {/if}
         </CollapsibleSection>
       {/if}
     {:else if viewMode === 'categories'}
@@ -1094,6 +1097,9 @@
         categories={$categories}
         activeTodosByCategory={$activeTodosByCategoryCollapsed}
         completedTodos={$completedTodosCollapsed}
+        completedTotal={$completedTotal}
+        hasMoreCompleted={$hasMoreCompleted}
+        onLoadAllCompleted={store.loadAllCompleted}
         getCategoryName={getCategoryName}
         onToggleComplete={store.toggleComplete}
         onToggleStar={store.toggleStar}

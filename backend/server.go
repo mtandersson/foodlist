@@ -459,22 +459,7 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	s.register <- client
 
 	// Send state rollup to new client
-	rollup := StateRollup{
-		Type:       "StateRollup",
-		Todos:      s.state.GetTodos(),
-		Categories: s.state.GetCategories(),
-		ListTitle:  s.state.GetListTitle(),
-		Version:    version,
-	}
-	flags := FeatureFlags{
-		Suggestions:  s.SuggestionsEnabled(),
-		Recipes:      s.RecipesEnabled(),
-		RecipesParse: s.RecipesEnabled() && s.recipeLLMEnabled,
-	}
-	if flags.Suggestions || flags.Recipes || flags.RecipesParse {
-		rollup.FeatureFlags = &flags
-	}
-	rollupData, err := json.Marshal(rollup)
+	rollupData, err := json.Marshal(s.clientStateRollup(false))
 	if err != nil {
 		slog.Error("failed to marshal state rollup", "error", err)
 	} else {
@@ -569,6 +554,9 @@ func (s *Server) readPump(client *Client) {
 
 		// Check if this is an autocomplete request first
 		if handled := s.handleAutocompleteRequest(client, message); handled {
+			continue
+		}
+		if handled := s.handleRequestStateRollup(client, message); handled {
 			continue
 		}
 
@@ -789,6 +777,58 @@ func (s *Server) ExecuteCreateTodosBatch(commands []CreateTodoCommand) (int, err
 	// matching suggestions that individual TodoCreated hooks used to remove.
 	s.RecomputeSuggestions()
 	return len(events), firstErr
+}
+
+// stateRollup projects the list for clients. Completed items are limited to
+// the most recent DefaultCompletedLimit unless includeAllCompleted is set.
+func (s *Server) stateRollup(includeAllCompleted bool) StateRollup {
+	limit := DefaultCompletedLimit
+	if includeAllCompleted {
+		limit = -1
+	}
+	snap := s.state.GetListSnapshot(limit)
+	return StateRollup{
+		Type:           "StateRollup",
+		Todos:          snap.Todos,
+		Categories:     snap.Categories,
+		ListTitle:      snap.Title,
+		Version:        version,
+		CompletedTotal: snap.CompletedTotal,
+	}
+}
+
+// clientStateRollup is stateRollup plus the feature flags WebSocket clients use.
+func (s *Server) clientStateRollup(includeAllCompleted bool) StateRollup {
+	rollup := s.stateRollup(includeAllCompleted)
+	flags := FeatureFlags{
+		Suggestions:  s.SuggestionsEnabled(),
+		Recipes:      s.RecipesEnabled(),
+		RecipesParse: s.RecipesEnabled() && s.recipeLLMEnabled,
+	}
+	if flags.Suggestions || flags.Recipes || flags.RecipesParse {
+		rollup.FeatureFlags = &flags
+	}
+	return rollup
+}
+
+// handleRequestStateRollup resends StateRollup to the requesting client only.
+// Returns true when the message was a RequestStateRollup.
+func (s *Server) handleRequestStateRollup(client *Client, message []byte) bool {
+	var req RequestStateRollup
+	if err := json.Unmarshal(message, &req); err != nil || req.Type != "RequestStateRollup" {
+		return false
+	}
+	data, err := json.Marshal(s.clientStateRollup(req.IncludeAllCompleted))
+	if err != nil {
+		slog.Error("failed to marshal state rollup", "error", err)
+		return true
+	}
+	select {
+	case client.sendCh <- data:
+	default:
+		slog.Warn("client send buffer full, dropping requested state rollup")
+	}
+	return true
 }
 
 // handleAutocompleteRequest checks if the message is an autocomplete request and handles it

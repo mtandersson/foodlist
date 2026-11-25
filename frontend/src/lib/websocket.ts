@@ -1,4 +1,4 @@
-import type { Event, ServerMessage, AutocompleteRequest, AutocompleteResponse, Command } from './types';
+import type { Event, ServerMessage, AutocompleteRequest, AutocompleteResponse, Command, RequestStateRollup } from './types';
 
 export enum ConnectionState {
   CONNECTING = 'CONNECTING',
@@ -389,6 +389,13 @@ export class TodoWebSocket {
       query,
       requestId,
     };
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(request));
+    }
+  }
+
+  requestStateRollup(includeAllCompleted: boolean) {
+    const request: RequestStateRollup = {type: 'RequestStateRollup', includeAllCompleted};
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(request));
     }

@@ -296,7 +296,8 @@
         },
         "listTitle": {"type": "string"},
         "version": {"type": "string"},
-        "featureFlags": {"$ref": "#/definitions/FeatureFlags"}
+        "featureFlags": {"$ref": "#/definitions/FeatureFlags"},
+        "completedTotal": {"type": "integer", "minimum": 0, "description": "Number of completed items, including ones omitted from todos"}
       },
       "required": ["type", "todos", "categories", "listTitle"],
       "additionalProperties": false
@@ -357,6 +358,16 @@
         "id": {"type": "string", "format": "uuid"}
       },
       "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    "RequestStateRollup": {
+      "type": "object",
+      "description": "Ask the server to resend StateRollup to this client only. By default todos holds every open item and the 50 most recently completed items; includeAllCompleted returns the full completed history.",
+      "properties": {
+        "type": {"const": "RequestStateRollup"},
+        "includeAllCompleted": {"type": "boolean"}
+      },
+      "required": ["type"],
       "additionalProperties": false
     },
     "AutocompleteRequest": {
@@ -567,7 +578,8 @@
     "ClientMessage": {
       "oneOf": [
         {"$ref": "#/definitions/Command"},
-        {"$ref": "#/definitions/AutocompleteRequest"}
+        {"$ref": "#/definitions/AutocompleteRequest"},
+        {"$ref": "#/definitions/RequestStateRollup"}
       ]
     }
   }

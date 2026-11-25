@@ -213,6 +213,14 @@ export interface StateRollup {
   listTitle: string
   version?: string
   featureFlags?: FeatureFlags
+  /** Number of completed items, including ones omitted from todos. */
+  completedTotal?: number
+}
+
+/** Asks the server to resend StateRollup to this client only. */
+export interface RequestStateRollup {
+  type: "RequestStateRollup"
+  includeAllCompleted?: boolean
 }
 
 export interface Suggestion {
