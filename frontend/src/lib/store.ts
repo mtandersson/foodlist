@@ -57,6 +57,8 @@ export interface TodoStore {
   /** True while completed items exist that the "Slutfört" section does not show. */
   hasMoreCompleted: ReturnType<typeof derived<any, boolean>>
   loadAllCompleted: () => void
+  /** Return the "Slutfört" section to the newest COMPLETED_LIMIT items. */
+  capCompleted: () => void
   categories: ReturnType<
     typeof derived<
       ReturnType<typeof writable<Map<string, Category>>>,
@@ -314,6 +316,10 @@ export function createTodoStore(wsUrl: string): TodoStore {
     [completedTodos, hiddenCompleted, showAllCompleted],
     ([$completed, $hidden, $showAll]) => !$showAll && ($hidden > 0 || $completed.length > COMPLETED_LIMIT)
   )
+
+  function capCompleted() {
+    showAllCompleted.set(false)
+  }
 
   function loadAllCompleted() {
     showAllCompleted.set(true)
@@ -1104,6 +1110,7 @@ export function createTodoStore(wsUrl: string): TodoStore {
     completedTotal,
     hasMoreCompleted,
     loadAllCompleted,
+    capCompleted,
     categories: categories as any,
     categoryLookup: categoryLookup as any,
     activeTodosByCategory: activeTodosByCategory as any,

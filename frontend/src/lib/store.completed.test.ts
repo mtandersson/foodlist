@@ -64,6 +64,26 @@ describe('completed history', () => {
     expect(get(store.hasMoreCompleted)).toBe(false);
   });
 
+  it('returns to the newest items when capped after showing all, without refetching', () => {
+    const store = createTodoStore('ws://test');
+    rollup([...completed(COMPLETED_LIMIT, 10)], COMPLETED_LIMIT + 10);
+    store.loadAllCompleted();
+    rollup(completed(COMPLETED_LIMIT + 10), COMPLETED_LIMIT + 10);
+    requestStateRollup.mockClear();
+
+    store.capCompleted();
+
+    const shown = get(store.completedTodosCollapsed);
+    expect(shown).toHaveLength(COMPLETED_LIMIT);
+    expect(shown[0].todo.id).toBe(`done-${COMPLETED_LIMIT + 9}`);
+    expect(get(store.completedTotal)).toBe(COMPLETED_LIMIT + 10);
+    expect(get(store.hasMoreCompleted)).toBe(true);
+
+    store.loadAllCompleted();
+    expect(requestStateRollup).not.toHaveBeenCalled();
+    expect(get(store.completedTodosCollapsed)).toHaveLength(COMPLETED_LIMIT + 10);
+  });
+
   it('has nothing more to load when every completed item fits', () => {
     const store = createTodoStore('ws://test');
     rollup(completed(3), 3);
